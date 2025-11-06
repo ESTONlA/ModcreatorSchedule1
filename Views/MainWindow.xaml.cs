@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using Schedule1ModdingTool.ViewModels;
 
@@ -18,7 +17,11 @@ namespace Schedule1ModdingTool.Views
             // Set up key bindings
             SetupKeyBindings();
             
-            // Code editor is now a simple TextBox - no syntax highlighting setup needed
+            // Set up code editor syntax highlighting
+            if (CodeEditor != null)
+            {
+                CodeEditor.SyntaxHighlighting = ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinition("C#");
+            }
         }
 
         private void SetupKeyBindings()
@@ -69,51 +72,6 @@ namespace Schedule1ModdingTool.Views
             }
 
             base.OnClosing(e);
-        }
-
-        private void Blueprint_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ClickCount == 2)
-            {
-                // Double-click to add quest
-                if (sender is FrameworkElement element && element.DataContext is BlueprintTemplate template)
-                {
-                    var vm = DataContext as MainViewModel;
-                    vm?.AddQuestCommand.Execute(template);
-                }
-            }
-            else
-            {
-                // Start drag operation
-                if (sender is FrameworkElement element && element.DataContext is BlueprintTemplate template)
-                {
-                    DragDrop.DoDragDrop(element, template, DragDropEffects.Copy);
-                }
-            }
-        }
-
-        private void QuestListBox_Drop(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(typeof(BlueprintTemplate)))
-            {
-                var template = (BlueprintTemplate)e.Data.GetData(typeof(BlueprintTemplate));
-                if (DataContext is MainViewModel vm)
-                {
-                    vm.AddQuestCommand.Execute(template);
-                }
-            }
-        }
-
-        private void QuestListBox_DragOver(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(typeof(BlueprintTemplate)))
-            {
-                e.Effects = DragDropEffects.Copy;
-            }
-            else
-            {
-                e.Effects = DragDropEffects.None;
-            }
         }
     }
 }

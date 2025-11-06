@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.ViewModels;
 
 namespace Schedule1ModdingTool.Views
@@ -16,9 +17,9 @@ namespace Schedule1ModdingTool.Views
 
         private void QuestListBox_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(typeof(BlueprintTemplate)))
+            if (e.Data.GetDataPresent(typeof(QuestBlueprint)))
             {
-                var template = (BlueprintTemplate)e.Data.GetData(typeof(BlueprintTemplate));
+                var template = (QuestBlueprint)e.Data.GetData(typeof(QuestBlueprint));
                 if (DataContext is MainViewModel vm)
                 {
                     vm.AddQuestCommand.Execute(template);
@@ -28,7 +29,7 @@ namespace Schedule1ModdingTool.Views
 
         private void QuestListBox_DragOver(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(typeof(BlueprintTemplate)))
+            if (e.Data.GetDataPresent(typeof(QuestBlueprint)))
             {
                 e.Effects = DragDropEffects.Copy;
             }

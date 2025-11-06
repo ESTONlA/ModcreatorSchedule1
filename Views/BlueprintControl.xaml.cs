@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.ViewModels;
 
 namespace Schedule1ModdingTool.Views
@@ -11,11 +12,11 @@ namespace Schedule1ModdingTool.Views
     public partial class BlueprintControl : UserControl
     {
         public static readonly DependencyProperty BlueprintProperty =
-            DependencyProperty.Register("Blueprint", typeof(BlueprintTemplate), typeof(BlueprintControl), new PropertyMetadata(null));
+            DependencyProperty.Register("Blueprint", typeof(QuestBlueprint), typeof(BlueprintControl), new PropertyMetadata(null));
 
-        public BlueprintTemplate Blueprint
+        public QuestBlueprint Blueprint
         {
-            get { return (BlueprintTemplate)GetValue(BlueprintProperty); }
+            get { return (QuestBlueprint)GetValue(BlueprintProperty); }
             set { SetValue(BlueprintProperty, value); }
         }
 

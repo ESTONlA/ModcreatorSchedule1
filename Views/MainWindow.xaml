@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="clr-namespace:Schedule1ModdingTool.Views"
+        xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
         Title="{Binding CurrentProject.DisplayTitle, StringFormat='Schedule 1 Modding Tool - {0}'}"
         Height="800" Width="1200"
@@ -74,9 +75,9 @@
                         <TextBlock Text="🔄" FontSize="14"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="_Generate Mod" Command="{Binding CompileCommand}" InputGestureText="F6">
+                <MenuItem Header="_Compile DLL" Command="{Binding CompileCommand}" InputGestureText="F6">
                     <MenuItem.Icon>
-                        <TextBlock Text="📦" FontSize="14"/>
+                        <TextBlock Text="⚙️" FontSize="14"/>
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
@@ -111,45 +112,32 @@
             <Button Command="{Binding RegenerateCodeCommand}" ToolTip="Regenerate Code (F5)">
                 <TextBlock Text="🔄" FontSize="16"/>
             </Button>
-            <Button Command="{Binding CompileCommand}" ToolTip="Generate MelonLoader Mod (F6)">
-                <TextBlock Text="📦" FontSize="16"/>
+            <Button Command="{Binding CompileCommand}" ToolTip="Compile to DLL (F6)">
+                <TextBlock Text="⚙️" FontSize="16"/>
             </Button>
         </ToolBar>
 
         <!-- Main Content Grid -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" MinWidth="250"/>
+                <ColumnDefinition Width="250" MinWidth="200"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*" MinWidth="400"/>
+                <ColumnDefinition Width="*" MinWidth="300"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="300" MinWidth="250"/>
             </Grid.ColumnDefinitions>
 
             <!-- Resource Explorer Panel -->
-            <Border Grid.Column="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="2">
+            <Border Grid.Column="0" Style="{StaticResource PanelStyle}">
                 <DockPanel>
-                    <TextBlock Text="Resource Explorer" FontSize="14" FontWeight="SemiBold" Foreground="#424242" Margin="8,8,8,4" DockPanel.Dock="Top"/>
+                    <TextBlock Text="Resource Explorer" Style="{StaticResource PanelHeaderStyle}" DockPanel.Dock="Top"/>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="8">
                             <TextBlock Text="Blueprints" FontWeight="SemiBold" Margin="0,0,0,4"/>
                             <ItemsControl ItemsSource="{Binding AvailableBlueprints}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="White" 
-                                                BorderBrush="#E0E0E0" 
-                                                BorderThickness="1" 
-                                                CornerRadius="4" 
-                                                Margin="4,2" 
-                                                Padding="8,6" 
-                                                Cursor="Hand"
-                                                MouseLeftButtonDown="Blueprint_MouseLeftButtonDown">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Icon}" FontSize="20" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"/>
-                                                    <TextBlock Text="{Binding Type}" FontSize="10" Foreground="Gray"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
+                                        <views:BlueprintControl Blueprint="{Binding}"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
@@ -159,7 +147,7 @@
             </Border>
 
             <!-- Vertical Splitter -->
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="#E0E0E0" BorderBrush="#BDBDBD" BorderThickness="1"/>
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Style="{StaticResource SplitterStyle}"/>
 
             <!-- Workspace Panel -->
             <Grid Grid.Column="2">
@@ -169,113 +157,49 @@
                     <RowDefinition Height="*" x:Name="CodeContentRow"/>
                 </Grid.RowDefinitions>
 
-                <!-- Workspace Panel -->
-                <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="2">
+                <!-- Quest Workspace -->
+                <Border Grid.Row="0" Style="{StaticResource PanelStyle}">
                     <DockPanel>
-                        <TextBlock Text="Workspace" FontSize="14" FontWeight="SemiBold" Foreground="#424242" Margin="8,8,8,4" DockPanel.Dock="Top"/>
-                        <Grid Margin="8">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            
-                            <!-- Workspace Header -->
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                                <TextBlock Text="Drop zone for blueprints - Right-click items to edit" 
-                                           FontStyle="Italic" 
-                                           Foreground="Gray" 
-                                           VerticalAlignment="Center"/>
-                            </StackPanel>
-                            
-                            <!-- Blueprint Items List -->
-                            <ListBox Grid.Row="1"
-                                     x:Name="WorkspaceListBox"
-                                     ItemsSource="{Binding CurrentProject.Quests}"
-                                     SelectedItem="{Binding SelectedQuest}"
-                                     AllowDrop="True"
-                                     Drop="QuestListBox_Drop"
-                                     DragOver="QuestListBox_DragOver">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <TextBlock Grid.Column="0" 
-                                                       Text="📋" 
-                                                       FontSize="16" 
-                                                       VerticalAlignment="Center"
-                                                       Margin="0,0,8,0"/>
-                                            
-                                            <StackPanel Grid.Column="1">
-                                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding Summary}" FontSize="10" Foreground="Gray"/>
-                                            </StackPanel>
-                                            
-                                            <TextBlock Grid.Column="2" 
-                                                       Text="{Binding BlueprintType}" 
-                                                       FontSize="10" 
-                                                       Foreground="DarkBlue" 
-                                                       VerticalAlignment="Top"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                                <ListBox.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Edit Quest" Command="{Binding EditQuestCommand}">
-                                            <MenuItem.Icon>
-                                                <TextBlock Text="✏️" FontSize="14"/>
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                        <MenuItem Header="Duplicate Quest" Command="{Binding DuplicateQuestCommand}">
-                                            <MenuItem.Icon>
-                                                <TextBlock Text="📄" FontSize="14"/>
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                        <Separator/>
-                                        <MenuItem Header="Remove Quest" Command="{Binding RemoveQuestCommand}">
-                                            <MenuItem.Icon>
-                                                <TextBlock Text="🗑️" FontSize="14"/>
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                    </ContextMenu>
-                                </ListBox.ContextMenu>
-                            </ListBox>
-                        </Grid>
+                        <TextBlock Text="Quest Workspace" Style="{StaticResource PanelHeaderStyle}" DockPanel.Dock="Top"/>
+                        <views:WorkspaceControl DataContext="{Binding}"/>
                     </DockPanel>
                 </Border>
 
                 <!-- Code View Splitter -->
-                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="#E0E0E0" BorderBrush="#BDBDBD" BorderThickness="1"/>
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Center" Style="{StaticResource SplitterStyle}" Visibility="{Binding IsCodeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                 <!-- Generated Code Panel -->
-                <Border Grid.Row="2" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="2">
+                <Border Grid.Row="2" Style="{StaticResource PanelStyle}" Visibility="{Binding IsCodeVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <DockPanel>
                         <DockPanel DockPanel.Dock="Top" Margin="8,8,8,4">
-                            <TextBlock Text="Generated C# Code" FontSize="14" FontWeight="SemiBold" Foreground="#424242" DockPanel.Dock="Left"/>
+                            <TextBlock Text="Generated C# Code" Style="{StaticResource PanelHeaderStyle}" DockPanel.Dock="Left"/>
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
-                                <Button Content="Export" Margin="4,0,0,0"/>
-                                <Button Content="Copy" Margin="4,0,0,0"/>
+                                <Button Content="Export" Style="{StaticResource IconButtonStyle}" Margin="4,0,0,0"/>
+                                <Button Content="Copy" Style="{StaticResource IconButtonStyle}" Margin="4,0,0,0"/>
                             </StackPanel>
-                        </DockPanel>
-                        <TextBox
+                        </DockPanel>    
+                        <avalonEdit:TextEditor
                             x:Name="CodeEditor"
                             FontFamily="Consolas"
                             FontSize="12"
+                            ShowLineNumbers="True"
                             Text="{Binding GeneratedCode}"
                             IsReadOnly="True"
-                            Margin="8,0,8,8"
-                            VerticalScrollBarVisibility="Auto"
-                            HorizontalScrollBarVisibility="Auto"
-                            AcceptsReturn="True"
-                            TextWrapping="NoWrap"/>
+                            Margin="8,0,8,8"/>
                     </DockPanel>
                 </Border>
             </Grid>
 
+            <!-- Vertical Splitter -->
+            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Style="{StaticResource SplitterStyle}"/>
+
+            <!-- Properties Panel -->
+            <Border Grid.Column="4" Style="{StaticResource PanelStyle}">
+                <DockPanel>
+                    <TextBlock Text="Quest Properties" Style="{StaticResource PanelHeaderStyle}" DockPanel.Dock="Top"/>
+                    <views:PropertiesControl DataContext="{Binding}"/>
+                </DockPanel>
+            </Border>
         </Grid>
 
         <!-- Status Bar -->

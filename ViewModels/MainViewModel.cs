@@ -1,13 +1,11 @@
 using System;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services;
 using Schedule1ModdingTool.Utils;
-using Schedule1ModdingTool.Views;
 
 namespace Schedule1ModdingTool.ViewModels
 {
@@ -52,21 +50,32 @@ namespace Schedule1ModdingTool.ViewModels
             set => SetProperty(ref _isCodeVisible, value);
         }
 
-        public ObservableCollection<BlueprintTemplate> AvailableBlueprints { get; } = new ObservableCollection<BlueprintTemplate>();
+        public ObservableCollection<QuestBlueprint> AvailableBlueprints { get; } = new ObservableCollection<QuestBlueprint>();
 
-        // Commands
-        public ICommand NewProjectCommand { get; private set; }
-        public ICommand OpenProjectCommand { get; private set; }
-        public ICommand SaveProjectCommand { get; private set; }
-        public ICommand SaveProjectAsCommand { get; private set; }
-        public ICommand ExitCommand { get; private set; }
-        public ICommand AddQuestCommand { get; private set; }
-        public ICommand RemoveQuestCommand { get; private set; }
-        public ICommand EditQuestCommand { get; private set; }
-        public ICommand DuplicateQuestCommand { get; private set; }
-        public ICommand RegenerateCodeCommand { get; private set; }
-        public ICommand CompileCommand { get; private set; }
-        public ICommand ToggleCodeViewCommand { get; private set; }
+        // Commands with private backing fields
+        private ICommand? _newProjectCommand;
+        private ICommand? _openProjectCommand;
+        private ICommand? _saveProjectCommand;
+        private ICommand? _saveProjectAsCommand;
+        private ICommand? _exitCommand;
+        private ICommand? _addQuestCommand;
+        private ICommand? _removeQuestCommand;
+        private ICommand? _editQuestCommand;
+        private ICommand? _regenerateCodeCommand;
+        private ICommand? _compileCommand;
+        private ICommand? _toggleCodeViewCommand;
+
+        public ICommand NewProjectCommand => _newProjectCommand!;
+        public ICommand OpenProjectCommand => _openProjectCommand!;
+        public ICommand SaveProjectCommand => _saveProjectCommand!;
+        public ICommand SaveProjectAsCommand => _saveProjectAsCommand!;
+        public ICommand ExitCommand => _exitCommand!;
+        public ICommand AddQuestCommand => _addQuestCommand!;
+        public ICommand RemoveQuestCommand => _removeQuestCommand!;
+        public ICommand EditQuestCommand => _editQuestCommand!;
+        public ICommand RegenerateCodeCommand => _regenerateCodeCommand!;
+        public ICommand CompileCommand => _compileCommand!;
+        public ICommand ToggleCodeViewCommand => _toggleCodeViewCommand!;
 
         private readonly CodeGenerationService _codeGenService;
         private readonly ProjectService _projectService;
@@ -83,24 +92,35 @@ namespace Schedule1ModdingTool.ViewModels
 
         private void InitializeCommands()
         {
-            NewProjectCommand = new RelayCommand(NewProject);
-            OpenProjectCommand = new RelayCommand(OpenProject);
-            SaveProjectCommand = new RelayCommand(SaveProject, () => CurrentProject.IsModified);
-            SaveProjectAsCommand = new RelayCommand(SaveProjectAs);
-            ExitCommand = new RelayCommand(Exit);
-            AddQuestCommand = new RelayCommand<BlueprintTemplate>(AddQuest);
-            RemoveQuestCommand = new RelayCommand(RemoveQuest, () => SelectedQuest != null);
-            EditQuestCommand = new RelayCommand(EditQuest, () => SelectedQuest != null);
-            DuplicateQuestCommand = new RelayCommand(DuplicateQuest, () => SelectedQuest != null);
-            RegenerateCodeCommand = new RelayCommand(RegenerateCode, () => SelectedQuest != null);
-            CompileCommand = new RelayCommand(Compile, () => SelectedQuest != null);
-            ToggleCodeViewCommand = new RelayCommand(() => IsCodeVisible = !IsCodeVisible);
+            _newProjectCommand = new RelayCommand(NewProject);
+            _openProjectCommand = new RelayCommand(OpenProject);
+            _saveProjectCommand = new RelayCommand(SaveProject, () => CurrentProject.IsModified);
+            _saveProjectAsCommand = new RelayCommand(SaveProjectAs);
+            _exitCommand = new RelayCommand(Exit);
+            _addQuestCommand = new RelayCommand<QuestBlueprint>(AddQuest);
+            _removeQuestCommand = new RelayCommand(RemoveQuest, () => SelectedQuest != null);
+            _editQuestCommand = new RelayCommand(EditQuest, () => SelectedQuest != null);
+            _regenerateCodeCommand = new RelayCommand(RegenerateCode, () => SelectedQuest != null);
+            _compileCommand = new RelayCommand(Compile, () => SelectedQuest != null);
+            _toggleCodeViewCommand = new RelayCommand(() => IsCodeVisible = !IsCodeVisible);
         }
 
         private void InitializeBlueprints()
         {
-            AvailableBlueprints.Add(new BlueprintTemplate("Quest Blueprint", QuestBlueprintType.Standard, "📝"));
-            AvailableBlueprints.Add(new BlueprintTemplate("Advanced Quest Blueprint", QuestBlueprintType.Advanced, "⚡"));
+            AvailableBlueprints.Add(new QuestBlueprint(QuestBlueprintType.Standard)
+            {
+                ClassName = "Standard Quest",
+                QuestTitle = "Standard Quest Template",
+                QuestDescription = "A standard quest template",
+                BlueprintType = QuestBlueprintType.Standard
+            });
+            AvailableBlueprints.Add(new QuestBlueprint(QuestBlueprintType.Advanced)
+            {
+                ClassName = "Advanced Quest",
+                QuestTitle = "Advanced Quest Template",
+                QuestDescription = "An advanced quest template with more features",
+                BlueprintType = QuestBlueprintType.Advanced
+            });
         }
 
         private void NewProject()
@@ -143,24 +163,16 @@ namespace Schedule1ModdingTool.ViewModels
             }
         }
 
-        private void AddQuest(BlueprintTemplate? template)
+        private void AddQuest(QuestBlueprint? template)
         {
             if (template == null) return;
 
-            var quest = new QuestBlueprint(template.Type)
+            var quest = new QuestBlueprint(template.BlueprintType)
             {
-                ClassName = $"Quest{CurrentProject.Quests.Count + 1}Mod",
-                QuestId = $"Quest{CurrentProject.Quests.Count + 1}",
+                ClassName = $"Quest{CurrentProject.Quests.Count + 1}",
                 QuestTitle = $"New Quest {CurrentProject.Quests.Count + 1}",
                 QuestDescription = "A new quest for Schedule 1",
-                BlueprintType = template.Type,
-                // MelonLoader defaults
-                ModName = $"My Quest Mod {CurrentProject.Quests.Count + 1}",
-                ModVersion = "1.0.0",
-                ModAuthor = "YourName",
-                GameDeveloper = "TVGS",
-                GameName = "Schedule I",
-                Namespace = "MyProject"
+                BlueprintType = template.BlueprintType
             };
 
             CurrentProject.AddQuest(quest);
@@ -183,55 +195,7 @@ namespace Schedule1ModdingTool.ViewModels
 
         private void EditQuest()
         {
-            if (SelectedQuest == null) return;
-
-            try
-            {
-                // Open the quest edit window
-                var editWindow = new QuestEditWindow(SelectedQuest, this)
-                {
-                    Owner = Application.Current.MainWindow
-                };
-
-                // Show as dialog and handle the result
-                var result = editWindow.ShowDialog();
-                
-                if (result == true)
-                {
-                    // Changes were applied - refresh the code view
-                    RegenerateCode();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to open quest editor: {ex.Message}", "Error", 
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void DuplicateQuest()
-        {
-            if (SelectedQuest == null) return;
-
-            try
-            {
-                // Create a deep copy of the selected quest
-                var duplicatedQuest = SelectedQuest.DeepCopy();
-                
-                // Modify the name to indicate it's a copy
-                duplicatedQuest.ClassName = $"{duplicatedQuest.ClassName}_Copy";
-                duplicatedQuest.QuestTitle = $"{duplicatedQuest.QuestTitle} (Copy)";
-                duplicatedQuest.QuestId = $"{duplicatedQuest.QuestId}_copy";
-
-                // Add to project and select
-                CurrentProject.AddQuest(duplicatedQuest);
-                SelectedQuest = duplicatedQuest;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to duplicate quest: {ex.Message}", "Error", 
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            // This will be handled by the properties panel
         }
 
         private void RegenerateCode()
@@ -249,9 +213,8 @@ namespace Schedule1ModdingTool.ViewModels
                 var success = _codeGenService.CompileToDll(SelectedQuest, GeneratedCode);
                 if (success)
                 {
-                    var outputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Schedule1_Mods");
-                    MessageBox.Show($"Successfully generated MelonLoader mod source code!\n\nFiles saved to:\n{outputDir}\n\n- {SelectedQuest.ClassName}.cs (source code)\n- COMPILATION_INSTRUCTIONS.txt (how to compile)\n\nSee instructions file for compilation steps.", 
-                        "Mod Generated Successfully", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Successfully compiled '{SelectedQuest.ClassName}.dll'", "Compilation Successful", 
+                        MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
@@ -285,17 +248,4 @@ namespace Schedule1ModdingTool.ViewModels
         }
     }
 
-    public class BlueprintTemplate
-    {
-        public string Name { get; }
-        public QuestBlueprintType Type { get; }
-        public string Icon { get; }
-
-        public BlueprintTemplate(string name, QuestBlueprintType type, string icon)
-        {
-            Name = name;
-            Type = type;
-            Icon = icon;
-        }
-    }
 }
