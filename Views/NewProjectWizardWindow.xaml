@@ -59,7 +59,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Project Path:" VerticalAlignment="Center" Margin="0,0,10,0" MinWidth="120"/>
+                        <TextBlock Grid.Column="0" Text="Workspace Path:" VerticalAlignment="Center" Margin="0,0,10,0" MinWidth="120"/>
                         <TextBox Grid.Column="1" Text="{Binding ProjectPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,5,0"/>
                         <Button Grid.Column="2" Content="Browse..." Command="{Binding BrowsePathCommand}" Padding="10,0"/>
                     </Grid>
