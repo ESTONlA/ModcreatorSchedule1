@@ -4,6 +4,16 @@ using Newtonsoft.Json;
 namespace Schedule1ModdingTool.Models
 {
     /// <summary>
+    /// User's coding/modding experience level
+    /// </summary>
+    public enum ExperienceLevel
+    {
+        NoCodingExperience,
+        SomeCoding,
+        ExperiencedCoder
+    }
+
+    /// <summary>
     /// Stores user configuration for mod generation and build settings
     /// </summary>
     public class ModSettings : ObservableObject
@@ -17,6 +27,9 @@ namespace Schedule1ModdingTool.Models
         private string _defaultModNamespace = "Schedule1Mods";
         private string _defaultModAuthor = "Quest Creator";
         private string _defaultModVersion = "1.0.0";
+        private string _workspacePath = "";
+        private ExperienceLevel _experienceLevel = ExperienceLevel.SomeCoding;
+        private bool _isFirstStartComplete = false;
 
         [JsonProperty("gameInstallPath")]
         public string GameInstallPath
@@ -44,6 +57,27 @@ namespace Schedule1ModdingTool.Models
         {
             get => _defaultModVersion;
             set => SetProperty(ref _defaultModVersion, value);
+        }
+
+        [JsonProperty("workspacePath")]
+        public string WorkspacePath
+        {
+            get => _workspacePath;
+            set => SetProperty(ref _workspacePath, value);
+        }
+
+        [JsonProperty("experienceLevel")]
+        public ExperienceLevel ExperienceLevel
+        {
+            get => _experienceLevel;
+            set => SetProperty(ref _experienceLevel, value);
+        }
+
+        [JsonProperty("isFirstStartComplete")]
+        public bool IsFirstStartComplete
+        {
+            get => _isFirstStartComplete;
+            set => SetProperty(ref _isFirstStartComplete, value);
         }
 
         public static ModSettings Load()

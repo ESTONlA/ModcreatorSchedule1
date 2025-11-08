@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using Schedule1ModdingTool.Models;
+using Schedule1ModdingTool.Utils;
 
 namespace Schedule1ModdingTool.Services
 {
@@ -77,7 +79,8 @@ namespace Schedule1ModdingTool.Services
                     GenerateNpcFile(modPath, npc, result);
                 }
 
-                CopyResources(project, modPath, result);
+                // Validate and copy resources
+                ValidateAndCopyResources(project, modPath, result);
 
                 result.Success = true;
                 result.OutputPath = modPath;
@@ -115,7 +118,8 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("    <NeutralLanguage>en-US</NeutralLanguage>");
             sb.AppendLine("    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>");
             sb.AppendLine("    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>");
-            sb.AppendLine("    <Configurations>Debug;Release;Mono;Il2cpp;CrossCompat</Configurations>");
+            sb.AppendLine("    <Configurations>CrossCompat</Configurations>");
+            sb.AppendLine("    <Nullable>enable</Nullable>");
             sb.AppendLine("  </PropertyGroup>");
             sb.AppendLine();
             sb.AppendLine("  <!-- CrossCompat configuration (default for S1API.Forked) -->");
@@ -129,7 +133,7 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("  </PropertyGroup>");
             sb.AppendLine();
             sb.AppendLine("  <ItemGroup>");
-            sb.AppendLine("    <PackageReference Include=\"S1API.Forked\" Version=\"2.4.8\" />");
+            sb.AppendLine("    <PackageReference Include=\"S1API.Forked\" Version=\"*\" />");
             sb.AppendLine("    <PackageReference Include=\"LavaGang.MelonLoader\" Version=\"0.7.0\" />");
             sb.AppendLine("  </ItemGroup>");
             sb.AppendLine();
@@ -146,6 +150,9 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("    </Reference>");
             sb.AppendLine("    <Reference Include=\"UnityEngine.CoreModule\">");
             sb.AppendLine("      <HintPath>$(ManagedPath)\\UnityEngine.CoreModule.dll</HintPath>");
+            sb.AppendLine("    </Reference>");
+            sb.AppendLine("    <Reference Include=\"UnityEngine\">");
+            sb.AppendLine("      <HintPath>$(ManagedPath)\\UnityEngine.dll</HintPath>");
             sb.AppendLine("    </Reference>");
             sb.AppendLine("    <Reference Include=\"UnityEngine.JSONSerializeModule\">");
             sb.AppendLine("      <HintPath>$(ManagedPath)\\UnityEngine.JSONSerializeModule.dll</HintPath>");
@@ -293,6 +300,7 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("using S1API.Quests;");
             sb.AppendLine("using S1API.Quests.Constants;");
             sb.AppendLine("using S1API.Entities;");
+            sb.AppendLine("using S1API.GameTime;");
             sb.AppendLine($"using {rootNamespace}.Utils;");
             sb.AppendLine($"using {rootNamespace}.Quests;");
             sb.AppendLine();
@@ -307,17 +315,18 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine();
             sb.AppendLine("        private readonly Dictionary<string, Quest> _registeredQuests = new Dictionary<string, Quest>();");
             sb.AppendLine();
-            sb.AppendLine("        public override void OnInitializeMelon()");
+            sb.AppendLine("        public override void OnLateInitializeMelon()");
             sb.AppendLine("        {");
             sb.AppendLine("            Instance = this;");
-            sb.AppendLine("            RegisterQuests();");
-            sb.AppendLine("            SubscribeToNPCEvents();");
+            sb.AppendLine("            // Triggers are handled in individual quest classes via SubscribeToTriggers()");
+            sb.AppendLine("            // No need to subscribe here to avoid duplicate subscriptions");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        public override void OnSceneWasInitialized(int buildIndex, string sceneName)");
             sb.AppendLine("        {");
             sb.AppendLine("            if (sceneName == \"Main\")");
             sb.AppendLine("            {");
+            sb.AppendLine("                RegisterQuests();");
             sb.AppendLine("                StartSceneInitQuests();");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
@@ -343,7 +352,8 @@ namespace Schedule1ModdingTool.Services
                 sb.AppendLine($"                var {questKey} = QuestManager.CreateQuest<{className}>(\"{questId}\") as {className};");
                 sb.AppendLine($"                if ({questKey} != null)");
                 sb.AppendLine("                {");
-                sb.AppendLine($"                    {questKey}.ConfigureQuest();");
+                sb.AppendLine("                    // Quest initialization happens automatically in OnCreated()");
+                sb.AppendLine("                    // No need to call ConfigureQuest() anymore");
                 sb.AppendLine($"                    _registeredQuests[\"{EscapeString(quest.QuestId ?? className)}\"] = {questKey};");
                 sb.AppendLine("                }");
                 sb.AppendLine("            }");
@@ -358,45 +368,14 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine();
             sb.AppendLine("        private void SubscribeToNPCEvents()");
             sb.AppendLine("        {");
-
-            // Subscribe to NPC events for deal-based triggers
-            var npcTriggerQuests = project.Quests.Where(q => q.StartCondition?.TriggerType == QuestStartTrigger.NPCDealCompleted && !string.IsNullOrWhiteSpace(q.StartCondition.NpcId)).ToList();
-            if (npcTriggerQuests.Any())
-            {
-                sb.AppendLine("            // Subscribe to NPC customer events for deal-based quest triggers");
-                foreach (var quest in npcTriggerQuests)
-                {
-                    var className = MakeSafeIdentifier(quest.ClassName, "GeneratedQuest");
-                    var npcId = EscapeString(quest.StartCondition.NpcId);
-                    var questKey = EscapeString(quest.QuestId ?? quest.ClassName);
-
-                    sb.AppendLine($"            // Quest: {className} triggered by NPC: {npcId}");
-                    sb.AppendLine("            try");
-                    sb.AppendLine("            {");
-                    sb.AppendLine($"                var npc = NPC.All.FirstOrDefault(n => n.ID == \"{npcId}\");");
-                    sb.AppendLine("                if (npc != null && npc.IsCustomer)");
-                    sb.AppendLine("                {");
-                    sb.AppendLine("                    npc.Customer.OnDealCompleted(() =>");
-                    sb.AppendLine("                    {");
-                    sb.AppendLine($"                        if (_registeredQuests.TryGetValue(\"{questKey}\", out var quest))");
-                    sb.AppendLine("                        {");
-                    sb.AppendLine("                            quest.Begin();");
-                    sb.AppendLine("                        }");
-                    sb.AppendLine("                    });");
-                    sb.AppendLine("                }");
-                    sb.AppendLine("            }");
-                    sb.AppendLine("            catch (Exception ex)");
-                    sb.AppendLine("            {");
-                    sb.AppendLine($"                MelonLogger.Warning($\"Failed to subscribe to NPC {npcId} for quest {className}: {{ex.Message}}\");");
-                    sb.AppendLine("            }");
-                    sb.AppendLine();
-                }
-            }
-            else
-            {
-                sb.AppendLine("            // No NPC deal-based quest triggers configured");
-            }
-
+            sb.AppendLine("            // NPC event triggers are handled in individual quest classes via SubscribeToTriggers()");
+            sb.AppendLine("            // This prevents duplicate subscriptions and keeps trigger logic with the quest");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private void SubscribeToActionTriggers()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            // Triggers are handled in individual quest classes via SubscribeToTriggers()");
+            sb.AppendLine("            // This prevents duplicate subscriptions and keeps trigger logic with the quest");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        private void StartSceneInitQuests()");
@@ -462,45 +441,108 @@ namespace Schedule1ModdingTool.Services
             result.GeneratedFiles.Add(npcPath);
         }
 
-        private void CopyResources(QuestProject project, string modPath, ModProjectGenerationResult result)
+        private void ValidateAndCopyResources(QuestProject project, string modPath, ModProjectGenerationResult result)
         {
             if (project.Resources == null || project.Resources.Count == 0)
+            {
+                Debug.WriteLine("[ModProjectGenerator] No resources to copy");
                 return;
+            }
 
             if (string.IsNullOrWhiteSpace(project.FilePath))
+            {
+                result.Warnings.Add("Project file path is not set. Cannot copy resources.");
+                Debug.WriteLine("[ModProjectGenerator] Missing project file path; skipping resource copy");
                 return;
+            }
 
             var projectDir = Path.GetDirectoryName(project.FilePath);
             if (string.IsNullOrWhiteSpace(projectDir))
+            {
+                result.Warnings.Add("Could not determine project directory. Cannot copy resources.");
+                Debug.WriteLine("[ModProjectGenerator] Could not determine project directory");
                 return;
+            }
+
+            // First, validate all resources exist
+            var missingResources = new List<string>();
+            var validResources = new List<ResourceAsset>();
 
             foreach (var asset in project.Resources)
             {
                 var relative = asset.RelativePath;
+                Debug.WriteLine($"[ModProjectGenerator] Validating resource '{asset.DisplayName}' ({relative ?? "null"})");
                 if (string.IsNullOrWhiteSpace(relative))
-                    continue;
-
-                var source = Path.Combine(projectDir, relative.Replace('/', Path.DirectorySeparatorChar));
-                if (!File.Exists(source))
                 {
-                    result.Errors.Add($"Resource file not found: {relative}");
+                    result.Warnings.Add($"Resource '{asset.DisplayName}' has no path specified");
                     continue;
                 }
 
+                if (!ResourcePathHelper.ResourceExists(relative, projectDir))
+                {
+                    var expectedPath = Path.Combine(projectDir, relative.Replace('/', Path.DirectorySeparatorChar));
+                    missingResources.Add($"  • {asset.DisplayName} ({relative})\n    Expected at: {expectedPath}");
+                    Debug.WriteLine($"[ModProjectGenerator] Missing resource '{relative}' expected at '{expectedPath}'");
+                }
+                else
+                {
+                    validResources.Add(asset);
+                }
+            }
+
+            // Report missing resources
+            if (missingResources.Count > 0)
+            {
+                var errorMessage = $"Error copying resource {(missingResources.Count == 1 ? "file" : "files")}. " +
+                                 $"The following resource {(missingResources.Count == 1 ? "file" : "files")} could not be found:\n\n" +
+                                 string.Join("\n", missingResources) +
+                                 "\n\nThese resources will be excluded from the exported mod. " +
+                                 "Please ensure all resource files exist in your project's Resources folder before exporting.";
+
+                result.Errors.Add(errorMessage);
+            }
+
+            Debug.WriteLine($"[ModProjectGenerator] Copying {validResources.Count} resource(s) into '{modPath}'");
+            // Copy valid resources
+            foreach (var asset in validResources)
+            {
+                var relative = asset.RelativePath;
+                var source = Path.Combine(projectDir, relative.Replace('/', Path.DirectorySeparatorChar));
                 var destination = Path.Combine(modPath, relative.Replace('/', Path.DirectorySeparatorChar));
-                var destinationDir = Path.GetDirectoryName(destination);
+
+                var sourceFullPath = Path.GetFullPath(source);
+                var destinationFullPath = Path.GetFullPath(destination);
+
+                // When exporting into the same folder the project already lives in (the default flow),
+                // the resource already sits at the correct path. Copying it onto itself is unnecessary
+                // and was causing the exporter to delete the original PNG before attempting to read it,
+                // leaving the preview blank and the export operation complaining about locked files.
+                if (string.Equals(sourceFullPath, destinationFullPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Nothing to copy – simply ensure the directory exists and continue.
+                    var existingDir = Path.GetDirectoryName(sourceFullPath);
+                    if (!string.IsNullOrEmpty(existingDir))
+                    {
+                        Directory.CreateDirectory(existingDir);
+                    }
+                    Debug.WriteLine($"[ModProjectGenerator] Skipping copy for '{relative}' (source equals destination '{sourceFullPath}')");
+                    continue;
+                }
+
+                var destinationDir = Path.GetDirectoryName(destinationFullPath);
                 if (!string.IsNullOrEmpty(destinationDir))
                 {
                     Directory.CreateDirectory(destinationDir);
                 }
 
-                if (!TryCopyFileWithRetry(source, destination, result, relative))
+                Debug.WriteLine($"[ModProjectGenerator] Copying '{sourceFullPath}' -> '{destinationFullPath}'");
+                if (!TryCopyFileWithRetry(sourceFullPath, destinationFullPath, result, relative))
                 {
                     result.Errors.Add($"Failed to copy resource after retries: {relative}. The file may be locked by another process. Please close any applications using this file and try again.");
                 }
                 else
                 {
-                    result.GeneratedFiles.Add(destination);
+                    result.GeneratedFiles.Add(destinationFullPath);
                 }
             }
         }
@@ -511,12 +553,14 @@ namespace Schedule1ModdingTool.Services
             {
                 try
                 {
+                    Debug.WriteLine($"[ModProjectGenerator] Resource copy attempt {attempt}/{maxRetries}: '{source}' -> '{destination}'");
                     // If destination exists and is locked, try to delete it first
                     if (File.Exists(destination))
                     {
                         try
                         {
                             File.Delete(destination);
+                            Debug.WriteLine($"[ModProjectGenerator] Destination delete failed (attempt {attempt}): {destination}");
                         }
                         catch (IOException)
                         {
@@ -530,41 +574,32 @@ namespace Schedule1ModdingTool.Services
                         }
                     }
 
-                    // Use ReadAllBytes/WriteAllBytes instead of File.Copy to minimize file handle hold time
-                    // This opens and closes the file quickly rather than keeping it open during copy
-                    byte[] fileData;
-                    try
+                    // Use FileStream with FileShare.ReadWrite to allow reading even if file is open elsewhere
+                    // This allows copying files that might be open in Explorer preview or image viewers
+                    using (var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                    using (var destStream = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None))
                     {
-                        fileData = File.ReadAllBytes(source);
+                        sourceStream.CopyTo(destStream);
                     }
-                    catch (IOException ex) when (ex.Message.Contains("being used by another process") || ex.Message.Contains("cannot access"))
-                    {
-                        if (attempt < maxRetries)
-                        {
-                            result.Errors.Add($"Resource file locked (attempt {attempt}/{maxRetries}): {relativePath}. Retrying...");
-                            Thread.Sleep(100 * attempt); // Exponential backoff: 100ms, 200ms, 300ms
-                            continue;
-                        }
-                        result.Errors.Add($"Resource file locked after {maxRetries} attempts: {relativePath}");
-                        return false;
-                    }
-
-                    File.WriteAllBytes(destination, fileData);
+                    Debug.WriteLine($"[ModProjectGenerator] Copy succeeded: '{destination}'");
                     return true;
                 }
                 catch (IOException ex) when (ex.Message.Contains("being used by another process") || ex.Message.Contains("cannot access"))
                 {
                     if (attempt < maxRetries)
                     {
+                        Debug.WriteLine($"[ModProjectGenerator] Resource locked (attempt {attempt}): {relativePath} - {ex.Message}");
                         result.Errors.Add($"Resource file locked (attempt {attempt}/{maxRetries}): {relativePath}. Retrying...");
                         Thread.Sleep(100 * attempt); // Exponential backoff: 100ms, 200ms, 300ms
                         continue;
                     }
+                    Debug.WriteLine($"[ModProjectGenerator] Resource locked after {maxRetries} attempts: {relativePath}");
                     result.Errors.Add($"Resource file locked after {maxRetries} attempts: {relativePath}");
                     return false;
                 }
                 catch (Exception ex)
                 {
+                    Debug.WriteLine($"[ModProjectGenerator] Copy failed for '{relativePath}': {ex.Message}");
                     result.Errors.Add($"Error copying resource {relativePath}: {ex.Message}");
                     return false;
                 }
@@ -631,6 +666,7 @@ namespace Schedule1ModdingTool.Services
         public string? OutputPath { get; set; }
         public List<string> GeneratedFiles { get; } = new List<string>();
         public List<string> Errors { get; } = new List<string>();
+        public List<string> Warnings { get; } = new List<string>();
     }
 }
 

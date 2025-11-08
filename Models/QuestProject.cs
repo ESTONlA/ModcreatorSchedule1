@@ -18,6 +18,7 @@ namespace Schedule1ModdingTool.Models
 
         private readonly HashSet<QuestBlueprint> _trackedQuests = new HashSet<QuestBlueprint>();
         private readonly HashSet<QuestObjective> _trackedObjectives = new HashSet<QuestObjective>();
+        private readonly HashSet<QuestTrigger> _trackedTriggers = new HashSet<QuestTrigger>();
         private readonly HashSet<NpcBlueprint> _trackedNpcs = new HashSet<NpcBlueprint>();
         private readonly HashSet<ResourceAsset> _trackedResources = new HashSet<ResourceAsset>();
         private readonly HashSet<ModFolder> _trackedFolders = new HashSet<ModFolder>();
@@ -243,6 +244,19 @@ namespace Schedule1ModdingTool.Models
             {
                 AttachObjectiveHandlers(objective);
             }
+            
+            // Attach handlers to trigger collections
+            quest.QuestTriggers.CollectionChanged += OnQuestTriggersCollectionChanged;
+            foreach (var trigger in quest.QuestTriggers)
+            {
+                AttachTriggerHandlers(trigger);
+            }
+            
+            quest.QuestFinishTriggers.CollectionChanged += OnQuestFinishTriggersCollectionChanged;
+            foreach (var finishTrigger in quest.QuestFinishTriggers)
+            {
+                AttachTriggerHandlers(finishTrigger);
+            }
         }
 
         private void AttachNpcHandlers(NpcBlueprint npc)
@@ -264,6 +278,19 @@ namespace Schedule1ModdingTool.Models
             foreach (var objective in quest.Objectives)
             {
                 DetachObjectiveHandlers(objective);
+            }
+            
+            // Detach handlers from trigger collections
+            quest.QuestTriggers.CollectionChanged -= OnQuestTriggersCollectionChanged;
+            foreach (var trigger in quest.QuestTriggers)
+            {
+                DetachTriggerHandlers(trigger);
+            }
+            
+            quest.QuestFinishTriggers.CollectionChanged -= OnQuestFinishTriggersCollectionChanged;
+            foreach (var finishTrigger in quest.QuestFinishTriggers)
+            {
+                DetachTriggerHandlers(finishTrigger);
             }
         }
 
@@ -381,6 +408,94 @@ namespace Schedule1ModdingTool.Models
             MarkAsModified();
         }
 
+        private void OnQuestTriggersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                MarkAsModified();
+                return;
+            }
+
+            if (e.NewItems != null)
+            {
+                foreach (var item in e.NewItems)
+                {
+                    if (item is QuestTrigger trigger)
+                    {
+                        AttachTriggerHandlers(trigger);
+                    }
+                }
+            }
+
+            if (e.OldItems != null)
+            {
+                foreach (var item in e.OldItems)
+                {
+                    if (item is QuestTrigger trigger)
+                    {
+                        DetachTriggerHandlers(trigger);
+                    }
+                }
+            }
+
+            MarkAsModified();
+        }
+
+        private void OnQuestFinishTriggersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                MarkAsModified();
+                return;
+            }
+
+            if (e.NewItems != null)
+            {
+                foreach (var item in e.NewItems)
+                {
+                    if (item is QuestTrigger trigger)
+                    {
+                        AttachTriggerHandlers(trigger);
+                    }
+                }
+            }
+
+            if (e.OldItems != null)
+            {
+                foreach (var item in e.OldItems)
+                {
+                    if (item is QuestTrigger trigger)
+                    {
+                        DetachTriggerHandlers(trigger);
+                    }
+                }
+            }
+
+            MarkAsModified();
+        }
+
+        private void AttachTriggerHandlers(QuestTrigger trigger)
+        {
+            if (_trackedTriggers.Contains(trigger))
+                return;
+
+            _trackedTriggers.Add(trigger);
+            trigger.PropertyChanged += TriggerOnPropertyChanged;
+        }
+
+        private void DetachTriggerHandlers(QuestTrigger trigger)
+        {
+            if (!_trackedTriggers.Remove(trigger))
+                return;
+
+            trigger.PropertyChanged -= TriggerOnPropertyChanged;
+        }
+
+        private void TriggerOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            MarkAsModified();
+        }
+
         private void AttachExistingQuestHandlers()
         {
             foreach (var quest in Quests)
@@ -419,6 +534,18 @@ namespace Schedule1ModdingTool.Models
             {
                 quest.PropertyChanged -= QuestOnPropertyChanged;
                 quest.Objectives.CollectionChanged -= OnObjectivesCollectionChanged;
+                quest.QuestTriggers.CollectionChanged -= OnQuestTriggersCollectionChanged;
+                quest.QuestFinishTriggers.CollectionChanged -= OnQuestFinishTriggersCollectionChanged;
+            }
+
+            foreach (var objective in _trackedObjectives.ToArray())
+            {
+                objective.PropertyChanged -= ObjectiveOnPropertyChanged;
+            }
+
+            foreach (var trigger in _trackedTriggers.ToArray())
+            {
+                trigger.PropertyChanged -= TriggerOnPropertyChanged;
             }
 
             foreach (var npc in _trackedNpcs.ToArray())
@@ -436,6 +563,8 @@ namespace Schedule1ModdingTool.Models
             }
 
             _trackedQuests.Clear();
+            _trackedObjectives.Clear();
+            _trackedTriggers.Clear();
             _trackedNpcs.Clear();
             _trackedFolders.Clear();
             _trackedResources.Clear();

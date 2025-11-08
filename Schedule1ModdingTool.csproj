@@ -35,11 +35,11 @@
     <None Remove="BarsNPCs\**" />
     <Page Remove="BarsNPCs\**" />
     <Resource Remove="BarsNPCs\**" />
-    <Compile Remove="MyFirstMod\**" />
-    <EmbeddedResource Remove="MyFirstMod\**" />
-    <None Remove="MyFirstMod\**" />
-    <Page Remove="MyFirstMod\**" />
-    <Resource Remove="MyFirstMod\**" />
+    <Compile Remove="TestMod\**" />
+    <EmbeddedResource Remove="TestMod\**" />
+    <None Remove="TestMod\**" />
+    <Page Remove="TestMod\**" />
+    <Resource Remove="TestMod\**" />
     <Compile Remove="CustomNPCTest\**" />
     <EmbeddedResource Remove="CustomNPCTest\**" />
     <None Remove="CustomNPCTest\**" />
@@ -49,7 +49,13 @@
     <EmbeddedResource Remove="docs\**" />
     <None Remove="docs\**" />
     <Page Remove="docs\**" />
-    <Resource Remove="docs\**" />
+    <Resource Remove="Empire-S1API\**" />
+    <Resource Remove="Empire-S1API\**" />
+    <Compile Remove="Empire-S1API\**" />
+    <EmbeddedResource Remove="Empire-S1API\**" />
+    <None Remove="Empire-S1API\**" />
+    <Page Remove="Empire-S1API\**" />
+    <Resource Remove="Empire-S1API\**" />
   </ItemGroup>
 
   <ItemGroup>

@@ -30,6 +30,24 @@ namespace Schedule1ModdingTool.Views
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            // Check if first start wizard needs to be shown
+            var settings = Models.ModSettings.Load();
+            if (!settings.IsFirstStartComplete)
+            {
+                var firstStartWizard = new FirstStartWizardWindow
+                {
+                    Owner = this
+                };
+
+                var wizardResult = firstStartWizard.ShowDialog();
+                if (wizardResult != true)
+                {
+                    // User cancelled first start wizard - exit application
+                    Application.Current.Shutdown();
+                    return;
+                }
+            }
+
             var vm = DataContext as MainViewModel;
             if (vm != null && string.IsNullOrWhiteSpace(vm.CurrentProject.ProjectName))
             {

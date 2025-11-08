@@ -1,138 +1,138 @@
 <UserControl x:Class="Schedule1ModdingTool.Views.ResourcesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:models="clr-namespace:Schedule1ModdingTool.Models"
              xmlns:views="clr-namespace:Schedule1ModdingTool.Views"
-             mc:Ignorable="d" 
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
-    
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        
-        <!-- Resources Header -->
-        <views:WorkspaceHeader Grid.Row="0" DataContext="{Binding WorkspaceViewModel}"/>
-        
-        <!-- Resources Content -->
-        <Grid Grid.Row="1" Background="{StaticResource DarkBackgroundBrush}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12">
-                <Button Content="Upload PNG"
-                        Command="{Binding AddResourceCommand}"
-                        Style="{StaticResource IconButtonStyle}"
-                        Padding="12,6"
-                        Background="{StaticResource AccentOrangeBrush}"
-                        Foreground="White"
-                        BorderThickness="0"/>
-            </StackPanel>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
 
-            <ScrollViewer Grid.Row="1"
-                          VerticalScrollBarVisibility="Auto">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+		<!-- Resources Header -->
+		<views:WorkspaceHeader Grid.Row="0" DataContext="{Binding WorkspaceViewModel}" />
 
-                    <ItemsControl Grid.Row="0"
-                                  ItemsSource="{Binding CurrentProject.Resources}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:ResourceAsset}">
-                                <Border Style="{StaticResource CategoryTileStyle}"
-                                        Width="250" MinHeight="270">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="120"/>
-                                            <RowDefinition Height="Auto" MaxHeight="25"/>
-                                            <RowDefinition Height="Auto" MaxHeight="45"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Border Grid.Row="0"
-                                                Height="120"
-                                                Background="{StaticResource DarkBackgroundBrush}"
-                                                CornerRadius="4"
-                                                Margin="0,0,0,8">
-                                            <Image Stretch="Uniform"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center">
-                                                <Image.Source>
-                                                    <MultiBinding Converter="{StaticResource RelativeResourcePathConverter}">
-                                                        <Binding Path="RelativePath"/>
-                                                        <Binding RelativeSource="{RelativeSource AncestorType=UserControl}" Path="DataContext.CurrentProject.FilePath"/>
-                                                    </MultiBinding>
-                                                </Image.Source>
-                                            </Image>
-                                        </Border>
-                                        <TextBlock Grid.Row="1"
-                                                   Text="{Binding DisplayName}"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{StaticResource LightTextBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Margin="4,0,4,4"/>
-                                        <ScrollViewer Grid.Row="2"
-                                                      VerticalScrollBarVisibility="Disabled"
-                                                      HorizontalScrollBarVisibility="Disabled"
-                                                      MaxHeight="40">
-                                            <TextBlock Text="{Binding RelativePath}"
-                                                       FontSize="10"
-                                                       Foreground="{StaticResource DimTextBrush}"
-                                                       HorizontalAlignment="Center"
-                                                       TextAlignment="Center"
-                                                       TextWrapping="Wrap"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       Margin="4,0,4,4"/>
-                                        </ScrollViewer>
-                                        <Button Grid.Row="4"
-                                                Content="Remove"
-                                                Command="{Binding DataContext.RemoveResourceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"
-                                                Style="{StaticResource IconButtonStyle}"
-                                                Margin="0,8,0,0"
-                                                VerticalAlignment="Top"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+		<!-- Resources Content -->
+		<Grid Grid.Row="1" Background="{StaticResource DarkBackgroundBrush}">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+			</Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Visibility="{Binding CurrentProject.Resources.Count, Converter={StaticResource CountToVisibilityConverter}}">
-                        <TextBlock Text="🖼️"
-                                   FontSize="64"
-                                   HorizontalAlignment="Center"
-                                   Opacity="0.3"
-                                   Margin="0,0,0,16"/>
-                        <TextBlock Text="No resources uploaded yet"
-                                   FontSize="16"
-                                   Foreground="{StaticResource LightTextBrush}"
-                                   HorizontalAlignment="Center"/>
-                        <TextBlock Text="Click 'Upload PNG' to add images to your mod."
-                                   FontSize="12"
-                                   Foreground="{StaticResource DimTextBrush}"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,8,0,0"/>
-                    </StackPanel>
-                </Grid>
-            </ScrollViewer>
-        </Grid>
-    </Grid>
+			<StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12">
+				<Button Content="Upload PNG"
+				        Command="{Binding AddResourceCommand}"
+				        Style="{StaticResource IconButtonStyle}"
+				        Padding="12,6"
+				        Background="{StaticResource AccentOrangeBrush}"
+				        Foreground="White"
+				        BorderThickness="0" />
+			</StackPanel>
+
+			<ScrollViewer Grid.Row="1"
+			              VerticalScrollBarVisibility="Auto">
+				<Grid Margin="16">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+
+					<ItemsControl Grid.Row="0"
+					              ItemsSource="{Binding CurrentProject.Resources}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<WrapPanel Orientation="Horizontal" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate DataType="{x:Type models:ResourceAsset}">
+								<Border Style="{StaticResource CategoryTileStyle}"
+								        Width="250" MinHeight="270">
+									<Grid>
+										<Grid.RowDefinitions>
+											<RowDefinition Height="120" />
+											<RowDefinition Height="Auto" MaxHeight="25" />
+											<RowDefinition Height="Auto" MaxHeight="45" />
+											<RowDefinition Height="*" />
+											<RowDefinition Height="Auto" />
+										</Grid.RowDefinitions>
+										<Border Grid.Row="0"
+										        Height="120"
+										        Background="{StaticResource DarkBackgroundBrush}"
+										        CornerRadius="4"
+										        Margin="0,0,0,8">
+											<Image Stretch="Uniform"
+											       HorizontalAlignment="Center"
+											       VerticalAlignment="Center">
+												<Image.Source>
+													<MultiBinding Converter="{StaticResource RelativeResourcePathConverter}">
+														<Binding Path="RelativePath" />
+														<Binding RelativeSource="{RelativeSource AncestorType=UserControl}"
+														         Path="DataContext.CurrentProject.FilePath" />
+													</MultiBinding>
+												</Image.Source>
+											</Image>
+										</Border>
+										<TextBlock Grid.Row="1"
+										           Text="{Binding DisplayName}"
+										           FontWeight="SemiBold"
+										           Foreground="{StaticResource LightTextBrush}"
+										           HorizontalAlignment="Center"
+										           TextAlignment="Center"
+										           TextTrimming="CharacterEllipsis"
+										           Margin="4,0,4,4" />
+										<ScrollViewer Grid.Row="2"
+										              VerticalScrollBarVisibility="Disabled"
+										              HorizontalScrollBarVisibility="Disabled"
+										              MaxHeight="40">
+											<TextBlock Text="{Binding RelativePath}"
+											           FontSize="10"
+											           Foreground="{StaticResource DimTextBrush}"
+											           HorizontalAlignment="Center"
+											           TextAlignment="Center"
+											           TextWrapping="Wrap"
+											           TextTrimming="CharacterEllipsis"
+											           Margin="4,0,4,4" />
+										</ScrollViewer>
+										<Button Grid.Row="4"
+										        Content="Remove"
+										        Command="{Binding DataContext.RemoveResourceCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+										        CommandParameter="{Binding}"
+										        Style="{StaticResource IconButtonStyle}"
+										        Margin="0,8,0,0"
+										        VerticalAlignment="Top" />
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+
+					<StackPanel Grid.Row="0"
+					            HorizontalAlignment="Center"
+					            VerticalAlignment="Center"
+					            Visibility="{Binding CurrentProject.Resources.Count, Converter={StaticResource CountToVisibilityConverter}}">
+						<TextBlock Text="🖼️"
+						           FontSize="64"
+						           HorizontalAlignment="Center"
+						           Opacity="0.3"
+						           Margin="0,0,0,16" />
+						<TextBlock Text="No resources uploaded yet"
+						           FontSize="16"
+						           Foreground="{StaticResource LightTextBrush}"
+						           HorizontalAlignment="Center" />
+						<TextBlock Text="Click 'Upload PNG' to add images to your mod."
+						           FontSize="12"
+						           Foreground="{StaticResource DimTextBrush}"
+						           HorizontalAlignment="Center"
+						           Margin="0,8,0,0" />
+					</StackPanel>
+				</Grid>
+			</ScrollViewer>
+		</Grid>
+	</Grid>
 </UserControl>
-

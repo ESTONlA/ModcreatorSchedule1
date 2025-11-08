@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -84,11 +86,14 @@ namespace Schedule1ModdingTool.Utils
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string str)
+            bool isEmpty = value is string str && string.IsNullOrWhiteSpace(str);
+            bool inverse = parameter?.ToString()?.Equals("Inverse", StringComparison.InvariantCultureIgnoreCase) == true;
+            
+            if (inverse)
             {
-                return string.IsNullOrWhiteSpace(str) ? Visibility.Collapsed : Visibility.Visible;
+                return isEmpty ? Visibility.Visible : Visibility.Collapsed;
             }
-            return Visibility.Collapsed;
+            return isEmpty ? Visibility.Collapsed : Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -334,44 +339,83 @@ namespace Schedule1ModdingTool.Utils
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values == null || values.Length < 2)
+            {
+                Debug.WriteLine("[RelativeResourcePathConverter] Missing binding values");
                 return Binding.DoNothing;
+            }
 
             var relativePath = values[0] as string;
             var projectFile = values[1] as string;
             if (string.IsNullOrWhiteSpace(relativePath) || string.IsNullOrWhiteSpace(projectFile))
+            {
+                Debug.WriteLine($"[RelativeResourcePathConverter] Null path (relative: '{relativePath ?? "null"}', projectFile: '{projectFile ?? "null"}')");
                 return Binding.DoNothing;
+            }
 
             var projectDir = Path.GetDirectoryName(projectFile);
             if (string.IsNullOrWhiteSpace(projectDir))
+            {
+                Debug.WriteLine($"[RelativeResourcePathConverter] Could not resolve project directory for '{projectFile}'");
                 return Binding.DoNothing;
+            }
 
             var absolutePath = ResolveAbsolutePath(relativePath, projectDir);
-            if (string.IsNullOrWhiteSpace(absolutePath) || !File.Exists(absolutePath))
+            if (string.IsNullOrWhiteSpace(absolutePath))
+            {
+                Debug.WriteLine($"[RelativeResourcePathConverter] ResolveAbsolutePath returned empty for '{relativePath}'");
                 return Binding.DoNothing;
+            }
+
+            if (!File.Exists(absolutePath))
+            {
+                Debug.WriteLine($"[RelativeResourcePathConverter] File not found at '{absolutePath}'");
+                return Binding.DoNothing;
+            }
+
+            try
+            {
+                var fileInfo = new FileInfo(absolutePath);
+                Debug.WriteLine($"[RelativeResourcePathConverter] Preparing to load '{absolutePath}' ({fileInfo.Length} bytes)");
+            }
+            catch (Exception sizeEx)
+            {
+                Debug.WriteLine($"[RelativeResourcePathConverter] Failed to inspect '{absolutePath}': {sizeEx.Message}");
+            }
 
             try
             {
                 var imageData = ReadAllBytesShared(absolutePath);
                 if (imageData == null)
-                    return Binding.DoNothing;
-
-                using var memoryStream = new MemoryStream(imageData);
-                var image = new BitmapImage();
-                image.BeginInit();
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                image.StreamSource = memoryStream;
-                image.EndInit();
-
-                if (image.CanFreeze)
                 {
-                    image.Freeze();
+                    Debug.WriteLine($"[RelativeResourcePathConverter] ReadAllBytesShared returned null for '{absolutePath}'");
+                    return Binding.DoNothing;
                 }
 
-                return image;
+                using var memoryStream = new MemoryStream(imageData);
+                memoryStream.Position = 0;
+                var decoder = BitmapDecoder.Create(
+                    memoryStream,
+                    BitmapCreateOptions.IgnoreColorProfile | BitmapCreateOptions.IgnoreImageCache,
+                    BitmapCacheOption.OnLoad);
+
+                var frame = decoder.Frames.FirstOrDefault();
+                if (frame == null)
+                {
+                    Debug.WriteLine($"[RelativeResourcePathConverter] Decoder produced no frames for '{absolutePath}'");
+                    return Binding.DoNothing;
+                }
+
+                if (frame.CanFreeze)
+                {
+                    frame.Freeze();
+                }
+
+                Debug.WriteLine($"[RelativeResourcePathConverter] Loaded '{absolutePath}' ({frame.PixelWidth}x{frame.PixelHeight})");
+                return frame;
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[RelativeResourcePathConverter] Failed to load '{absolutePath}': {ex}");
                 return Binding.DoNothing;
             }
         }
@@ -382,8 +426,9 @@ namespace Schedule1ModdingTool.Utils
             {
                 return ResourcePathHelper.GetAbsolutePath(relativePath, projectDir);
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[RelativeResourcePathConverter] ResolveAbsolutePath fallback for '{relativePath}': {ex.Message}");
                 if (Path.IsPathRooted(relativePath))
                 {
                     return relativePath;
@@ -405,8 +450,9 @@ namespace Schedule1ModdingTool.Utils
                 fileStream.CopyTo(memoryStream);
                 return memoryStream.ToArray();
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[RelativeResourcePathConverter] ReadAllBytesShared failed for '{path}': {ex}");
                 return null;
             }
         }
@@ -436,6 +482,67 @@ namespace Schedule1ModdingTool.Utils
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for enum to boolean (for radio buttons)
+    /// </summary>
+    public class EnumToBooleanConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null || parameter == null)
+                return false;
+
+            string checkValue = value.ToString() ?? "";
+            string targetValue = parameter.ToString() ?? "";
+            return checkValue.Equals(targetValue, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null || parameter == null)
+                return Binding.DoNothing;
+
+            if ((bool)value)
+            {
+                try
+                {
+                    return Enum.Parse(targetType, parameter.ToString() ?? "");
+                }
+                catch
+                {
+                    return Binding.DoNothing;
+                }
+            }
+            return Binding.DoNothing;
+        }
+    }
+
+    /// <summary>
+    /// Converter for ExperienceLevel enum to display string
+    /// </summary>
+    public class ExperienceLevelToStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is Models.ExperienceLevel level)
+            {
+                return level switch
+                {
+                    Models.ExperienceLevel.NoCodingExperience => "No coding experience",
+                    Models.ExperienceLevel.SomeCoding => "Some coding experience",
+                    Models.ExperienceLevel.ExperiencedCoder => "Experienced coder",
+                    _ => level.ToString()
+                };
+            }
+            return "";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }

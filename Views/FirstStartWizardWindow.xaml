@@ -1,0 +1,278 @@
+<Window x:Class="Schedule1ModdingTool.Views.FirstStartWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:utils="clr-namespace:Schedule1ModdingTool.Utils"
+        Title="Welcome to Schedule 1 Modding Tool" Height="625" Width="600"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{StaticResource DarkBackgroundBrush}"
+        Foreground="{StaticResource LightTextBrush}">
+	<Window.Resources>
+		<utils:WizardStepTemplateSelector x:Key="WizardStepSelector">
+			<utils:WizardStepTemplateSelector.Step1Template>
+				<DataTemplate>
+					<StackPanel Orientation="Vertical"
+					            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ContentControl}}">
+						<TextBlock Text="Welcome to Schedule 1 Modding Tool!" 
+						           FontSize="16" 
+						           FontWeight="SemiBold" 
+						           Margin="0,0,0,15" />
+						<TextBlock Text="This wizard will help you set up the tool for the first time." 
+						           Margin="0,0,0,20"
+						           TextWrapping="Wrap" />
+						<GroupBox Header="Author Name">
+							<StackPanel Margin="5">
+								<TextBox Text="{Binding AuthorName, UpdateSourceTrigger=PropertyChanged}"
+								         Margin="0,0,0,5" />
+								<TextBlock Text="Example: Bars"
+								           Foreground="{StaticResource DimTextBrush}"
+								           Margin="0,0,0,8" />
+								<TextBlock Text="We'll stamp this name on generated mods so players can see who created them."
+								           Foreground="{StaticResource DimTextBrush}"
+								           TextWrapping="Wrap" />
+							</StackPanel>
+						</GroupBox>
+					</StackPanel>
+				</DataTemplate>
+			</utils:WizardStepTemplateSelector.Step1Template>
+				<utils:WizardStepTemplateSelector.Step2Template>
+					<DataTemplate>
+						<StackPanel Orientation="Vertical"
+						            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ContentControl}}">
+								<TextBlock Text="Paths &amp; Installation" 
+							           FontSize="16" 
+							           FontWeight="SemiBold" 
+							           Margin="0,0,0,15" />
+							<TextBlock Text="Select where your mod projects will be stored and where the game is installed." 
+							           Margin="0,0,0,20"
+							           TextWrapping="Wrap" />
+							<GroupBox Header="Workspace Folder">
+								<StackPanel Margin="10">
+									<Grid>
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="*" />
+											<ColumnDefinition Width="Auto" />
+										</Grid.ColumnDefinitions>
+										<TextBox Grid.Column="0" 
+										         Text="{Binding WorkspacePath, UpdateSourceTrigger=PropertyChanged}" 
+										         Margin="0,0,5,0" />
+										<Button Grid.Column="1" 
+										        Content="Browse..." 
+										        Command="{Binding BrowsePathCommand}" 
+										        Padding="10,0" />
+									</Grid>
+									<TextBlock Text="Please select a valid folder to continue." 
+									           Foreground="{StaticResource DimTextBrush}"
+									           Margin="0,10,0,0"
+									           Visibility="{Binding WorkspacePath, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Inverse}" />
+								</StackPanel>
+							</GroupBox>
+							<GroupBox Header="Game Installation" Margin="0,10,0,0">
+								<StackPanel Margin="5">
+									<TextBlock Text="Game Install Path:" Margin="0,0,0,5" />
+									<Grid>
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="*" />
+											<ColumnDefinition Width="Auto" />
+										</Grid.ColumnDefinitions>
+										<TextBox Grid.Column="0" 
+										         Text="{Binding GameInstallPath, UpdateSourceTrigger=PropertyChanged}" 
+										         Margin="0,0,5,0" />
+										<Button Grid.Column="1" 
+										        Content="Browse..." 
+										        Command="{Binding BrowseGamePathCommand}" 
+										        Padding="10,0" />
+									</Grid>
+									<TextBlock Text="Please select a valid folder to continue." 
+									           Foreground="{StaticResource DimTextBrush}"
+									           Margin="0,10,0,0"
+									           Visibility="{Binding GameInstallPath, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Inverse}" />
+									<TextBlock Text="Built mods will automatically be copied to the game's Mods folder."
+									           Foreground="{StaticResource DimTextBrush}"
+									           Margin="0,10,0,0"
+									           TextWrapping="Wrap" />
+								</StackPanel>
+							</GroupBox>
+						</StackPanel>
+					</DataTemplate>
+				</utils:WizardStepTemplateSelector.Step2Template>
+			<utils:WizardStepTemplateSelector.Step3Template>
+				<DataTemplate>
+					<StackPanel Orientation="Vertical"
+					            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ContentControl}}">
+						<TextBlock Text="Experience Level" 
+						           FontSize="16" 
+						           FontWeight="SemiBold" 
+						           Margin="0,0,0,15" />
+						<TextBlock Text="Tell us about your coding and modding experience. This helps us customize the interface for you." 
+						           Margin="0,0,0,20"
+						           TextWrapping="Wrap" />
+						<GroupBox Header="Select Your Experience Level">
+							<StackPanel Margin="10">
+								<RadioButton Content="No coding experience" 
+								             IsChecked="{Binding SelectedExperienceLevel, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=NoCodingExperience}"
+								             Margin="0,5"
+								             GroupName="ExperienceLevel" />
+								<TextBlock Text="I'm new to coding and modding. Hide technical details by default." 
+								           Margin="25,0,0,10"
+								           Foreground="{StaticResource DimTextBrush}"
+								           FontSize="12" />
+								
+								<RadioButton Content="Some coding experience" 
+								             IsChecked="{Binding SelectedExperienceLevel, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=SomeCoding}"
+								             Margin="0,5"
+								             GroupName="ExperienceLevel" />
+								<TextBlock Text="I have some coding experience. Show code view by default." 
+								           Margin="25,0,0,10"
+								           Foreground="{StaticResource DimTextBrush}"
+								           FontSize="12" />
+								
+								<RadioButton Content="Experienced coder" 
+								             IsChecked="{Binding SelectedExperienceLevel, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=ExperiencedCoder}"
+								             Margin="0,5"
+								             GroupName="ExperienceLevel" />
+								<TextBlock Text="I'm experienced with coding and modding. Show all technical details." 
+								           Margin="25,0,0,10"
+								           Foreground="{StaticResource DimTextBrush}"
+								           FontSize="12" />
+							</StackPanel>
+						</GroupBox>
+						<TextBlock Text="{Binding ExperienceLevelDescription}" 
+						           Margin="0,15,0,0"
+						           Foreground="{StaticResource AccentOrangeBrush}"
+						           FontWeight="SemiBold"
+						           TextWrapping="Wrap" />
+					</StackPanel>
+				</DataTemplate>
+			</utils:WizardStepTemplateSelector.Step3Template>
+			<utils:WizardStepTemplateSelector.Step4Template>
+				<DataTemplate>
+					<StackPanel Orientation="Vertical"
+					            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ContentControl}}">
+						<TextBlock Text="Summary" 
+						           FontSize="16" 
+						           FontWeight="SemiBold" 
+						           Margin="0,0,0,15" />
+						<TextBlock Text="Review your settings before finishing:" 
+						           Margin="0,0,0,20"
+						           TextWrapping="Wrap" />
+						<GroupBox Header="Your Settings">
+							<StackPanel Margin="10">
+								<Grid Margin="0,0,0,10">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<TextBlock Grid.Column="0" Text="Workspace:" FontWeight="SemiBold" Margin="0,0,10,0" MinWidth="120" />
+									<TextBlock Grid.Column="1" Text="{Binding WorkspacePath}" TextWrapping="Wrap" />
+								</Grid>
+								<Grid Margin="0,0,0,10">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<TextBlock Grid.Column="0" Text="Author:" FontWeight="SemiBold" Margin="0,0,10,0" MinWidth="120" />
+									<TextBlock Grid.Column="1" Text="{Binding AuthorName}" TextWrapping="Wrap" />
+								</Grid>
+								<Grid Margin="0,0,0,10">
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<TextBlock Grid.Column="0" Text="Experience Level:" FontWeight="SemiBold" Margin="0,0,10,0" MinWidth="120" />
+									<TextBlock Grid.Column="1">
+										<TextBlock.Text>
+											<Binding Path="SelectedExperienceLevel">
+												<Binding.Converter>
+													<utils:ExperienceLevelToStringConverter />
+												</Binding.Converter>
+											</Binding>
+										</TextBlock.Text>
+									</TextBlock>
+								</Grid>
+								<Grid>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="Auto" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<TextBlock Grid.Column="0" Text="Game Path:" FontWeight="SemiBold" Margin="0,0,10,0" MinWidth="120" />
+									<TextBlock Grid.Column="1" Text="{Binding GameInstallPath}" TextWrapping="Wrap" />
+								</Grid>
+							</StackPanel>
+						</GroupBox>
+						<TextBlock Text="You can change these settings later in the Settings menu." 
+						           Margin="0,15,0,0"
+						           Foreground="{StaticResource DimTextBrush}"
+						           TextWrapping="Wrap" />
+					</StackPanel>
+				</DataTemplate>
+			</utils:WizardStepTemplateSelector.Step4Template>
+		</utils:WizardStepTemplateSelector>
+	</Window.Resources>
+	<Border Margin="20"
+	        Background="{StaticResource DarkPanelBrush}"
+	        BorderBrush="{StaticResource DarkBorderBrush}"
+	        BorderThickness="1"
+	        CornerRadius="6"
+	        Padding="20">
+		<Grid>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
+				<RowDefinition Height="*" />
+				<RowDefinition Height="Auto" />
+			</Grid.RowDefinitions>
+
+			<!-- Title -->
+			<TextBlock Grid.Row="0" Text="{Binding StepTitle}" FontSize="18" FontWeight="Bold" Margin="0,0,0,10" />
+
+			<!-- Progress Bar -->
+			<Grid Grid.Row="1" Margin="0,0,0,20">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="Auto" />
+				</Grid.RowDefinitions>
+				<ProgressBar Grid.Row="0"
+				             Value="{Binding ProgressPercentage, Mode=OneWay}"
+				             Maximum="100"
+				             Height="6" />
+				<TextBlock Grid.Row="1"
+				           Text="{Binding StepProgressText}" 
+				           HorizontalAlignment="Right" 
+				           Margin="0,4,5,0"
+				           FontSize="11"
+				           Foreground="{StaticResource DimTextBrush}" />
+			</Grid>
+
+			<!-- Step Content -->
+			<ContentControl Grid.Row="2" 
+			                Content="{Binding CurrentStep}"
+			                ContentTemplateSelector="{StaticResource WizardStepSelector}"
+			                DataContext="{Binding}" />
+
+			<!-- Navigation Buttons -->
+			<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+				<Button Content="Back" 
+				        Command="{Binding BackCommand}" 
+				        Padding="20,5" 
+				        Margin="0,0,10,0" 
+				        MinWidth="100"
+				        Visibility="{Binding CanGoBack, Converter={StaticResource BooleanToVisibilityConverter}}" />
+				<Button Content="Next" 
+				        Command="{Binding NextCommand}" 
+				        Padding="20,5" 
+				        Margin="0,0,10,0" 
+				        MinWidth="100"
+				        IsDefault="True"
+				        Visibility="{Binding IsLastStep, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+				<Button Content="Finish" 
+				        Command="{Binding FinishCommand}" 
+				        Padding="20,5" 
+				        MinWidth="100"
+				        IsDefault="True"
+				        Visibility="{Binding IsLastStep, Converter={StaticResource BooleanToVisibilityConverter}}" />
+			</StackPanel>
+		</Grid>
+	</Border>
+</Window>
+

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 
@@ -16,6 +17,8 @@ namespace Schedule1ModdingTool.Models
         private float _locationX = 0f;
         private float _locationY = 0f;
         private float _locationZ = 0f;
+        private ObservableCollection<QuestObjectiveTrigger> _startTriggers = new ObservableCollection<QuestObjectiveTrigger>();
+        private ObservableCollection<QuestObjectiveTrigger> _finishTriggers = new ObservableCollection<QuestObjectiveTrigger>();
 
         [Required(ErrorMessage = "Objective name is required")]
         [JsonProperty("name")]
@@ -72,6 +75,26 @@ namespace Schedule1ModdingTool.Models
         [JsonIgnore]
         public string LocationText => HasLocation ? $"({LocationX:F2}, {LocationY:F2}, {LocationZ:F2})" : "No Location";
 
+        /// <summary>
+        /// Triggers that start this objective
+        /// </summary>
+        [JsonProperty("startTriggers")]
+        public ObservableCollection<QuestObjectiveTrigger> StartTriggers
+        {
+            get => _startTriggers;
+            set => SetProperty(ref _startTriggers, value);
+        }
+
+        /// <summary>
+        /// Triggers that finish this objective
+        /// </summary>
+        [JsonProperty("finishTriggers")]
+        public ObservableCollection<QuestObjectiveTrigger> FinishTriggers
+        {
+            get => _finishTriggers;
+            set => SetProperty(ref _finishTriggers, value);
+        }
+
         public QuestObjective()
         {
         }
@@ -98,6 +121,18 @@ namespace Schedule1ModdingTool.Models
             LocationX = source.LocationX;
             LocationY = source.LocationY;
             LocationZ = source.LocationZ;
+
+            StartTriggers.Clear();
+            foreach (var trigger in source.StartTriggers)
+            {
+                StartTriggers.Add(trigger.DeepCopy());
+            }
+
+            FinishTriggers.Clear();
+            foreach (var trigger in source.FinishTriggers)
+            {
+                FinishTriggers.Add(trigger.DeepCopy());
+            }
         }
 
         public QuestObjective DeepCopy()

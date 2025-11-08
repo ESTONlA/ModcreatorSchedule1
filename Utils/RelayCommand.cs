@@ -26,23 +26,22 @@ namespace Schedule1ModdingTool.Utils
         public bool CanExecute(object? parameter)
         {
             var result = _canExecute?.Invoke() ?? true;
-            // Log CanExecute for debugging (can be filtered in debugger if needed)
-            System.Diagnostics.Debug.WriteLine($"[RelayCommand] CanExecute called for method: {_execute?.Method?.Name ?? "unknown"}, result: {result}");
             return result;
         }
 
         public void Execute(object? parameter)
         {
-            System.Diagnostics.Debug.WriteLine($"[RelayCommand] Execute called for method: {_execute?.Method?.Name ?? "unknown"}");
             try
             {
+                System.Diagnostics.Debug.WriteLine($"[RelayCommand] Execute called for action: {_execute.Method.Name}");
                 _execute();
+                System.Diagnostics.Debug.WriteLine($"[RelayCommand] Execute completed for action: {_execute.Method.Name}");
             }
             catch (Exception ex)
             {
-                // Log exception - in WPF apps, unhandled exceptions in commands are often silently swallowed
-                System.Diagnostics.Debug.WriteLine($"[RelayCommand] Exception in Execute: {ex.Message}\n{ex.StackTrace}");
-                throw; // Re-throw to allow proper error handling in the command handler
+                System.Diagnostics.Debug.WriteLine($"[RelayCommand] Exception in Execute for {_execute.Method.Name}: {ex.GetType().Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[RelayCommand] Stack trace: {ex.StackTrace}");
+                throw;
             }
         }
     }

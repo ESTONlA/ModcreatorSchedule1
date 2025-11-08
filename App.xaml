@@ -27,6 +27,8 @@
             <utils:CountToVisibilityInverseConverter x:Key="CountToVisibilityInverseConverter"/>
             <utils:BooleanToTabForegroundConverter x:Key="BooleanToTabForegroundConverter"/>
             <utils:BooleanToGridLengthConverter x:Key="BooleanToGridLengthConverter"/>
+            <utils:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
+            <utils:ExperienceLevelToStringConverter x:Key="ExperienceLevelToStringConverter"/>
             <utils:ColorHexToBrushConverter x:Key="ColorHexToBrushConverter"/>
             <utils:RelativeResourcePathConverter x:Key="RelativeResourcePathConverter"/>
             <utils:BreadcrumbSeparatorVisibilityConverter x:Key="BreadcrumbSeparatorVisibilityConverter"/>

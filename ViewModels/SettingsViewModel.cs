@@ -20,10 +20,12 @@ namespace Schedule1ModdingTool.ViewModels
         private ICommand? _saveCommand;
         private ICommand? _cancelCommand;
         private ICommand? _browseGamePathCommand;
+        private ICommand? _browseWorkspacePathCommand;
 
         public ICommand SaveCommand => _saveCommand!;
         public ICommand CancelCommand => _cancelCommand!;
         public ICommand BrowseGamePathCommand => _browseGamePathCommand!;
+        public ICommand BrowseWorkspacePathCommand => _browseWorkspacePathCommand!;
 
         public SettingsViewModel()
         {
@@ -36,6 +38,7 @@ namespace Schedule1ModdingTool.ViewModels
             _saveCommand = new RelayCommand(SaveSettings);
             _cancelCommand = new RelayCommand(Cancel);
             _browseGamePathCommand = new RelayCommand(BrowseGamePath);
+            _browseWorkspacePathCommand = new RelayCommand(BrowseWorkspacePath);
         }
 
         private void SaveSettings()
@@ -63,6 +66,20 @@ namespace Schedule1ModdingTool.ViewModels
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 Settings.GameInstallPath = dialog.SelectedPath;
+            }
+        }
+
+        private void BrowseWorkspacePath()
+        {
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Select default workspace folder for mod projects",
+                ShowNewFolderButton = true
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                Settings.WorkspacePath = dialog.SelectedPath;
             }
         }
 

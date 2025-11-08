@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -283,6 +284,9 @@ namespace Schedule1ModdingTool.ViewModels
             _modProjectGenerator = new ModProjectGeneratorService();
             _modBuildService = new ModBuildService();
             _modSettings = ModSettings.Load();
+
+            // Set code visibility based on user experience level
+            _isCodeVisible = _modSettings.ExperienceLevel != ExperienceLevel.NoCodingExperience;
 
             // Initialize WorkspaceViewModel BEFORE setting CurrentProject
             _workspaceViewModel = new WorkspaceViewModel
@@ -1034,15 +1038,22 @@ namespace Schedule1ModdingTool.ViewModels
             try
             {
                 if (CurrentProject == null || CurrentProject.Resources.Count == 0)
+                {
+                    Debug.WriteLine("[NormalizeProjectResources] No project/resources to normalize");
                     return;
+                }
 
                 if (!TryGetProjectDirectory(out var projectDir))
+                {
+                    Debug.WriteLine("[NormalizeProjectResources] Unable to resolve project directory");
                     return;
+                }
 
                 var resourcesDir = Path.Combine(projectDir, "Resources");
                 Directory.CreateDirectory(resourcesDir);
                 var resourcesDirFull = NormalizeDirectoryPath(resourcesDir);
 
+                Debug.WriteLine($"[NormalizeProjectResources] Normalizing {CurrentProject.Resources.Count} resource(s) into '{resourcesDirFull}'");
                 foreach (var asset in CurrentProject.Resources.ToList())
                 {
                     EnsureResourceAssetLocal(asset, projectDir, resourcesDir, resourcesDirFull);
@@ -1050,18 +1061,24 @@ namespace Schedule1ModdingTool.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[NormalizeProjectResources] {ex.Message}\n{ex.StackTrace}");
+                Debug.WriteLine($"[NormalizeProjectResources] {ex.Message}\n{ex.StackTrace}");
             }
         }
 
         private void EnsureResourceAssetLocal(ResourceAsset asset, string projectDir, string resourcesDir, string resourcesDirFull)
         {
             if (asset == null)
+            {
+                Debug.WriteLine("[EnsureResourceAssetLocal] Asset was null");
                 return;
+            }
 
             var relativePath = asset.RelativePath;
             if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                Debug.WriteLine("[EnsureResourceAssetLocal] Asset relative path was null/empty");
                 return;
+            }
 
             string absolutePath;
             try
@@ -1080,9 +1097,11 @@ namespace Schedule1ModdingTool.ViewModels
 
             if (!File.Exists(absolutePath))
             {
+                Debug.WriteLine($"[EnsureResourceAssetLocal] File missing for '{relativePath}' (expected '{absolutePath}')");
                 return;
             }
 
+            Debug.WriteLine($"[EnsureResourceAssetLocal] Found '{absolutePath}' for '{relativePath}'");
             var absoluteFull = NormalizeDirectoryPath(absolutePath);
             if (!absoluteFull.StartsWith(resourcesDirFull, StringComparison.OrdinalIgnoreCase))
             {
@@ -1095,10 +1114,11 @@ namespace Schedule1ModdingTool.ViewModels
                 var safeName = AppUtils.MakeSafeFilename(Path.GetFileNameWithoutExtension(absolutePath));
                 var destinationName = GenerateUniqueResourceName(resourcesDir, $"{safeName}{extension}");
                 var destinationPath = Path.Combine(resourcesDir, destinationName);
+                Debug.WriteLine($"[EnsureResourceAssetLocal] Copying '{absoluteFull}' into project resources '{destinationPath}'");
 
                 if (!TryCopyResourceFile(absolutePath, destinationPath, out var error))
                 {
-                    System.Diagnostics.Debug.WriteLine($"[NormalizeProjectResources] Failed to copy {absolutePath}: {error}");
+                    Debug.WriteLine($"[EnsureResourceAssetLocal] Failed to copy {absolutePath}: {error}");
                     return;
                 }
 
@@ -1122,26 +1142,110 @@ namespace Schedule1ModdingTool.ViewModels
         private static bool TryCopyResourceFile(string source, string destination, out string error)
         {
             error = string.Empty;
-            try
+
+            // Retry copy to mitigate transient file locks from antivirus/indexers or image decoders
+            const int maxRetries = 5;
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                using var sourceStream = new FileStream(
-                    source,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    FileShare.ReadWrite | FileShare.Delete);
-                using var destinationStream = new FileStream(
-                    destination,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    FileShare.Read);
-                sourceStream.CopyTo(destinationStream);
-                return true;
+                try
+                {
+                    Debug.WriteLine($"[TryCopyResourceFile] Attempt {attempt}/{maxRetries}: '{source}' -> '{destination}'");
+                    var destDir = Path.GetDirectoryName(destination);
+                    if (!string.IsNullOrEmpty(destDir))
+                    {
+                        Directory.CreateDirectory(destDir);
+                    }
+
+                    if (File.Exists(destination))
+                    {
+                        try
+                        {
+                            File.Delete(destination);
+                        }
+                        catch (IOException ioEx)
+                        {
+                            Debug.WriteLine($"[TryCopyResourceFile] Destination delete failed: {ioEx.Message}");
+                            // Destination locked; wait and retry delete on next attempt
+                        }
+                    }
+
+                    // Use FileStream with FileShare.ReadWrite to allow reading even if file is open elsewhere
+                    // This allows copying files that might be open in Explorer preview or image viewers
+                    using (var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                    using (var destStream = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        sourceStream.CopyTo(destStream);
+                    }
+                    Debug.WriteLine($"[TryCopyResourceFile] Copy succeeded: '{destination}'");
+                    return true;
+                }
+                catch (IOException ioEx)
+                {
+                    error = ioEx.Message;
+                    Debug.WriteLine($"[TryCopyResourceFile] IO exception ({attempt}/{maxRetries}): {ioEx.Message}");
+                    if (attempt == maxRetries)
+                        break;
+
+                    // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+                    System.Threading.Thread.Sleep(100 * (int)Math.Pow(2, attempt - 1));
+                    continue;
+                }
+                catch (UnauthorizedAccessException unauthEx)
+                {
+                    error = unauthEx.Message;
+                    Debug.WriteLine($"[TryCopyResourceFile] Unauthorized ({attempt}/{maxRetries}): {unauthEx.Message}");
+                    if (attempt == maxRetries)
+                        break;
+                    System.Threading.Thread.Sleep(100 * (int)Math.Pow(2, attempt - 1));
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    Debug.WriteLine($"[TryCopyResourceFile] Fatal error: {ex.Message}");
+                    return false;
+                }
             }
-            catch (Exception ex)
+
+            Debug.WriteLine($"[TryCopyResourceFile] Failed after {maxRetries} attempts: '{source}' -> '{destination}' ({error})");
+            return false;
+        }
+
+        private static bool TryDeleteFileWithRetry(string absolutePath, out string error)
+        {
+            error = string.Empty;
+            const int maxRetries = 5;
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                error = ex.Message;
-                return false;
+                try
+                {
+                    if (File.Exists(absolutePath))
+                    {
+                        File.Delete(absolutePath);
+                    }
+                    return true;
+                }
+                catch (IOException ioEx)
+                {
+                    error = ioEx.Message;
+                    if (attempt == maxRetries)
+                        break;
+                    System.Threading.Thread.Sleep(100 * (int)Math.Pow(2, attempt - 1));
+                }
+                catch (UnauthorizedAccessException unauthEx)
+                {
+                    error = unauthEx.Message;
+                    if (attempt == maxRetries)
+                        break;
+                    System.Threading.Thread.Sleep(100 * (int)Math.Pow(2, attempt - 1));
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    return false;
+                }
             }
+            return false;
         }
 
         private void RemoveResource(ResourceAsset? resource)
@@ -1161,7 +1265,10 @@ namespace Schedule1ModdingTool.ViewModels
             {
                 if (File.Exists(absolutePath))
                 {
-                    File.Delete(absolutePath);
+                    if (!TryDeleteFileWithRetry(absolutePath, out var delError))
+                    {
+                        AppUtils.ShowWarning($"Failed to delete file '{absolutePath}': {delError}");
+                    }
                 }
             }
             catch (Exception ex)
@@ -1174,6 +1281,41 @@ namespace Schedule1ModdingTool.ViewModels
             {
                 SelectedResource = null;
             }
+        }
+
+        /// <summary>
+        /// Validates all resources in the current project and returns a list of missing resources.
+        /// </summary>
+        /// <returns>List of missing resource display names and paths, or empty list if all valid</returns>
+        private List<string> ValidateProjectResources()
+        {
+            var missingResources = new List<string>();
+
+            if (CurrentProject == null || CurrentProject.Resources.Count == 0)
+                return missingResources;
+
+            if (!TryGetProjectDirectory(out var projectDir))
+            {
+                missingResources.Add("Unable to determine project directory");
+                return missingResources;
+            }
+
+            foreach (var asset in CurrentProject.Resources)
+            {
+                if (string.IsNullOrWhiteSpace(asset.RelativePath))
+                {
+                    missingResources.Add($"{asset.DisplayName}: No path specified");
+                    continue;
+                }
+
+                if (!ResourcePathHelper.ResourceExists(asset.RelativePath, projectDir))
+                {
+                    var expectedPath = Path.Combine(projectDir, asset.RelativePath.Replace('/', Path.DirectorySeparatorChar));
+                    missingResources.Add($"{asset.DisplayName} ({asset.RelativePath})\n  Expected at: {expectedPath}");
+                }
+            }
+
+            return missingResources;
         }
 
         private void EditQuest()
@@ -1290,6 +1432,21 @@ namespace Schedule1ModdingTool.ViewModels
                 return;
             }
 
+            // Validate resources before export
+            var missingResources = ValidateProjectResources();
+            if (missingResources.Count > 0)
+            {
+                var message = $"Warning: {missingResources.Count} resource file(s) are missing:\n\n" +
+                             string.Join("\n\n", missingResources) +
+                             "\n\nThese resources will be excluded from the exported mod. Do you want to continue?";
+
+                var result = MessageBox.Show(message, "Missing Resources", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (result != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+            }
+
             try
             {
                 ProcessState = "Exporting...";
@@ -1309,9 +1466,18 @@ namespace Schedule1ModdingTool.ViewModels
                 if (result.Success)
                 {
                     var message = $"Mod project exported successfully to:\n{result.OutputPath}\n\nGenerated {result.GeneratedFiles.Count} files.";
-                    if (result.Errors.Count > 0)
+
+                    var hasIssues = result.Errors.Count > 0 || result.Warnings.Count > 0;
+                    if (hasIssues)
                     {
-                        message += $"\n\nWarnings ({result.Errors.Count}):\n{string.Join("\n", result.Errors)}";
+                        if (result.Errors.Count > 0)
+                        {
+                            message += $"\n\nErrors ({result.Errors.Count}):\n{string.Join("\n", result.Errors)}";
+                        }
+                        if (result.Warnings.Count > 0)
+                        {
+                            message += $"\n\nWarnings ({result.Warnings.Count}):\n{string.Join("\n", result.Warnings)}";
+                        }
                         AppUtils.ShowWarning(message);
                     }
                     else
@@ -1325,6 +1491,10 @@ namespace Schedule1ModdingTool.ViewModels
                     if (result.Errors.Count > 0)
                     {
                         errorMessage += $"\n\nAdditional errors:\n{string.Join("\n", result.Errors)}";
+                    }
+                    if (result.Warnings.Count > 0)
+                    {
+                        errorMessage += $"\n\nWarnings:\n{string.Join("\n", result.Warnings)}";
                     }
                     AppUtils.ShowError($"Failed to export mod project:\n{errorMessage}");
                 }

@@ -16,6 +16,7 @@ namespace Schedule1ModdingTool.ViewModels
         private string _modAuthor = "";
         private string _modVersion = "1.0.0";
         private string _modNamespace = "";
+        private readonly ModSettings _settings;
 
         public string ModName
         {
@@ -53,7 +54,17 @@ namespace Schedule1ModdingTool.ViewModels
         public string ModAuthor
         {
             get => _modAuthor;
-            set => SetProperty(ref _modAuthor, value);
+            set
+            {
+                if (SetProperty(ref _modAuthor, value))
+                {
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        _settings.DefaultModAuthor = value;
+                        _settings.Save();
+                    }
+                }
+            }
         }
 
         public string ModVersion
@@ -91,10 +102,11 @@ namespace Schedule1ModdingTool.ViewModels
         public NewProjectWizardViewModel()
         {
             // Load defaults from settings
-            var settings = ModSettings.Load();
-            _modAuthor = settings.DefaultModAuthor;
-            _modVersion = settings.DefaultModVersion;
-            _modNamespace = settings.DefaultModNamespace;
+            _settings = ModSettings.Load();
+            _modAuthor = _settings.DefaultModAuthor;
+            _modVersion = _settings.DefaultModVersion;
+            _modNamespace = _settings.DefaultModNamespace;
+            _projectPath = _settings.WorkspacePath; // Use saved workspace path as default
 
             InitializeCommands();
         }

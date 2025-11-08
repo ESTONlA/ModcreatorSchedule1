@@ -1,0 +1,38 @@
+<UserControl x:Class="Schedule1ModdingTool.Views.TriggerSelector"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:utils="clr-namespace:Schedule1ModdingTool.Utils"
+             mc:Ignorable="d"
+             d:DesignHeight="60" d:DesignWidth="400">
+    <UserControl.Resources>
+        <utils:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
+    <StackPanel>
+        <ComboBox x:Name="TriggerComboBox"
+                  SelectedItem="{Binding SelectedTriggerMetadata, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                  FontSize="10"
+                  Margin="0,0,0,4">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding TargetAction}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding Description}" 
+                                   Foreground="{StaticResource MediumTextBrush}"
+                                   FontSize="9"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <TextBlock x:Name="DescriptionTextBlock"
+                   Text="{Binding SelectedTriggerMetadata.Description, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                   Foreground="{StaticResource MediumTextBrush}"
+                   FontSize="9"
+                   TextWrapping="Wrap"
+                   Margin="4,0,0,0"
+                   Visibility="{Binding SelectedTriggerMetadata, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NullToVisibilityConverter}}" />
+    </StackPanel>
+</UserControl>
+

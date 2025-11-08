@@ -368,8 +368,9 @@ FodyWeavers.xsd
 
 AGENTS.md
 docs/
-BarsNPCs/
-CustomNPCTest/
-S1NotesApp/
 S1API/
-MyFirstMod/
+CustomNPCTest/
+BarsNPCs/
+S1NotesApp/
+TestMod/
+Empire-S1API/

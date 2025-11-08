@@ -2,7 +2,9 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Schedule1ModdingTool.Models
 {
@@ -29,6 +31,8 @@ namespace Schedule1ModdingTool.Models
         private string _gameName = "Schedule I";
         private QuestStartCondition _startCondition = new QuestStartCondition();
         private string _folderId = QuestProject.RootFolderId;
+        private ObservableCollection<QuestTrigger> _questTriggers = new ObservableCollection<QuestTrigger>();
+        private ObservableCollection<QuestFinishTrigger> _questFinishTriggers = new ObservableCollection<QuestFinishTrigger>();
 
         [Required(ErrorMessage = "Class name is required")]
         [JsonProperty("className")]
@@ -166,6 +170,26 @@ namespace Schedule1ModdingTool.Models
             set => SetProperty(ref _folderId, string.IsNullOrWhiteSpace(value) ? QuestProject.RootFolderId : value);
         }
 
+        /// <summary>
+        /// Collection of triggers that can start this quest
+        /// </summary>
+        [JsonProperty("questTriggers")]
+        public ObservableCollection<QuestTrigger> QuestTriggers
+        {
+            get => _questTriggers;
+            set => SetProperty(ref _questTriggers, value);
+        }
+
+        /// <summary>
+        /// Collection of triggers that can finish this quest
+        /// </summary>
+        [JsonProperty("questFinishTriggers")]
+        public ObservableCollection<QuestFinishTrigger> QuestFinishTriggers
+        {
+            get => _questFinishTriggers;
+            set => SetProperty(ref _questFinishTriggers, value);
+        }
+
         [JsonIgnore]
         public string DisplayName => string.IsNullOrEmpty(QuestTitle) ? ClassName : QuestTitle;
 
@@ -185,6 +209,41 @@ namespace Schedule1ModdingTool.Models
             {
                 // Advanced blueprints have more default objectives
                 Objectives.Add(new QuestObjective("objective_2", "Advanced objective"));
+            }
+        }
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext context)
+        {
+            // When deserializing from JSON, the constructor adds default objectives,
+            // then JSON deserializer adds objectives from the file.
+            // We need to remove the constructor's defaults if objectives were loaded from JSON.
+            
+            // Expected default count: 1 for Standard, 2 for Advanced
+            int expectedDefaultCount = BlueprintType == QuestBlueprintType.Advanced ? 2 : 1;
+            
+            // If we have more objectives than the constructor would add, it means objectives were loaded from JSON
+            // In that case, remove the default objectives added by the constructor
+            if (Objectives.Count > expectedDefaultCount)
+            {
+                // Remove default objective_1 if it matches the constructor's pattern
+                var defaultObj1 = Objectives
+                    .FirstOrDefault(obj => obj.Name == "objective_1" && obj.Title == "Complete objective");
+                if (defaultObj1 != null)
+                {
+                    Objectives.Remove(defaultObj1);
+                }
+                
+                // Remove default objective_2 for Advanced blueprints if it matches the constructor's pattern
+                if (BlueprintType == QuestBlueprintType.Advanced)
+                {
+                    var defaultObj2 = Objectives
+                        .FirstOrDefault(obj => obj.Name == "objective_2" && obj.Title == "Advanced objective");
+                    if (defaultObj2 != null)
+                    {
+                        Objectives.Remove(defaultObj2);
+                    }
+                }
             }
         }
 
@@ -235,6 +294,18 @@ namespace Schedule1ModdingTool.Models
             foreach (var objective in source.Objectives)
             {
                 Objectives.Add(objective.DeepCopy());
+            }
+
+            QuestTriggers.Clear();
+            foreach (var trigger in source.QuestTriggers)
+            {
+                QuestTriggers.Add(trigger.DeepCopy());
+            }
+
+            QuestFinishTriggers.Clear();
+            foreach (var finishTrigger in source.QuestFinishTriggers)
+            {
+                QuestFinishTriggers.Add(finishTrigger.DeepCopy());
             }
         }
 

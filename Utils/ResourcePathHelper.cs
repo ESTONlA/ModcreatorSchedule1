@@ -44,5 +44,27 @@ namespace Schedule1ModdingTool.Utils
 
             return fullPath.StartsWith(fullProject, StringComparison.OrdinalIgnoreCase);
         }
+
+        /// <summary>
+        /// Validates that a resource file exists at the specified path.
+        /// </summary>
+        /// <param name="resourcePath">Relative path to the resource (e.g., "Resources/icon.png")</param>
+        /// <param name="projectDirectory">The project directory</param>
+        /// <returns>True if the file exists, false otherwise</returns>
+        public static bool ResourceExists(string? resourcePath, string projectDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(resourcePath) || string.IsNullOrWhiteSpace(projectDirectory))
+                return false;
+
+            try
+            {
+                var absolutePath = GetAbsolutePath(resourcePath, projectDirectory);
+                return !string.IsNullOrWhiteSpace(absolutePath) && File.Exists(absolutePath);
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

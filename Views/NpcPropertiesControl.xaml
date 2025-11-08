@@ -9,332 +9,360 @@
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
 
-    <Grid Margin="4" Loaded="Grid_Loaded">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="360" MinWidth="320"/>
-            <ColumnDefinition Width="12"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+	<Grid Margin="4" Loaded="Grid_Loaded">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="360" MinWidth="320" />
+			<ColumnDefinition Width="12" />
+			<ColumnDefinition Width="*" />
+		</Grid.ColumnDefinitions>
 
-        <!-- Identity Column -->
-        <ScrollViewer Grid.Column="0"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <StackPanel>
-                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Identity" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
+		<!-- Identity Column -->
+		<ScrollViewer Grid.Column="0"
+		              VerticalScrollBarVisibility="Auto"
+		              HorizontalScrollBarVisibility="Disabled">
+			<StackPanel>
+				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
+					<StackPanel Margin="12">
+						<TextBlock Text="Identity" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
 
-                        <Label Content="Class Name" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding SelectedNpc.ClassName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
+						<Label Content="Class Name" Style="{StaticResource LabelStyle}" />
+						<TextBox Text="{Binding SelectedNpc.ClassName, UpdateSourceTrigger=PropertyChanged}"
+						         Style="{StaticResource TextBoxStyle}" />
 
-                        <Label Content="Namespace" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding SelectedNpc.Namespace, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
+						<Label Content="Namespace" Style="{StaticResource LabelStyle}" />
+						<TextBox Text="{Binding SelectedNpc.Namespace, UpdateSourceTrigger=PropertyChanged}"
+						         Style="{StaticResource TextBoxStyle}" />
 
-                        <Label Content="NPC ID" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding SelectedNpc.NpcId, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
+						<Label Content="NPC ID" Style="{StaticResource LabelStyle}" />
+						<TextBox Text="{Binding SelectedNpc.NpcId, UpdateSourceTrigger=PropertyChanged}"
+						         Style="{StaticResource TextBoxStyle}" />
 
-                        <Label Content="First Name" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding SelectedNpc.FirstName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
+						<Label Content="First Name" Style="{StaticResource LabelStyle}" />
+						<TextBox Text="{Binding SelectedNpc.FirstName, UpdateSourceTrigger=PropertyChanged}"
+						         Style="{StaticResource TextBoxStyle}" />
 
-                        <Label Content="Last Name" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Text="{Binding SelectedNpc.LastName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
-                    </StackPanel>
-                </Border>
+						<Label Content="Last Name" Style="{StaticResource LabelStyle}" />
+						<TextBox Text="{Binding SelectedNpc.LastName, UpdateSourceTrigger=PropertyChanged}"
+						         Style="{StaticResource TextBoxStyle}" />
+					</StackPanel>
+				</Border>
 
-                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Behavior" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
+				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
+					<StackPanel Margin="12">
+						<TextBlock Text="Behavior" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
 
-                        <CheckBox Content="Is Physical" IsChecked="{Binding SelectedNpc.IsPhysical}" Margin="0,2" Foreground="{StaticResource LightTextBrush}"/>
-                        <CheckBox Content="Enable Customer Systems" 
-                                  IsChecked="{Binding SelectedNpc.EnableCustomer}" 
-                                  Checked="EnableCustomer_Checked"
-                                  Unchecked="EnableCustomer_Unchecked"
-                                  Margin="0,2" 
-                                  Foreground="{StaticResource LightTextBrush}"/>
-                        <CheckBox Content="Is Dealer" 
-                                  IsChecked="{Binding SelectedNpc.IsDealer}" 
-                                  Checked="IsDealer_Checked"
-                                  Unchecked="IsDealer_Unchecked"
-                                  Margin="0,2" 
-                                  Foreground="{StaticResource LightTextBrush}"/>
-                    </StackPanel>
-                </Border>
+						<CheckBox Content="Is Physical" IsChecked="{Binding SelectedNpc.IsPhysical}" Margin="0,2"
+						          Foreground="{StaticResource LightTextBrush}" />
+						<CheckBox Content="Enable Customer Systems"
+						          IsChecked="{Binding SelectedNpc.EnableCustomer}"
+						          Checked="EnableCustomer_Checked"
+						          Unchecked="EnableCustomer_Unchecked"
+						          Margin="0,2"
+						          Foreground="{StaticResource LightTextBrush}" />
+						<CheckBox Content="Is Dealer"
+						          IsChecked="{Binding SelectedNpc.IsDealer}"
+						          Checked="IsDealer_Checked"
+						          Unchecked="IsDealer_Unchecked"
+						          Margin="0,2"
+						          Foreground="{StaticResource LightTextBrush}" />
+					</StackPanel>
+				</Border>
 
-                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Spawn Position" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
-                        <CheckBox Content="Set spawn position"
-                                  IsChecked="{Binding SelectedNpc.HasSpawnPosition}"
-                                  Foreground="{StaticResource LightTextBrush}"
-                                  Margin="0,0,0,8"/>
-                        <Grid Margin="0,0,0,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition/>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,8,0">
-                                <Label Content="X" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.SpawnX, UpdateSourceTrigger=LostFocus, StringFormat=F3}" 
-                                         Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                                <Label Content="Y" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.SpawnY, UpdateSourceTrigger=LostFocus, StringFormat=F3}" 
-                                         Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <Label Content="Z" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.SpawnZ, UpdateSourceTrigger=LostFocus, StringFormat=F3}" 
-                                         Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </ScrollViewer>
+				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
+					<StackPanel Margin="12">
+						<TextBlock Text="Spawn Position" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
+						<CheckBox Content="Set spawn position"
+						          IsChecked="{Binding SelectedNpc.HasSpawnPosition}"
+						          Foreground="{StaticResource LightTextBrush}"
+						          Margin="0,0,0,8" />
+						<Grid Margin="0,0,0,4">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition />
+								<ColumnDefinition />
+								<ColumnDefinition />
+							</Grid.ColumnDefinitions>
+							<StackPanel Margin="0,0,8,0">
+								<Label Content="X" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.SpawnX, UpdateSourceTrigger=LostFocus, StringFormat=F3}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+							<StackPanel Grid.Column="1" Margin="0,0,8,0">
+								<Label Content="Y" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.SpawnY, UpdateSourceTrigger=LostFocus, StringFormat=F3}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+							<StackPanel Grid.Column="2">
+								<Label Content="Z" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.SpawnZ, UpdateSourceTrigger=LostFocus, StringFormat=F3}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+						</Grid>
+					</StackPanel>
+				</Border>
+			</StackPanel>
+		</ScrollViewer>
 
-        <!-- Appearance Column -->
-        <ScrollViewer Grid.Column="2"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <StackPanel>
-                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Appearance" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
-                        <UniformGrid Columns="2" Rows="3" Margin="0,0,0,8">
-                            <StackPanel Margin="4">
-                                <Label Content="Gender (0-1)" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.Gender, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <Label Content="Height" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.Height, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <Label Content="Weight" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.Weight, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <Label Content="Pupil Dilation" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.PupilDilation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <Label Content="Eyebrow Scale" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.EyebrowScale, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                            <StackPanel Margin="4">
-                                <Label Content="Eyebrow Thickness" Style="{StaticResource LabelStyle}"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.EyebrowThickness, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxStyle}"/>
-                            </StackPanel>
-                        </UniformGrid>
+		<!-- Appearance Column -->
+		<ScrollViewer Grid.Column="2"
+		              VerticalScrollBarVisibility="Auto"
+		              HorizontalScrollBarVisibility="Disabled">
+			<StackPanel>
+				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
+					<StackPanel Margin="12">
+						<TextBlock Text="Appearance" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
+						<UniformGrid Columns="2" Rows="3" Margin="0,0,0,8">
+							<StackPanel Margin="4">
+								<Label Content="Gender (0-1)" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.Gender, UpdateSourceTrigger=PropertyChanged}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+							<StackPanel Margin="4">
+								<Label Content="Height" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.Height, UpdateSourceTrigger=PropertyChanged}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+							<StackPanel Margin="4">
+								<Label Content="Weight" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.Weight, UpdateSourceTrigger=PropertyChanged}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+							<StackPanel Margin="4">
+								<Label Content="Pupil Dilation" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.PupilDilation, UpdateSourceTrigger=PropertyChanged}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+							<StackPanel Margin="4">
+								<Label Content="Eyebrow Scale" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.EyebrowScale, UpdateSourceTrigger=PropertyChanged}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+							<StackPanel Margin="4">
+								<Label Content="Eyebrow Thickness" Style="{StaticResource LabelStyle}" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.EyebrowThickness, UpdateSourceTrigger=PropertyChanged}"
+								         Style="{StaticResource TextBoxStyle}" />
+							</StackPanel>
+						</UniformGrid>
 
-                        <StackPanel Orientation="Vertical">
-                            <Label Content="Hair Path" Style="{StaticResource LabelStyle}"/>
-                            <ComboBox ItemsSource="{x:Static presets:AppearancePresets.HairStyles}"
-                                      IsEditable="True"
-                                      IsTextSearchEnabled="False"
-                                      StaysOpenOnEdit="True"
-                                      Text="{Binding SelectedNpc.Appearance.HairPath, UpdateSourceTrigger=PropertyChanged}"
-                                      Margin="0,2,0,4">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Vertical">
-                                            <TextBlock Text="{Binding Name}"/>
-                                            <TextBlock Text="{Binding Path}"
-                                                       FontSize="11"
-                                                       Foreground="{StaticResource DimTextBrush}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
+						<StackPanel Orientation="Vertical">
+							<Label Content="Hair Path" Style="{StaticResource LabelStyle}" />
+							<ComboBox ItemsSource="{x:Static presets:AppearancePresets.HairStyles}"
+							          IsEditable="True"
+							          IsTextSearchEnabled="False"
+							          StaysOpenOnEdit="True"
+							          Text="{Binding SelectedNpc.Appearance.HairPath, UpdateSourceTrigger=PropertyChanged}"
+							          Margin="0,2,0,4">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<StackPanel Orientation="Vertical">
+											<TextBlock Text="{Binding Name}" />
+											<TextBlock Text="{Binding Path}"
+											           FontSize="11"
+											           Foreground="{StaticResource DimTextBrush}" />
+										</StackPanel>
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+						</StackPanel>
+					</StackPanel>
+				</Border>
 
-                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Base Colors" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,4">
-                                <Label Content="Skin" Width="130"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.SkinColor, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                                <Border Width="32" Height="24" Margin="8,0"
-                                        Background="{Binding SelectedNpc.Appearance.SkinColor, Converter={StaticResource ColorHexToBrushConverter}}"/>
-                                <Button Content="Pick" Tag="SkinColor" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="PickAppearanceColor_Click"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,4">
-                                <Label Content="Left Eyelid" Width="130"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.LeftEyeLidColor, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                                <Border Width="32" Height="24" Margin="8,0"
-                                        Background="{Binding SelectedNpc.Appearance.LeftEyeLidColor, Converter={StaticResource ColorHexToBrushConverter}}"/>
-                                <Button Content="Pick" Tag="LeftEyeLidColor" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="PickAppearanceColor_Click"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,4">
-                                <Label Content="Right Eyelid" Width="130"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.RightEyeLidColor, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                                <Border Width="32" Height="24" Margin="8,0"
-                                        Background="{Binding SelectedNpc.Appearance.RightEyeLidColor, Converter={StaticResource ColorHexToBrushConverter}}"/>
-                                <Button Content="Pick" Tag="RightEyeLidColor" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="PickAppearanceColor_Click"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,4">
-                                <Label Content="Eyeball Tint" Width="130"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.EyeBallTint, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                                <Border Width="32" Height="24" Margin="8,0"
-                                        Background="{Binding SelectedNpc.Appearance.EyeBallTint, Converter={StaticResource ColorHexToBrushConverter}}"/>
-                                <Button Content="Pick" Tag="EyeBallTint" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="PickAppearanceColor_Click"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,4">
-                                <Label Content="Hair" Width="130"/>
-                                <TextBox Text="{Binding SelectedNpc.Appearance.HairColor, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                                <Border Width="32" Height="24" Margin="8,0"
-                                        Background="{Binding SelectedNpc.Appearance.HairColor, Converter={StaticResource ColorHexToBrushConverter}}"/>
-                                <Button Content="Pick" Tag="HairColor" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="PickAppearanceColor_Click"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
+				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
+					<StackPanel Margin="12">
+						<TextBlock Text="Base Colors" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
+						<StackPanel>
+							<StackPanel Orientation="Horizontal" Margin="0,4">
+								<Label Content="Skin" Width="130" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.SkinColor, UpdateSourceTrigger=PropertyChanged}" Width="120" />
+								<Border Width="32" Height="24" Margin="8,0"
+								        Background="{Binding SelectedNpc.Appearance.SkinColor, Converter={StaticResource ColorHexToBrushConverter}}" />
+								<Button Content="Pick" Tag="SkinColor" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+								        Click="PickAppearanceColor_Click" />
+							</StackPanel>
+							<StackPanel Orientation="Horizontal" Margin="0,4">
+								<Label Content="Left Eyelid" Width="130" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.LeftEyeLidColor, UpdateSourceTrigger=PropertyChanged}"
+								         Width="120" />
+								<Border Width="32" Height="24" Margin="8,0"
+								        Background="{Binding SelectedNpc.Appearance.LeftEyeLidColor, Converter={StaticResource ColorHexToBrushConverter}}" />
+								<Button Content="Pick" Tag="LeftEyeLidColor" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+								        Click="PickAppearanceColor_Click" />
+							</StackPanel>
+							<StackPanel Orientation="Horizontal" Margin="0,4">
+								<Label Content="Right Eyelid" Width="130" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.RightEyeLidColor, UpdateSourceTrigger=PropertyChanged}"
+								         Width="120" />
+								<Border Width="32" Height="24" Margin="8,0"
+								        Background="{Binding SelectedNpc.Appearance.RightEyeLidColor, Converter={StaticResource ColorHexToBrushConverter}}" />
+								<Button Content="Pick" Tag="RightEyeLidColor" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+								        Click="PickAppearanceColor_Click" />
+							</StackPanel>
+							<StackPanel Orientation="Horizontal" Margin="0,4">
+								<Label Content="Eyeball Tint" Width="130" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.EyeBallTint, UpdateSourceTrigger=PropertyChanged}" Width="120" />
+								<Border Width="32" Height="24" Margin="8,0"
+								        Background="{Binding SelectedNpc.Appearance.EyeBallTint, Converter={StaticResource ColorHexToBrushConverter}}" />
+								<Button Content="Pick" Tag="EyeBallTint" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+								        Click="PickAppearanceColor_Click" />
+							</StackPanel>
+							<StackPanel Orientation="Horizontal" Margin="0,4">
+								<Label Content="Hair" Width="130" />
+								<TextBox Text="{Binding SelectedNpc.Appearance.HairColor, UpdateSourceTrigger=PropertyChanged}" Width="120" />
+								<Border Width="32" Height="24" Margin="8,0"
+								        Background="{Binding SelectedNpc.Appearance.HairColor, Converter={StaticResource ColorHexToBrushConverter}}" />
+								<Button Content="Pick" Tag="HairColor" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+								        Click="PickAppearanceColor_Click" />
+							</StackPanel>
+						</StackPanel>
+					</StackPanel>
+				</Border>
 
-                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Face Layers" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
-                        <ItemsControl ItemsSource="{Binding SelectedNpc.Appearance.FaceLayers}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:NpcAppearanceLayer}">
-                                    <Grid Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="32"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox Grid.Column="0"
-                                                  ItemsSource="{x:Static presets:AppearancePresets.FaceLayers}"
-                                                  IsEditable="True"
-                                                  IsTextSearchEnabled="False"
-                                                  StaysOpenOnEdit="True"
-                                                  Text="{Binding LayerPath, UpdateSourceTrigger=PropertyChanged}"
-                                                  Margin="0,0,8,0">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <StackPanel Orientation="Vertical">
-                                                        <TextBlock Text="{Binding Name}"/>
-                                                        <TextBlock Text="{Binding Path}"
-                                                                   FontSize="11"
-                                                                   Foreground="{StaticResource DimTextBrush}"/>
-                                                    </StackPanel>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                        <TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
-                                        <Border Grid.Column="2" Width="24" Height="24" Margin="0,0,8,0"
-                                                Background="{Binding ColorHex, Converter={StaticResource ColorHexToBrushConverter}}"/>
-                                        <StackPanel Grid.Column="3" Orientation="Horizontal">
-                                            <Button Content="Pick" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Padding="8,2" Margin="0,0,8,0" Click="PickLayerColor_Click"/>
-                                            <Button Content="✕" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="RemoveFaceLayer_Click" Tag="{Binding}"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Button Content="Add Face Layer" Style="{StaticResource IconButtonStyle}" Margin="0,8,0,0" Click="AddFaceLayer_Click"/>
-                    </StackPanel>
-                </Border>
+				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
+					<StackPanel Margin="12">
+						<TextBlock Text="Face Layers" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
+						<ItemsControl ItemsSource="{Binding SelectedNpc.Appearance.FaceLayers}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate DataType="{x:Type models:NpcAppearanceLayer}">
+									<Grid Margin="0,4">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="*" />
+											<ColumnDefinition Width="120" />
+											<ColumnDefinition Width="32" />
+											<ColumnDefinition Width="Auto" />
+										</Grid.ColumnDefinitions>
+										<ComboBox Grid.Column="0"
+										          ItemsSource="{x:Static presets:AppearancePresets.FaceLayers}"
+										          IsEditable="True"
+										          IsTextSearchEnabled="False"
+										          StaysOpenOnEdit="True"
+										          Text="{Binding LayerPath, UpdateSourceTrigger=PropertyChanged}"
+										          Margin="0,0,8,0">
+											<ComboBox.ItemTemplate>
+												<DataTemplate>
+													<StackPanel Orientation="Vertical">
+														<TextBlock Text="{Binding Name}" />
+														<TextBlock Text="{Binding Path}"
+														           FontSize="11"
+														           Foreground="{StaticResource DimTextBrush}" />
+													</StackPanel>
+												</DataTemplate>
+											</ComboBox.ItemTemplate>
+										</ComboBox>
+										<TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" />
+										<Border Grid.Column="2" Width="24" Height="24" Margin="0,0,8,0"
+										        Background="{Binding ColorHex, Converter={StaticResource ColorHexToBrushConverter}}" />
+										<StackPanel Grid.Column="3" Orientation="Horizontal">
+											<Button Content="Pick" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+											        Margin="0,0,8,0" Click="PickLayerColor_Click" />
+											<Button Content="✕" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="RemoveFaceLayer_Click"
+											        Tag="{Binding}" />
+										</StackPanel>
+									</Grid>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+						<Button Content="Add Face Layer" Style="{StaticResource IconButtonStyle}" Margin="0,8,0,0"
+						        Click="AddFaceLayer_Click" />
+					</StackPanel>
+				</Border>
 
-                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Body Layers" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
-                        <ItemsControl ItemsSource="{Binding SelectedNpc.Appearance.BodyLayers}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:NpcAppearanceLayer}">
-                                    <Grid Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="32"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox Grid.Column="0"
-                                                  ItemsSource="{x:Static presets:AppearancePresets.BodyLayers}"
-                                                  IsEditable="True"
-                                                  IsTextSearchEnabled="False"
-                                                  StaysOpenOnEdit="True"
-                                                  Text="{Binding LayerPath, UpdateSourceTrigger=PropertyChanged}"
-                                                  Margin="0,0,8,0">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <StackPanel Orientation="Vertical">
-                                                        <TextBlock Text="{Binding Name}"/>
-                                                        <TextBlock Text="{Binding Path}"
-                                                                   FontSize="11"
-                                                                   Foreground="{StaticResource DimTextBrush}"/>
-                                                    </StackPanel>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                        <TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
-                                        <Border Grid.Column="2" Width="24" Height="24" Margin="0,0,8,0"
-                                                Background="{Binding ColorHex, Converter={StaticResource ColorHexToBrushConverter}}"/>
-                                        <StackPanel Grid.Column="3" Orientation="Horizontal">
-                                            <Button Content="Pick" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Padding="8,2" Margin="0,0,8,0" Click="PickLayerColor_Click"/>
-                                            <Button Content="✕" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="RemoveBodyLayer_Click" Tag="{Binding}"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Button Content="Add Body Layer" Style="{StaticResource IconButtonStyle}" Margin="0,8,0,0" Click="AddBodyLayer_Click"/>
-                    </StackPanel>
-                </Border>
+				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
+					<StackPanel Margin="12">
+						<TextBlock Text="Body Layers" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
+						<ItemsControl ItemsSource="{Binding SelectedNpc.Appearance.BodyLayers}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate DataType="{x:Type models:NpcAppearanceLayer}">
+									<Grid Margin="0,4">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="*" />
+											<ColumnDefinition Width="120" />
+											<ColumnDefinition Width="32" />
+											<ColumnDefinition Width="Auto" />
+										</Grid.ColumnDefinitions>
+										<ComboBox Grid.Column="0"
+										          ItemsSource="{x:Static presets:AppearancePresets.BodyLayers}"
+										          IsEditable="True"
+										          IsTextSearchEnabled="False"
+										          StaysOpenOnEdit="True"
+										          Text="{Binding LayerPath, UpdateSourceTrigger=PropertyChanged}"
+										          Margin="0,0,8,0">
+											<ComboBox.ItemTemplate>
+												<DataTemplate>
+													<StackPanel Orientation="Vertical">
+														<TextBlock Text="{Binding Name}" />
+														<TextBlock Text="{Binding Path}"
+														           FontSize="11"
+														           Foreground="{StaticResource DimTextBrush}" />
+													</StackPanel>
+												</DataTemplate>
+											</ComboBox.ItemTemplate>
+										</ComboBox>
+										<TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" />
+										<Border Grid.Column="2" Width="24" Height="24" Margin="0,0,8,0"
+										        Background="{Binding ColorHex, Converter={StaticResource ColorHexToBrushConverter}}" />
+										<StackPanel Grid.Column="3" Orientation="Horizontal">
+											<Button Content="Pick" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+											        Margin="0,0,8,0" Click="PickLayerColor_Click" />
+											<Button Content="✕" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="RemoveBodyLayer_Click"
+											        Tag="{Binding}" />
+										</StackPanel>
+									</Grid>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+						<Button Content="Add Body Layer" Style="{StaticResource IconButtonStyle}" Margin="0,8,0,0"
+						        Click="AddBodyLayer_Click" />
+					</StackPanel>
+				</Border>
 
-                <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
-                    <StackPanel Margin="12">
-                        <TextBlock Text="Accessory Layers" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
-                        <ItemsControl ItemsSource="{Binding SelectedNpc.Appearance.AccessoryLayers}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:NpcAppearanceLayer}">
-                                    <Grid Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="32"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox Grid.Column="0"
-                                                  ItemsSource="{x:Static presets:AppearancePresets.AccessoryLayers}"
-                                                  IsEditable="True"
-                                                  IsTextSearchEnabled="False"
-                                                  StaysOpenOnEdit="True"
-                                                  Text="{Binding LayerPath, UpdateSourceTrigger=PropertyChanged}"
-                                                  Margin="0,0,8,0">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <StackPanel Orientation="Vertical">
-                                                        <TextBlock Text="{Binding Name}"/>
-                                                        <TextBlock Text="{Binding Path}"
-                                                                   FontSize="11"
-                                                                   Foreground="{StaticResource DimTextBrush}"/>
-                                                    </StackPanel>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                        <TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
-                                        <Border Grid.Column="2" Width="24" Height="24" Margin="0,0,8,0"
-                                                Background="{Binding ColorHex, Converter={StaticResource ColorHexToBrushConverter}}"/>
-                                        <StackPanel Grid.Column="3" Orientation="Horizontal">
-                                            <Button Content="Pick" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Padding="8,2" Margin="0,0,8,0" Click="PickLayerColor_Click"/>
-                                            <Button Content="✕" Style="{StaticResource IconButtonStyle}" Padding="8,2" Click="RemoveAccessoryLayer_Click" Tag="{Binding}"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Button Content="Add Accessory Layer" Style="{StaticResource IconButtonStyle}" Margin="0,8,0,0" Click="AddAccessoryLayer_Click"/>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </ScrollViewer>
-    </Grid>
+				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
+					<StackPanel Margin="12">
+						<TextBlock Text="Accessory Layers" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
+						<ItemsControl ItemsSource="{Binding SelectedNpc.Appearance.AccessoryLayers}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate DataType="{x:Type models:NpcAppearanceLayer}">
+									<Grid Margin="0,4">
+										<Grid.ColumnDefinitions>
+											<ColumnDefinition Width="*" />
+											<ColumnDefinition Width="120" />
+											<ColumnDefinition Width="32" />
+											<ColumnDefinition Width="Auto" />
+										</Grid.ColumnDefinitions>
+										<ComboBox Grid.Column="0"
+										          ItemsSource="{x:Static presets:AppearancePresets.AccessoryLayers}"
+										          IsEditable="True"
+										          IsTextSearchEnabled="False"
+										          StaysOpenOnEdit="True"
+										          Text="{Binding LayerPath, UpdateSourceTrigger=PropertyChanged}"
+										          Margin="0,0,8,0">
+											<ComboBox.ItemTemplate>
+												<DataTemplate>
+													<StackPanel Orientation="Vertical">
+														<TextBlock Text="{Binding Name}" />
+														<TextBlock Text="{Binding Path}"
+														           FontSize="11"
+														           Foreground="{StaticResource DimTextBrush}" />
+													</StackPanel>
+												</DataTemplate>
+											</ComboBox.ItemTemplate>
+										</ComboBox>
+										<TextBox Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" />
+										<Border Grid.Column="2" Width="24" Height="24" Margin="0,0,8,0"
+										        Background="{Binding ColorHex, Converter={StaticResource ColorHexToBrushConverter}}" />
+										<StackPanel Grid.Column="3" Orientation="Horizontal">
+											<Button Content="Pick" Tag="{Binding}" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+											        Margin="0,0,8,0" Click="PickLayerColor_Click" />
+											<Button Content="✕" Style="{StaticResource IconButtonStyle}" Padding="8,2"
+											        Click="RemoveAccessoryLayer_Click" Tag="{Binding}" />
+										</StackPanel>
+									</Grid>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+						<Button Content="Add Accessory Layer" Style="{StaticResource IconButtonStyle}" Margin="0,8,0,0"
+						        Click="AddAccessoryLayer_Click" />
+					</StackPanel>
+				</Border>
+			</StackPanel>
+		</ScrollViewer>
+	</Grid>
 </UserControl>

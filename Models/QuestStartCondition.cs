@@ -4,12 +4,14 @@ namespace Schedule1ModdingTool.Models
 {
     /// <summary>
     /// Configuration for quest start conditions based on trigger type
+    /// Maintains backward compatibility with legacy QuestStartTrigger enum
     /// </summary>
     public class QuestStartCondition : ObservableObject
     {
         private QuestStartTrigger _triggerType = QuestStartTrigger.AutoStart;
         private string _npcId = "";
         private string _sceneName = "Main";
+        private QuestTrigger _questTrigger = null;
 
         [JsonProperty("triggerType")]
         public QuestStartTrigger TriggerType
@@ -36,6 +38,17 @@ namespace Schedule1ModdingTool.Models
         {
             get => _sceneName;
             set => SetProperty(ref _sceneName, value);
+        }
+
+        /// <summary>
+        /// New trigger system trigger (optional, for new trigger-based system)
+        /// When set, takes precedence over legacy TriggerType enum
+        /// </summary>
+        [JsonProperty("questTrigger")]
+        public QuestTrigger QuestTrigger
+        {
+            get => _questTrigger;
+            set => SetProperty(ref _questTrigger, value);
         }
     }
 }
