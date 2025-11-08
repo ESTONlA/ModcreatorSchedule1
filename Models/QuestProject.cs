@@ -14,8 +14,13 @@ namespace Schedule1ModdingTool.Models
     /// </summary>
     public class QuestProject : ObservableObject
     {
+        public const string RootFolderId = "root";
+
         private readonly HashSet<QuestBlueprint> _trackedQuests = new HashSet<QuestBlueprint>();
         private readonly HashSet<QuestObjective> _trackedObjectives = new HashSet<QuestObjective>();
+        private readonly HashSet<NpcBlueprint> _trackedNpcs = new HashSet<NpcBlueprint>();
+        private readonly HashSet<ResourceAsset> _trackedResources = new HashSet<ResourceAsset>();
+        private readonly HashSet<ModFolder> _trackedFolders = new HashSet<ModFolder>();
         private bool _suppressNotifications;
 
         private string _projectName = "";
@@ -66,6 +71,15 @@ namespace Schedule1ModdingTool.Models
         [JsonProperty("quests")]
         public ObservableCollection<QuestBlueprint> Quests { get; } = new ObservableCollection<QuestBlueprint>();
 
+        [JsonProperty("npcs")]
+        public ObservableCollection<NpcBlueprint> Npcs { get; } = new ObservableCollection<NpcBlueprint>();
+
+        [JsonProperty("resources")]
+        public ObservableCollection<ResourceAsset> Resources { get; } = new ObservableCollection<ResourceAsset>();
+
+        [JsonProperty("folders")]
+        public ObservableCollection<ModFolder> Folders { get; } = new ObservableCollection<ModFolder>();
+
         [JsonIgnore]
         public string DisplayTitle
         {
@@ -82,6 +96,10 @@ namespace Schedule1ModdingTool.Models
             ProjectName = "New Quest Project";
             ProjectDescription = "A new quest modding project for Schedule 1";
             Quests.CollectionChanged += OnQuestsCollectionChanged;
+            Npcs.CollectionChanged += OnNpcsCollectionChanged;
+            Folders.CollectionChanged += OnFoldersCollectionChanged;
+            Resources.CollectionChanged += OnResourcesCollectionChanged;
+            EnsureRootFolder();
             _suppressNotifications = false;
         }
 
@@ -93,6 +111,44 @@ namespace Schedule1ModdingTool.Models
         public void RemoveQuest(QuestBlueprint quest)
         {
             Quests.Remove(quest);
+        }
+
+        public void AddNpc(NpcBlueprint npc)
+        {
+            Npcs.Add(npc);
+        }
+
+        public void RemoveNpc(NpcBlueprint npc)
+        {
+            Npcs.Remove(npc);
+        }
+
+        public void AddResource(ResourceAsset asset)
+        {
+            Resources.Add(asset);
+        }
+
+        public void RemoveResource(ResourceAsset asset)
+        {
+            Resources.Remove(asset);
+        }
+
+        public ModFolder CreateFolder(string name, string? parentId = null)
+        {
+            var folder = new ModFolder
+            {
+                Name = string.IsNullOrWhiteSpace(name) ? "New Folder" : name,
+                ParentId = string.IsNullOrWhiteSpace(parentId) ? RootFolderId : parentId
+            };
+            Folders.Add(folder);
+            return folder;
+        }
+
+        public ModFolder? GetFolderById(string? folderId)
+        {
+            if (string.IsNullOrWhiteSpace(folderId))
+                return null;
+            return Folders.FirstOrDefault(f => f.Id == folderId);
         }
 
         public void MarkAsModified()
@@ -130,6 +186,10 @@ namespace Schedule1ModdingTool.Models
             {
                 project.FilePath = filePath;
                 project.AttachExistingQuestHandlers();
+                project.AttachExistingNpcHandlers();
+                project.AttachExistingFolderHandlers();
+                project.AttachExistingResourceHandlers();
+                project.EnsureRootFolder();
                 project.MarkAsSaved();
                 project._suppressNotifications = false;
             }
@@ -168,6 +228,7 @@ namespace Schedule1ModdingTool.Models
             }
 
             MarkAsModified();
+            OnPropertyChanged(nameof(Quests));
         }
 
         private void AttachQuestHandlers(QuestBlueprint quest)
@@ -184,6 +245,15 @@ namespace Schedule1ModdingTool.Models
             }
         }
 
+        private void AttachNpcHandlers(NpcBlueprint npc)
+        {
+            if (_trackedNpcs.Contains(npc))
+                return;
+
+            _trackedNpcs.Add(npc);
+            npc.PropertyChanged += NpcOnPropertyChanged;
+        }
+
         private void DetachQuestHandlers(QuestBlueprint quest)
         {
             if (!_trackedQuests.Remove(quest))
@@ -197,7 +267,60 @@ namespace Schedule1ModdingTool.Models
             }
         }
 
+        private void DetachNpcHandlers(NpcBlueprint npc)
+        {
+            if (!_trackedNpcs.Remove(npc))
+                return;
+
+            npc.PropertyChanged -= NpcOnPropertyChanged;
+        }
+
         private void QuestOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            MarkAsModified();
+            OnPropertyChanged(nameof(Quests));
+        }
+
+        private void OnFoldersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems != null)
+            {
+                foreach (var item in e.NewItems)
+                {
+                    if (item is ModFolder folder)
+                    {
+                        AttachFolderHandlers(folder);
+                    }
+                }
+            }
+
+            if (e.OldItems != null)
+            {
+                foreach (var item in e.OldItems)
+                {
+                    if (item is ModFolder folder)
+                    {
+                        DetachFolderHandlers(folder);
+                    }
+                }
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                foreach (var folder in _trackedFolders.ToArray())
+                {
+                    folder.PropertyChanged -= FolderOnPropertyChanged;
+                }
+                _trackedFolders.Clear();
+                AttachExistingFolderHandlers();
+            }
+
+            EnsureRootFolder();
+            MarkAsModified();
+            OnPropertyChanged(nameof(Folders));
+        }
+
+        private void NpcOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             MarkAsModified();
         }
@@ -266,6 +389,30 @@ namespace Schedule1ModdingTool.Models
             }
         }
 
+        private void AttachExistingNpcHandlers()
+        {
+            foreach (var npc in Npcs)
+            {
+                AttachNpcHandlers(npc);
+            }
+        }
+
+        private void AttachExistingFolderHandlers()
+        {
+            foreach (var folder in Folders)
+            {
+                AttachFolderHandlers(folder);
+            }
+        }
+
+        private void AttachExistingResourceHandlers()
+        {
+            foreach (var asset in Resources)
+            {
+                AttachResourceHandlers(asset);
+            }
+        }
+
         private void ResetQuestTracking()
         {
             foreach (var quest in _trackedQuests.ToArray())
@@ -274,9 +421,29 @@ namespace Schedule1ModdingTool.Models
                 quest.Objectives.CollectionChanged -= OnObjectivesCollectionChanged;
             }
 
+            foreach (var npc in _trackedNpcs.ToArray())
+            {
+                npc.PropertyChanged -= NpcOnPropertyChanged;
+            }
+
+            foreach (var folder in _trackedFolders.ToArray())
+            {
+                folder.PropertyChanged -= FolderOnPropertyChanged;
+            }
+            foreach (var asset in _trackedResources.ToArray())
+            {
+                asset.PropertyChanged -= ResourceOnPropertyChanged;
+            }
+
             _trackedQuests.Clear();
+            _trackedNpcs.Clear();
+            _trackedFolders.Clear();
+            _trackedResources.Clear();
             RebuildObjectiveTracking();
             AttachExistingQuestHandlers();
+            AttachExistingNpcHandlers();
+            AttachExistingFolderHandlers();
+            AttachExistingResourceHandlers();
         }
 
         private void RebuildObjectiveTracking()
@@ -297,20 +464,171 @@ namespace Schedule1ModdingTool.Models
             }
         }
 
+        private void OnNpcsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems != null)
+            {
+                foreach (var item in e.NewItems)
+                {
+                    if (item is NpcBlueprint npc)
+                    {
+                        AttachNpcHandlers(npc);
+                    }
+                }
+            }
+
+            if (e.OldItems != null)
+            {
+                foreach (var item in e.OldItems)
+                {
+                    if (item is NpcBlueprint npc)
+                    {
+                        DetachNpcHandlers(npc);
+                    }
+                }
+            }
+
+            MarkAsModified();
+            OnPropertyChanged(nameof(Npcs));
+        }
+
         [OnDeserializing]
         private void OnDeserializing(StreamingContext context)
         {
             _suppressNotifications = true;
             Quests.CollectionChanged -= OnQuestsCollectionChanged;
             Quests.CollectionChanged += OnQuestsCollectionChanged;
+            Npcs.CollectionChanged -= OnNpcsCollectionChanged;
+            Npcs.CollectionChanged += OnNpcsCollectionChanged;
+            Folders.CollectionChanged -= OnFoldersCollectionChanged;
+            Folders.CollectionChanged += OnFoldersCollectionChanged;
+            Resources.CollectionChanged -= OnResourcesCollectionChanged;
+            Resources.CollectionChanged += OnResourcesCollectionChanged;
         }
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext context)
         {
             AttachExistingQuestHandlers();
+            AttachExistingNpcHandlers();
+            AttachExistingFolderHandlers();
+            AttachExistingResourceHandlers();
+            EnsureRootFolder();
             _suppressNotifications = false;
             OnPropertyChanged(nameof(DisplayTitle));
+        }
+
+        private void AttachFolderHandlers(ModFolder folder)
+        {
+            if (_trackedFolders.Contains(folder))
+                return;
+            _trackedFolders.Add(folder);
+            folder.PropertyChanged += FolderOnPropertyChanged;
+        }
+
+        private void DetachFolderHandlers(ModFolder folder)
+        {
+            if (!_trackedFolders.Remove(folder))
+                return;
+            folder.PropertyChanged -= FolderOnPropertyChanged;
+        }
+
+        private void FolderOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            MarkAsModified();
+        }
+
+        private void OnResourcesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems != null)
+            {
+                foreach (var item in e.NewItems)
+                {
+                    if (item is ResourceAsset asset)
+                    {
+                        AttachResourceHandlers(asset);
+                    }
+                }
+            }
+
+            if (e.OldItems != null)
+            {
+                foreach (var item in e.OldItems)
+                {
+                    if (item is ResourceAsset asset)
+                    {
+                        DetachResourceHandlers(asset);
+                    }
+                }
+            }
+
+            MarkAsModified();
+            OnPropertyChanged(nameof(Resources));
+        }
+
+        private void AttachResourceHandlers(ResourceAsset asset)
+        {
+            if (_trackedResources.Contains(asset))
+                return;
+            _trackedResources.Add(asset);
+            asset.PropertyChanged += ResourceOnPropertyChanged;
+        }
+
+        private void DetachResourceHandlers(ResourceAsset asset)
+        {
+            if (!_trackedResources.Remove(asset))
+                return;
+            asset.PropertyChanged -= ResourceOnPropertyChanged;
+        }
+
+        private void ResourceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            MarkAsModified();
+        }
+
+        private void EnsureRootFolder()
+        {
+            if (!Folders.Any())
+            {
+                Folders.Add(new ModFolder
+                {
+                    Id = RootFolderId,
+                    Name = "Workspace",
+                    ParentId = null
+                });
+            }
+
+            var root = Folders.FirstOrDefault(f => f.Id == RootFolderId);
+            if (root == null)
+            {
+                root = new ModFolder
+                {
+                    Id = RootFolderId,
+                    Name = "Workspace",
+                    ParentId = null
+                };
+                Folders.Insert(0, root);
+            }
+            else
+            {
+                root.ParentId = null;
+                if (string.IsNullOrWhiteSpace(root.Name))
+                {
+                    root.Name = "Workspace";
+                }
+            }
+
+            foreach (var quest in Quests)
+            {
+                if (string.IsNullOrWhiteSpace(quest.FolderId))
+                    quest.FolderId = RootFolderId;
+            }
+
+            foreach (var npc in Npcs)
+            {
+                if (string.IsNullOrWhiteSpace(npc.FolderId))
+                    npc.FolderId = RootFolderId;
+            }
         }
     }
 }

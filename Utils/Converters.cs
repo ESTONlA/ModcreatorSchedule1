@@ -1,8 +1,10 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using MaterialDesignThemes.Wpf;
 
 namespace Schedule1ModdingTool.Utils
@@ -321,6 +323,121 @@ namespace Schedule1ModdingTool.Utils
                 return gridLength.GridUnitType == GridUnitType.Star && gridLength.Value > 0;
             }
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Converts a relative resource path and project file path into an ImageSource.
+    /// </summary>
+    public class RelativeResourcePathConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values == null || values.Length < 2)
+                return Binding.DoNothing;
+
+            var relativePath = values[0] as string;
+            var projectFile = values[1] as string;
+            if (string.IsNullOrWhiteSpace(relativePath) || string.IsNullOrWhiteSpace(projectFile))
+                return Binding.DoNothing;
+
+            var projectDir = Path.GetDirectoryName(projectFile);
+            if (string.IsNullOrWhiteSpace(projectDir))
+                return Binding.DoNothing;
+
+            var absolutePath = ResolveAbsolutePath(relativePath, projectDir);
+            if (string.IsNullOrWhiteSpace(absolutePath) || !File.Exists(absolutePath))
+                return Binding.DoNothing;
+
+            try
+            {
+                var imageData = ReadAllBytesShared(absolutePath);
+                if (imageData == null)
+                    return Binding.DoNothing;
+
+                using var memoryStream = new MemoryStream(imageData);
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+                image.StreamSource = memoryStream;
+                image.EndInit();
+
+                if (image.CanFreeze)
+                {
+                    image.Freeze();
+                }
+
+                return image;
+            }
+            catch
+            {
+                return Binding.DoNothing;
+            }
+        }
+
+        private static string ResolveAbsolutePath(string relativePath, string projectDir)
+        {
+            try
+            {
+                return ResourcePathHelper.GetAbsolutePath(relativePath, projectDir);
+            }
+            catch
+            {
+                if (Path.IsPathRooted(relativePath))
+                {
+                    return relativePath;
+                }
+                return string.Empty;
+            }
+        }
+
+        private static byte[]? ReadAllBytesShared(string path)
+        {
+            try
+            {
+                using var fileStream = new FileStream(
+                    path,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.ReadWrite | FileShare.Delete);
+                using var memoryStream = new MemoryStream();
+                fileStream.CopyTo(memoryStream);
+                return memoryStream.ToArray();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Shows breadcrumb separator arrows for all items except the last.
+    /// </summary>
+    public class BreadcrumbSeparatorVisibilityConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length < 2)
+                return Visibility.Collapsed;
+
+            if (values[0] is int index && values[1] is int count)
+            {
+                return index < count - 1 ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            return Visibility.Collapsed;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
         }
     }
 }

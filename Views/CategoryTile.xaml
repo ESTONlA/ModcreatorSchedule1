@@ -53,7 +53,21 @@
                            Visibility="{Binding IsEnabled, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             </StackPanel>
             
-            <!-- Coming Soon Badge -->
+            <Border Grid.Row="2"
+                    Background="{StaticResource DarkBorderBrush}"
+                    CornerRadius="4"
+                    Padding="8,4"
+                    Margin="8"
+                    HorizontalAlignment="Center"
+                    Visibility="{Binding IsEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{Binding ClassName}"
+                           FontSize="10"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource MediumTextBrush}"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="180"/>
+            </Border>
+            
             <Border Grid.Row="2"
                     Background="{StaticResource DimTextBrush}"
                     CornerRadius="4"

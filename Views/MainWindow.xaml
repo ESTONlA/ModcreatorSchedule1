@@ -16,6 +16,18 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
+    <Window.Resources>
+        <DataTemplate x:Key="QuestEditorTemplate">
+            <views:PropertiesControl DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="NpcEditorTemplate">
+            <views:NpcPropertiesControl DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext}"/>
+        </DataTemplate>
+        <utils:ElementEditorTemplateSelector x:Key="ElementEditorTemplateSelector"
+                                             QuestTemplate="{StaticResource QuestEditorTemplate}"
+                                             NpcTemplate="{StaticResource NpcEditorTemplate}"/>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -171,7 +183,8 @@
                         <TabControl ItemsSource="{Binding OpenTabs}"
                                     SelectedItem="{Binding SelectedTab}"
                                     Background="Transparent"
-                                    BorderThickness="0">
+                                    BorderThickness="0"
+                                    ContentTemplateSelector="{StaticResource ElementEditorTemplateSelector}">
                             <TabControl.ItemContainerStyle>
                                 <Style TargetType="TabItem" BasedOn="{StaticResource TabItemStyle}"/>
                             </TabControl.ItemContainerStyle>
@@ -212,11 +225,6 @@
                                     </Grid>
                                 </DataTemplate>
                             </TabControl.ItemTemplate>
-                            <TabControl.ContentTemplate>
-                                <DataTemplate>
-                                    <views:PropertiesControl DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext}"/>
-                                </DataTemplate>
-                            </TabControl.ContentTemplate>
                             <TabControl.Style>
                                 <Style TargetType="TabControl">
                                     <Setter Property="Template">
@@ -233,6 +241,8 @@
                                                     <ContentPresenter Grid.Row="1" 
                                                                       Content="{TemplateBinding SelectedContent}"
                                                                       ContentTemplate="{TemplateBinding SelectedContentTemplate}"
+                                                                      ContentTemplateSelector="{TemplateBinding ContentTemplateSelector}"
+                                                                      ContentStringFormat="{TemplateBinding SelectedContentStringFormat}"
                                                                       VerticalAlignment="Stretch"/>
                                                 </Grid>
                                             </ControlTemplate>
@@ -244,12 +254,12 @@
                 </Border>
 
                     <!-- Workspace View (when no tabs open) -->
-                    <ContentControl>
+                    <ContentControl DataContext="{Binding}">
                         <ContentControl.Style>
                             <Style TargetType="ContentControl">
                                 <Setter Property="Content">
                                     <Setter.Value>
-                                        <views:WorkspaceControl DataContext="{Binding}"/>
+                                        <views:WorkspaceControl/>
                                     </Setter.Value>
                                 </Setter>
                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -260,7 +270,7 @@
                                     <DataTrigger Binding="{Binding SelectedNavigationItem.Id}" Value="Resources">
                                         <Setter Property="Content">
                                             <Setter.Value>
-                                                <views:ResourcesView DataContext="{Binding}"/>
+                                                <views:ResourcesView/>
                                             </Setter.Value>
                                         </Setter>
                                     </DataTrigger>
@@ -323,8 +333,10 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Quests: "/>
                     <TextBlock Text="{Binding CurrentProject.Quests.Count}"/>
+                    <TextBlock Text=" | NPCs: " Margin="8,0,0,0"/>
+                    <TextBlock Text="{Binding CurrentProject.Npcs.Count}"/>
                     <TextBlock Text=" | Selected: " Margin="8,0,0,0"/>
-                    <TextBlock Text="{Binding SelectedQuest.DisplayName, FallbackValue='None'}"/>
+                    <TextBlock Text="{Binding SelectedElementName}"/>
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>

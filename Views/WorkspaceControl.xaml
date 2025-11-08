@@ -3,13 +3,221 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:views="clr-namespace:Schedule1ModdingTool.Views"
-             xmlns:utils="clr-namespace:Schedule1ModdingTool.Utils"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:models="clr-namespace:Schedule1ModdingTool.Models"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    
+
     <UserControl.Resources>
+        <Style x:Key="TileBorderStyle" TargetType="Border" BasedOn="{StaticResource CategoryTileStyle}">
+            <Setter Property="Width" Value="220"/>
+            <Setter Property="Height" Value="150"/>
+            <Setter Property="Margin" Value="8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <DataTemplate DataType="{x:Type models:ModFolder}">
+            <Border Style="{StaticResource TileBorderStyle}"
+                    MouseLeftButtonDown="FolderTile_MouseLeftButtonDown"
+                    MouseRightButtonDown="FolderTile_MouseRightButtonDown"
+                    AllowDrop="True"
+                    DragOver="FolderTile_DragOver"
+                    Drop="FolderTile_Drop"
+                    DragEnter="FolderTile_DragEnter"
+                    DragLeave="FolderTile_DragLeave">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Open" Click="OpenFolder_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource FolderOpenIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Header="Duplicate" Click="DuplicateFolder_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource CopyIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Delete" Click="DeleteFolder_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <materialDesign:PackIcon Grid.Row="0"
+                                             Kind="{StaticResource FolderIcon}"
+                                             Foreground="{StaticResource MediumTextBrush}"
+                                             Width="48" Height="48"
+                                             HorizontalAlignment="Center"
+                                             Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding Name}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource LightTextBrush}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               Margin="8,0"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type models:QuestBlueprint}">
+            <Border Style="{StaticResource TileBorderStyle}"
+                    MouseLeftButtonDown="QuestTile_MouseLeftButtonDown"
+                    MouseRightButtonDown="QuestTile_MouseRightButtonDown"
+                    MouseMove="QuestTile_MouseMove"
+                    AllowDrop="False">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Open" Click="OpenQuest_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource DocumentIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Header="Duplicate" Click="DuplicateQuest_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource CopyIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Delete" Click="DeleteQuest_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <materialDesign:PackIcon Grid.Row="0"
+                                             Kind="{StaticResource QuestIcon}"
+                                             Foreground="{StaticResource MediumTextBrush}"
+                                             Width="40" Height="40"
+                                             HorizontalAlignment="Center"
+                                             Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding DisplayName}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource LightTextBrush}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               Margin="8,0"/>
+                    <Border Grid.Row="2"
+                            Background="{StaticResource DarkBorderBrush}"
+                            CornerRadius="4"
+                            Padding="4"
+                            Margin="8"
+                            HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding ClassName}"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource MediumTextBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="180"/>
+                    </Border>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type models:NpcBlueprint}">
+            <Border Style="{StaticResource TileBorderStyle}"
+                    MouseLeftButtonDown="NpcTile_MouseLeftButtonDown"
+                    MouseRightButtonDown="NpcTile_MouseRightButtonDown"
+                    MouseMove="NpcTile_MouseMove"
+                    AllowDrop="False">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Open" Click="OpenNpc_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource DocumentIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Header="Duplicate" Click="DuplicateNpc_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource CopyIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Delete" Click="DeleteNpc_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}"
+                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                                      Width="16" Height="16"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <materialDesign:PackIcon Grid.Row="0"
+                                             Kind="{StaticResource NPCsIcon}"
+                                             Foreground="{StaticResource MediumTextBrush}"
+                                             Width="40" Height="40"
+                                             HorizontalAlignment="Center"
+                                             Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding DisplayName}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource LightTextBrush}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               Margin="8,0"/>
+                    <Border Grid.Row="2"
+                            Background="{StaticResource DarkBorderBrush}"
+                            CornerRadius="4"
+                            Padding="4"
+                            Margin="8"
+                            HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding ClassName}"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource MediumTextBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="180"/>
+                    </Border>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
         <!-- Context Menu -->
         <ContextMenu x:Key="WorkspaceContextMenu">
             <MenuItem Header="New">
@@ -20,106 +228,108 @@
                               Width="16" Height="16"/>
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="NPC" Click="NewNpc_Click">
+                    <MenuItem.Icon>
+                        <materialDesign:PackIcon Kind="{StaticResource NPCsIcon}"
+                              Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                              Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Folder" Click="NewFolder_Click">
+                    <MenuItem.Icon>
+                        <materialDesign:PackIcon Kind="{StaticResource FolderIcon}"
+                              Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+                              Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
         </ContextMenu>
     </UserControl.Resources>
-    
-    <Grid>
+
+    <Grid ContextMenu="{StaticResource WorkspaceContextMenu}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        
-        <!-- Workspace Header -->
-        <views:WorkspaceHeader Grid.Row="0" DataContext="{Binding WorkspaceViewModel}"/>
-        
-        <!-- Workspace Content -->
-        <ScrollViewer Grid.Row="1" 
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Auto"
-                      Background="{StaticResource DarkBackgroundBrush}">
-            <Grid Margin="16" ContextMenu="{StaticResource WorkspaceContextMenu}">
-                <!-- Quest Tiles - Show all quests directly -->
-                <ItemsControl ItemsSource="{Binding CurrentProject.Quests}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource CategoryTileStyle}"
-                                    Width="200" Height="150"
-                                    Margin="8"
-                                    MouseLeftButtonDown="QuestTile_MouseLeftButtonDown"
-                                    MouseRightButtonDown="QuestTile_MouseRightButtonDown"
-                                    Cursor="Hand">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Quest Icon -->
-                                    <materialDesign:PackIcon Grid.Row="0"
-                                          Kind="{StaticResource DocumentIcon}"
-                                          Foreground="{StaticResource MediumTextBrush}"
-                                          Width="48" Height="48"
-                                          HorizontalAlignment="Center"
-                                          Margin="0,0,0,8"/>
-                                    
-                                    <!-- Quest Name -->
-                                    <TextBlock Grid.Row="1"
-                                               Text="{Binding DisplayName}"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource LightTextBrush}"
-                                               HorizontalAlignment="Center"
-                                               TextAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               TextWrapping="Wrap"
-                                               Margin="8,0"/>
-                                    
-                                    <!-- Quest Type Badge -->
-                                    <Border Grid.Row="2"
-                                            Background="{StaticResource DarkBorderBrush}"
-                                            CornerRadius="4"
-                                            Padding="8,4"
-                                            Margin="8"
-                                            HorizontalAlignment="Center">
-                                        <TextBlock Text="{Binding BlueprintType}"
-                                                   FontSize="10"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{StaticResource MediumTextBrush}"/>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                
-                <!-- Empty State -->
-                <StackPanel HorizontalAlignment="Center" 
-                            VerticalAlignment="Center"
-                            Visibility="{Binding CurrentProject.Quests.Count, Converter={StaticResource CountToVisibilityConverter}}">
-                    <TextBlock Text="📋" 
-                               FontSize="64" 
-                               HorizontalAlignment="Center" 
-                               Opacity="0.3"
-                               Margin="0,0,0,16"/>
-                    <TextBlock Text="No quests in your project" 
-                               HorizontalAlignment="Center" 
-                               FontStyle="Italic" 
-                               Foreground="{StaticResource DimTextBrush}"
-                               FontSize="14"/>
-                    <TextBlock Text="Right-click in the workspace and select New → Quest to create a new quest" 
-                               HorizontalAlignment="Center" 
-                               FontSize="11" 
-                               Foreground="{StaticResource DimTextBrush}"
-                               Margin="0,8,0,0"/>
+
+        <!-- Toolbar / Breadcrumb -->
+        <Border Grid.Row="0"
+                Background="{StaticResource DarkPanelBrush}"
+                BorderBrush="{StaticResource DarkBorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <ScrollViewer Grid.Column="1"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Hidden"
+                              Background="Transparent">
+                    <ItemsControl ItemsSource="{Binding WorkspaceViewModel.Breadcrumb}"
+                                  AlternationCount="1000">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:ModFolder}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="{Binding Name}"
+                                            Style="{StaticResource IconButtonStyle}"
+                                            Padding="6,2"
+                                            Margin="0,0,4,0"
+                                            Click="BreadcrumbButton_Click"
+                                            AllowDrop="True"
+                                            DragOver="BreadcrumbButton_DragOver"
+                                            Drop="BreadcrumbButton_Drop"
+                                            DragEnter="BreadcrumbButton_DragEnter"
+                                            DragLeave="BreadcrumbButton_DragLeave"/>
+                                    <TextBlock Text=">"
+                                               Foreground="{StaticResource DimTextBrush}"
+                                               Margin="0,0,4,0">
+                                        <TextBlock.Visibility>
+                                            <MultiBinding Converter="{StaticResource BreadcrumbSeparatorVisibilityConverter}">
+                                                <Binding RelativeSource="{RelativeSource AncestorType=ContentPresenter}" Path="(ItemsControl.AlternationIndex)"/>
+                                                <Binding RelativeSource="{RelativeSource AncestorType=ItemsControl}" Path="Items.Count"/>
+                                            </MultiBinding>
+                                        </TextBlock.Visibility>
+                                    </TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Up"
+                            Style="{StaticResource IconButtonStyle}"
+                            Click="NavigateUp_Click"
+                            AllowDrop="True"
+                            DragOver="UpButton_DragOver"
+                            Drop="UpButton_Drop"
+                            DragEnter="UpButton_DragEnter"
+                            DragLeave="UpButton_DragLeave"/>
                 </StackPanel>
             </Grid>
+        </Border>
+
+        <!-- Workspace Content -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Background="{StaticResource DarkBackgroundBrush}">
+            <ItemsControl ItemsSource="{Binding WorkspaceViewModel.CurrentTiles}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
         </ScrollViewer>
     </Grid>
 </UserControl>

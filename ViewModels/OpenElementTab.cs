@@ -10,9 +10,13 @@ namespace Schedule1ModdingTool.ViewModels
     {
         private bool _isSelected;
 
-        public QuestBlueprint Quest { get; set; }
-        public string Title => Quest?.DisplayName ?? "Untitled";
-        public string TabId => $"Quest_{Quest?.QuestId ?? "Unknown"}";
+        public QuestBlueprint? Quest { get; set; }
+        public NpcBlueprint? Npc { get; set; }
+
+        public string Title => Quest?.DisplayName ?? Npc?.DisplayName ?? "Untitled";
+        public string TabId => Quest != null
+            ? $"Quest_{Quest.QuestId ?? "Unknown"}"
+            : $"Npc_{Npc?.NpcId ?? "Unknown"}";
 
         public bool IsSelected
         {

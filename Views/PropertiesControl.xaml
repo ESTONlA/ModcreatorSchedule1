@@ -57,6 +57,30 @@
                               Margin="0,2"
                               Foreground="{StaticResource LightTextBrush}"/>
                     
+                    <StackPanel Margin="0,4,0,2" Visibility="{Binding SelectedQuest.CustomIcon, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Label Content="Icon Resource:" Style="{StaticResource LabelStyle}" FontSize="10"/>
+                        <ComboBox ItemsSource="{Binding CurrentProject.Resources}"
+                                  SelectedValuePath="RelativePath"
+                                  SelectedValue="{Binding SelectedQuest.IconFileName}"
+                                  FontSize="10"
+                                  Margin="0,2,0,0"
+                                  Background="{StaticResource DarkPanelBrush}"
+                                  Foreground="{StaticResource LightTextBrush}"
+                                  BorderBrush="{StaticResource DarkBorderBrush}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" ToolTip="{Binding RelativePath}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{Binding SelectedQuest.IconFileName, StringFormat='Resource: {0}'}"
+                                   FontSize="9"
+                                   Foreground="{StaticResource DimTextBrush}"
+                                   Margin="0,2,0,0"
+                                   TextWrapping="Wrap"
+                                   Visibility="{Binding SelectedQuest.IconFileName, Converter={StaticResource StringToVisibilityConverter}}"/>
+                    </StackPanel>
+                    
                     <CheckBox Content="Quest Rewards" 
                               IsChecked="{Binding SelectedQuest.QuestRewards}" 
                               Margin="0,2"
@@ -89,7 +113,7 @@
                                         BorderThickness="1" 
                                         CornerRadius="3" 
                                         Margin="0,2" 
-                                        Padding="6">
+                                        Padding="8">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -103,36 +127,59 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <!-- Objective Name -->
-                                        <StackPanel Grid.Row="0" Grid.Column="0">
-                                            <Label Content="Name:" Style="{StaticResource LabelStyle}" FontSize="10"/>
-                                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource TextBoxStyle}" FontSize="10"/>
-                                        </StackPanel>
-                                        
-                                        <!-- Remove Button -->
-                                        <Button Grid.Row="0" Grid.Column="1" 
-                                                Click="RemoveObjective_Click"
-                                                Style="{StaticResource IconButtonStyle}"
-                                                VerticalAlignment="Top"
-                                                Width="24" Height="24"
-                                                ToolTip="Remove Objective">
-                                            <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}"
-                                                  Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
-                                                  Width="16" Height="16"/>
-                                        </Button>
+                                        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <StackPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="0,0,4,0">
+                                                <Label Content="Name:" Style="{StaticResource LabelStyle}" FontSize="10"/>
+                                                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource TextBoxStyle}" 
+                                                         FontSize="10"
+                                                         MinWidth="0"
+                                                         TextWrapping="NoWrap"
+                                                         HorizontalScrollBarVisibility="Auto"
+                                                         VerticalScrollBarVisibility="Disabled"/>
+                                            </StackPanel>
+                                            <Button Grid.Row="1" Grid.Column="1" 
+                                                    Click="RemoveObjective_Click"
+                                                    Style="{StaticResource IconButtonStyle}"
+                                                    VerticalAlignment="Top"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="0,0,0,0"
+                                                    Width="24" Height="24"
+                                                    Padding="4"
+                                                    ToolTip="Remove Objective">
+                                                <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}"
+                                                      Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                                      Width="16" Height="16"/>
+                                            </Button>
+                                        </Grid>
                                         
                                         <!-- Objective Title -->
-                                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,4">
                                             <Label Content="Title:" Style="{StaticResource LabelStyle}" FontSize="10"/>
                                             <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource TextBoxStyle}" FontSize="10"/>
+                                                     Style="{StaticResource TextBoxStyle}" 
+                                                     FontSize="10"
+                                                     MinWidth="0"
+                                                     TextWrapping="NoWrap"
+                                                     HorizontalScrollBarVisibility="Auto"
+                                                     VerticalScrollBarVisibility="Disabled"/>
                                         </StackPanel>
                                         
                                         <!-- Required Progress -->
-                                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+                                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,4">
                                             <Label Content="Required Progress:" Style="{StaticResource LabelStyle}" FontSize="10"/>
                                             <TextBox Text="{Binding RequiredProgress, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource TextBoxStyle}" FontSize="10"/>
+                                                     Style="{StaticResource TextBoxStyle}" 
+                                                     FontSize="10"
+                                                     MinWidth="0"/>
                                         </StackPanel>
                                         
                                         <!-- Location Settings -->
@@ -142,29 +189,37 @@
                                                       FontSize="10" Margin="0,4,0,2"
                                                       Foreground="{StaticResource LightTextBrush}"/>
                                             
-                                            <Grid Visibility="{Binding HasLocation, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Grid Visibility="{Binding HasLocation, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,4,0,0">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="4"/>
                                                     <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="4"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 
-                                                <StackPanel Grid.Column="0" Margin="0,0,2,0">
+                                                <StackPanel Grid.Column="0">
                                                     <Label Content="X:" Style="{StaticResource LabelStyle}" FontSize="9"/>
                                                     <TextBox Text="{Binding LocationX, UpdateSourceTrigger=PropertyChanged}" 
-                                                             Style="{StaticResource TextBoxStyle}" FontSize="9"/>
+                                                             Style="{StaticResource TextBoxStyle}" 
+                                                             FontSize="9"
+                                                             MinWidth="0"/>
                                                 </StackPanel>
                                                 
-                                                <StackPanel Grid.Column="1" Margin="2,0">
+                                                <StackPanel Grid.Column="2">
                                                     <Label Content="Y:" Style="{StaticResource LabelStyle}" FontSize="9"/>
                                                     <TextBox Text="{Binding LocationY, UpdateSourceTrigger=PropertyChanged}" 
-                                                             Style="{StaticResource TextBoxStyle}" FontSize="9"/>
+                                                             Style="{StaticResource TextBoxStyle}" 
+                                                             FontSize="9"
+                                                             MinWidth="0"/>
                                                 </StackPanel>
                                                 
-                                                <StackPanel Grid.Column="2" Margin="2,0,0,0">
+                                                <StackPanel Grid.Column="4">
                                                     <Label Content="Z:" Style="{StaticResource LabelStyle}" FontSize="9"/>
                                                     <TextBox Text="{Binding LocationZ, UpdateSourceTrigger=PropertyChanged}" 
-                                                             Style="{StaticResource TextBoxStyle}" FontSize="9"/>
+                                                             Style="{StaticResource TextBoxStyle}" 
+                                                             FontSize="9"
+                                                             MinWidth="0"/>
                                                 </StackPanel>
                                             </Grid>
                                         </StackPanel>
@@ -173,77 +228,6 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </StackPanel>
-            </Border>
-            
-            <!-- Build Actions -->
-            <Border Background="{StaticResource AccentOrangeBrush}" BorderBrush="{StaticResource AccentOrangeSelectedBrush}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,8" Opacity="0.8">
-                <StackPanel Margin="8">
-                    <TextBlock Text="Build &amp; Export" FontWeight="Bold" FontSize="14" Margin="0,0,0,8" Foreground="White"/>
-                    
-                    <Button Content="Export Mod Project" 
-                            Command="{Binding ExportModProjectCommand}" 
-                            Margin="0,2"
-                            Background="{StaticResource DarkPanelBrush}"
-                            Foreground="White"
-                            Padding="8,4"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            FontWeight="SemiBold">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    CornerRadius="3"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{StaticResource AccentOrangeHoverBrush}"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    
-                    <Button Content="Build Mod" 
-                            Command="{Binding BuildModCommand}" 
-                            Margin="0,2"
-                            Background="{StaticResource DarkPanelBrush}"
-                            Foreground="White"
-                            Padding="8,4"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            FontWeight="SemiBold">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    CornerRadius="3"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{StaticResource AccentOrangeHoverBrush}"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
                 </StackPanel>
             </Border>
         </StackPanel>

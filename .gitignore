@@ -367,8 +367,9 @@ FodyWeavers.xsd
 .embeddings_cache.json
 
 AGENTS.md
-BarsNPCs/
 docs/
-MyFirstMod/
-S1API/
+BarsNPCs/
+CustomNPCTest/
 S1NotesApp/
+S1API/
+MyFirstMod/

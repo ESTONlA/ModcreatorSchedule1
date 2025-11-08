@@ -11,9 +11,22 @@ namespace Schedule1ModdingTool.Views
     /// </summary>
     public partial class QuestItemsView : UserControl
     {
+        private readonly System.Windows.Threading.DispatcherTimer _doubleClickTimer;
+        private QuestBlueprint? _lastClickedQuest;
+        private const int DoubleClickDelay = 300;
+
         public QuestItemsView()
         {
             InitializeComponent();
+            _doubleClickTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = System.TimeSpan.FromMilliseconds(DoubleClickDelay)
+            };
+            _doubleClickTimer.Tick += (_, _) =>
+            {
+                _doubleClickTimer.Stop();
+                _lastClickedQuest = null;
+            };
         }
 
         private void BackToCategories_Click(object sender, RoutedEventArgs e)
@@ -33,6 +46,18 @@ namespace Schedule1ModdingTool.Views
                 if (mainWindow?.DataContext is MainViewModel vm)
                 {
                     vm.SelectedQuest = quest;
+
+                    if (_lastClickedQuest == quest && _doubleClickTimer.IsEnabled)
+                    {
+                        _doubleClickTimer.Stop();
+                        _lastClickedQuest = null;
+                        vm.OpenQuestInTab(quest);
+                    }
+                    else
+                    {
+                        _lastClickedQuest = quest;
+                        _doubleClickTimer.Start();
+                    }
                 }
             }
         }

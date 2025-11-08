@@ -17,6 +17,7 @@ namespace Schedule1ModdingTool.Models
         private string _questDescription = "";
         private bool _autoBegin = true;
         private bool _customIcon = false;
+        private string _iconFileName = string.Empty;
         private bool _questRewards = true;
         private bool _generateDataClass = false;
         private QuestBlueprintType _blueprintType = QuestBlueprintType.Standard;
@@ -27,6 +28,7 @@ namespace Schedule1ModdingTool.Models
         private string _gameDeveloper = "TVGS";
         private string _gameName = "Schedule I";
         private QuestStartCondition _startCondition = new QuestStartCondition();
+        private string _folderId = QuestProject.RootFolderId;
 
         [Required(ErrorMessage = "Class name is required")]
         [JsonProperty("className")]
@@ -119,6 +121,13 @@ namespace Schedule1ModdingTool.Models
             set => SetProperty(ref _customIcon, value);
         }
 
+        [JsonProperty("iconFileName")]
+        public string IconFileName
+        {
+            get => _iconFileName;
+            set => SetProperty(ref _iconFileName, value);
+        }
+
         [JsonProperty("questRewards")]
         public bool QuestRewards
         {
@@ -148,6 +157,13 @@ namespace Schedule1ModdingTool.Models
         {
             get => _startCondition;
             set => SetProperty(ref _startCondition, value);
+        }
+
+        [JsonProperty("folderId")]
+        public string FolderId
+        {
+            get => _folderId;
+            set => SetProperty(ref _folderId, string.IsNullOrWhiteSpace(value) ? QuestProject.RootFolderId : value);
         }
 
         [JsonIgnore]
@@ -197,6 +213,7 @@ namespace Schedule1ModdingTool.Models
             QuestDescription = source.QuestDescription;
             AutoBegin = source.AutoBegin;
             CustomIcon = source.CustomIcon;
+            IconFileName = source.IconFileName;
             QuestRewards = source.QuestRewards;
             GenerateDataClass = source.GenerateDataClass;
             BlueprintType = source.BlueprintType;
@@ -206,6 +223,7 @@ namespace Schedule1ModdingTool.Models
             ModAuthor = source.ModAuthor;
             GameDeveloper = source.GameDeveloper;
             GameName = source.GameName;
+            FolderId = source.FolderId;
             StartCondition = source.StartCondition != null ? new QuestStartCondition
             {
                 TriggerType = source.StartCondition.TriggerType,

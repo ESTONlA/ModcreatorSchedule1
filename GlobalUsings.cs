@@ -1,0 +1,10 @@
+global using UserControl = System.Windows.Controls.UserControl;
+global using Application = System.Windows.Application;
+global using MessageBox = System.Windows.MessageBox;
+global using Clipboard = System.Windows.Clipboard;
+global using Button = System.Windows.Controls.Button;
+global using DragDropEffects = System.Windows.DragDropEffects;
+global using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+global using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
+global using Binding = System.Windows.Data.Binding;
+global using MultiBinding = System.Windows.Data.MultiBinding;

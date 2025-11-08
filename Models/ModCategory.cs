@@ -23,6 +23,7 @@ namespace Schedule1ModdingTool.Models
         public string DisplayName { get; set; } = "";
         public string IconKey { get; set; } = "";
         public string Description { get; set; } = "";
+        public string ClassName { get; set; } = "";
         public bool IsEnabled
         {
             get => _isEnabled;

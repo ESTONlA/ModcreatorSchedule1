@@ -27,6 +27,9 @@
             <utils:CountToVisibilityInverseConverter x:Key="CountToVisibilityInverseConverter"/>
             <utils:BooleanToTabForegroundConverter x:Key="BooleanToTabForegroundConverter"/>
             <utils:BooleanToGridLengthConverter x:Key="BooleanToGridLengthConverter"/>
+            <utils:ColorHexToBrushConverter x:Key="ColorHexToBrushConverter"/>
+            <utils:RelativeResourcePathConverter x:Key="RelativeResourcePathConverter"/>
+            <utils:BreadcrumbSeparatorVisibilityConverter x:Key="BreadcrumbSeparatorVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

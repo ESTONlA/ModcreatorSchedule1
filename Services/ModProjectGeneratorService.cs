@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Schedule1ModdingTool.Models;
 
 namespace Schedule1ModdingTool.Services
@@ -37,7 +38,9 @@ namespace Schedule1ModdingTool.Services
                 // Create directory structure
                 Directory.CreateDirectory(modPath);
                 Directory.CreateDirectory(Path.Combine(modPath, "Quests"));
+                Directory.CreateDirectory(Path.Combine(modPath, "NPCs"));
                 Directory.CreateDirectory(Path.Combine(modPath, "Utils"));
+                Directory.CreateDirectory(Path.Combine(modPath, "Resources"));
 
                 // Get mod metadata from first quest or defaults
                 var firstQuest = project.Quests.FirstOrDefault();
@@ -51,7 +54,7 @@ namespace Schedule1ModdingTool.Services
                 var gameName = firstQuest?.GameName ?? "Schedule I";
 
                 // Generate .csproj file
-                GenerateCsprojFile(modPath, modName, result, settings);
+                GenerateCsprojFile(modPath, modName, project.Resources, result, settings);
 
                 // Generate .sln file
                 GenerateSolutionFile(modPath, modName, result);
@@ -68,6 +71,14 @@ namespace Schedule1ModdingTool.Services
                     GenerateQuestFile(modPath, quest, result);
                 }
 
+                // Generate NPC files
+                foreach (var npc in project.Npcs)
+                {
+                    GenerateNpcFile(modPath, npc, result);
+                }
+
+                CopyResources(project, modPath, result);
+
                 result.Success = true;
                 result.OutputPath = modPath;
             }
@@ -80,7 +91,7 @@ namespace Schedule1ModdingTool.Services
             return result;
         }
 
-        private void GenerateCsprojFile(string modPath, string modName, ModProjectGenerationResult result, ModSettings? settings = null)
+        private void GenerateCsprojFile(string modPath, string modName, IEnumerable<ResourceAsset> resources, ModProjectGenerationResult result, ModSettings? settings = null)
         {
             var csprojPath = Path.Combine(modPath, $"{modName}.csproj");
             var sb = new StringBuilder();
@@ -163,7 +174,21 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("    <Compile Include=\"Core.cs\" />");
             sb.AppendLine("    <Compile Include=\"Utils\\Constants.cs\" />");
             sb.AppendLine("    <Compile Include=\"Quests\\*.cs\" />");
+            sb.AppendLine("    <Compile Include=\"NPCs\\*.cs\" />");
             sb.AppendLine("  </ItemGroup>");
+            if (resources != null && resources.Any())
+            {
+                sb.AppendLine();
+                sb.AppendLine("  <ItemGroup>");
+                foreach (var resource in resources)
+                {
+                    var relative = (resource.RelativePath ?? string.Empty).Replace('/', '\\');
+                    if (string.IsNullOrWhiteSpace(relative))
+                        continue;
+                    sb.AppendLine($"    <EmbeddedResource Include=\"{relative}\" />");
+                }
+                sb.AppendLine("  </ItemGroup>");
+            }
             sb.AppendLine("</Project>");
 
             File.WriteAllText(csprojPath, sb.ToString());
@@ -427,6 +452,127 @@ namespace Schedule1ModdingTool.Services
             result.GeneratedFiles.Add(questPath);
         }
 
+        private void GenerateNpcFile(string modPath, NpcBlueprint npc, ModProjectGenerationResult result)
+        {
+            var npcCode = _codeGenService.GenerateNpcCode(npc);
+            var className = MakeSafeIdentifier(npc.ClassName, "GeneratedNpc");
+            var npcPath = Path.Combine(modPath, "NPCs", $"{className}.cs");
+
+            File.WriteAllText(npcPath, npcCode);
+            result.GeneratedFiles.Add(npcPath);
+        }
+
+        private void CopyResources(QuestProject project, string modPath, ModProjectGenerationResult result)
+        {
+            if (project.Resources == null || project.Resources.Count == 0)
+                return;
+
+            if (string.IsNullOrWhiteSpace(project.FilePath))
+                return;
+
+            var projectDir = Path.GetDirectoryName(project.FilePath);
+            if (string.IsNullOrWhiteSpace(projectDir))
+                return;
+
+            foreach (var asset in project.Resources)
+            {
+                var relative = asset.RelativePath;
+                if (string.IsNullOrWhiteSpace(relative))
+                    continue;
+
+                var source = Path.Combine(projectDir, relative.Replace('/', Path.DirectorySeparatorChar));
+                if (!File.Exists(source))
+                {
+                    result.Errors.Add($"Resource file not found: {relative}");
+                    continue;
+                }
+
+                var destination = Path.Combine(modPath, relative.Replace('/', Path.DirectorySeparatorChar));
+                var destinationDir = Path.GetDirectoryName(destination);
+                if (!string.IsNullOrEmpty(destinationDir))
+                {
+                    Directory.CreateDirectory(destinationDir);
+                }
+
+                if (!TryCopyFileWithRetry(source, destination, result, relative))
+                {
+                    result.Errors.Add($"Failed to copy resource after retries: {relative}. The file may be locked by another process. Please close any applications using this file and try again.");
+                }
+                else
+                {
+                    result.GeneratedFiles.Add(destination);
+                }
+            }
+        }
+
+        private static bool TryCopyFileWithRetry(string source, string destination, ModProjectGenerationResult result, string relativePath, int maxRetries = 3)
+        {
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    // If destination exists and is locked, try to delete it first
+                    if (File.Exists(destination))
+                    {
+                        try
+                        {
+                            File.Delete(destination);
+                        }
+                        catch (IOException)
+                        {
+                            // Destination file is locked, wait and retry
+                            if (attempt < maxRetries)
+                            {
+                                Thread.Sleep(100 * attempt); // Exponential backoff: 100ms, 200ms, 300ms
+                                continue;
+                            }
+                            return false;
+                        }
+                    }
+
+                    // Use ReadAllBytes/WriteAllBytes instead of File.Copy to minimize file handle hold time
+                    // This opens and closes the file quickly rather than keeping it open during copy
+                    byte[] fileData;
+                    try
+                    {
+                        fileData = File.ReadAllBytes(source);
+                    }
+                    catch (IOException ex) when (ex.Message.Contains("being used by another process") || ex.Message.Contains("cannot access"))
+                    {
+                        if (attempt < maxRetries)
+                        {
+                            result.Errors.Add($"Resource file locked (attempt {attempt}/{maxRetries}): {relativePath}. Retrying...");
+                            Thread.Sleep(100 * attempt); // Exponential backoff: 100ms, 200ms, 300ms
+                            continue;
+                        }
+                        result.Errors.Add($"Resource file locked after {maxRetries} attempts: {relativePath}");
+                        return false;
+                    }
+
+                    File.WriteAllBytes(destination, fileData);
+                    return true;
+                }
+                catch (IOException ex) when (ex.Message.Contains("being used by another process") || ex.Message.Contains("cannot access"))
+                {
+                    if (attempt < maxRetries)
+                    {
+                        result.Errors.Add($"Resource file locked (attempt {attempt}/{maxRetries}): {relativePath}. Retrying...");
+                        Thread.Sleep(100 * attempt); // Exponential backoff: 100ms, 200ms, 300ms
+                        continue;
+                    }
+                    result.Errors.Add($"Resource file locked after {maxRetries} attempts: {relativePath}");
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    result.Errors.Add($"Error copying resource {relativePath}: {ex.Message}");
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
         private static string MakeSafeIdentifier(string? candidate, string fallback)
         {
             if (string.IsNullOrWhiteSpace(candidate))
@@ -484,6 +630,7 @@ namespace Schedule1ModdingTool.Services
         public string? ErrorMessage { get; set; }
         public string? OutputPath { get; set; }
         public List<string> GeneratedFiles { get; } = new List<string>();
+        public List<string> Errors { get; } = new List<string>();
     }
 }
 
