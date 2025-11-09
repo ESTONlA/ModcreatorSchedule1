@@ -143,6 +143,9 @@ namespace Schedule1ModdingTool.Services
             // Generate OnCreated() override instead of ConfigureQuest()
             AppendOnCreatedMethod(sb, quest);
 
+            // Generate OnLoaded() override to rebuild entries after loading
+            AppendOnLoadedMethod(sb, quest);
+
             if (quest.QuestRewards)
             {
                 AppendRewardStub(sb);
@@ -318,10 +321,20 @@ namespace Schedule1ModdingTool.Services
         {
             sb.AppendLine("        /// <summary>");
             sb.AppendLine("        /// Called when the quest is created. Sets up objectives, POI positions, and activates entries.");
+            sb.AppendLine("        /// Only creates entries if they don't already exist (e.g., from save data).");
             sb.AppendLine("        /// </summary>");
             sb.AppendLine("        protected override void OnCreated()");
             sb.AppendLine("        {");
             sb.AppendLine("            base.OnCreated();");
+            sb.AppendLine();
+
+            sb.AppendLine("            // Skip entry creation if quest was loaded from save data");
+            sb.AppendLine("            if (QuestEntries.Count > 0)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                // Quest entries already exist (loaded from save), just subscribe to triggers");
+            sb.AppendLine("                SubscribeToTriggers();");
+            sb.AppendLine("                return;");
+            sb.AppendLine("            }");
             sb.AppendLine();
 
             if (quest.Objectives?.Any() != true)
@@ -369,58 +382,66 @@ namespace Schedule1ModdingTool.Services
                 }
             }
 
-            // Check if we have NPC triggers that need delayed subscription
-            var hasNpcTriggers = HasNpcTriggers(quest);
-            
-            if (hasNpcTriggers)
-            {
-                // NPCs aren't available in OnCreated(), so delay subscription
-                // Use a coroutine to wait a bit for NPCs to spawn, then subscribe
-                sb.AppendLine("            // NPCs may not be available yet, delay subscription");
-                sb.AppendLine("            MelonCoroutines.Start(DelayedTriggerSubscription());");
-            }
-            else
-            {
-                // No NPC triggers, can subscribe immediately
-                sb.AppendLine("            SubscribeToTriggers();");
-            }
-            sb.AppendLine("        }");
-            sb.AppendLine();
-            
-            // Add delayed subscription coroutine if we have NPC triggers
-            if (hasNpcTriggers)
-            {
-                sb.AppendLine("        /// <summary>");
-                sb.AppendLine("        /// Delays trigger subscription to ensure NPCs are available.");
-                sb.AppendLine("        /// Waits for NPCs to spawn before subscribing to their events.");
-                sb.AppendLine("        /// </summary>");
-                sb.AppendLine("        private IEnumerator DelayedTriggerSubscription()");
-                sb.AppendLine("        {");
-                sb.AppendLine("            // Wait for NPCs to be available (check every 0.5s, up to 30 seconds)");
-                sb.AppendLine("            float timeout = 30f;");
-                sb.AppendLine("            float waited = 0f;");
-                sb.AppendLine("            float checkInterval = 0.5f;");
-                sb.AppendLine();
-                sb.AppendLine("            while (waited < timeout)");
-                sb.AppendLine("            {");
-                sb.AppendLine("                // Check if any NPCs are available");
-                sb.AppendLine("                if (NPC.All != null && NPC.All.Count > 0)");
-                sb.AppendLine("                {");
-                sb.AppendLine("                    MelonLogger.Msg($\"[Quest] NPCs available after {waited:F1}s, subscribing to triggers\");");
-                sb.AppendLine("                    SubscribeToTriggers();");
-                sb.AppendLine("                    yield break;");
-                sb.AppendLine("                }");
-                sb.AppendLine();
-                sb.AppendLine("                yield return new WaitForSeconds(checkInterval);");
-                sb.AppendLine("                waited += checkInterval;");
-                sb.AppendLine("            }");
-                sb.AppendLine();
-                sb.AppendLine("            // Timeout reached, try subscribing anyway (retry logic will handle it)");
-                sb.AppendLine("            MelonLogger.Warning($\"[Quest] NPC availability timeout after {timeout}s, attempting subscription anyway\");");
             sb.AppendLine("            SubscribeToTriggers();");
             sb.AppendLine("        }");
             sb.AppendLine();
+        }
+
+        private static void AppendOnLoadedMethod(StringBuilder sb, QuestBlueprint quest)
+        {
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// Called after quest data has been loaded from save files.");
+            sb.AppendLine("        /// Rebuilds quest entries if they were cleared during load.");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        protected override void OnLoaded()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            base.OnLoaded();");
+            sb.AppendLine();
+
+            if (quest.Objectives?.Any() != true)
+            {
+                sb.AppendLine("            // No objectives defined, nothing to rebuild");
             }
+            else
+            {
+                sb.AppendLine("            // Rebuild entries if they were cleared during load");
+                sb.AppendLine("            if (QuestEntries.Count == 0)");
+                sb.AppendLine("            {");
+                
+                var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                int index = 0;
+                foreach (var objective in quest.Objectives)
+                {
+                    index++;
+                    var safeVariable = EnsureUniqueIdentifier(
+                        MakeSafeIdentifier(objective.Name, $"objective{index}"),
+                        usedNames,
+                        index);
+
+                    sb.AppendLine($"                // Rebuild objective \"{EscapeString(objective.Title)}\" ({objective.Name})");
+                    
+                    // Create entry
+                    sb.AppendLine($"                {safeVariable} = AddEntry(\"{EscapeString(objective.Title)}\");");
+                    
+                    // Set POI position if objective has a location
+                    if (objective.HasLocation)
+                    {
+                        sb.AppendLine($"                {safeVariable}.POIPosition = {FormatVector(objective)};");
+                    }
+
+                    // Don't call Begin() here - let the loaded quest state determine entry states
+                    // The base game quest loader will restore entry states from save data
+                    sb.AppendLine($"                // Entry state will be restored from save data by the base game loader");
+                    sb.AppendLine();
+                }
+                
+                sb.AppendLine("                // Re-subscribe to triggers after rebuilding entries");
+                sb.AppendLine("                SubscribeToTriggers();");
+                sb.AppendLine("            }");
+            }
+
+            sb.AppendLine("        }");
+            sb.AppendLine();
         }
 
         private static void AppendRewardStub(StringBuilder sb)
@@ -697,30 +718,6 @@ namespace Schedule1ModdingTool.Services
             return uniqueName;
         }
 
-        private static bool HasNpcTriggers(QuestBlueprint quest)
-        {
-            // Check quest start triggers
-            if (quest.QuestTriggers?.Any(t => t.TriggerType == QuestTriggerType.NPCEventTrigger && 
-                                             t.TriggerTarget == QuestTriggerTarget.QuestStart && 
-                                             !string.IsNullOrWhiteSpace(t.TargetNpcId)) == true)
-                return true;
-
-            // Check quest finish triggers
-            if (quest.QuestFinishTriggers?.Any(t => t.TriggerType == QuestTriggerType.NPCEventTrigger && 
-                                                    !string.IsNullOrWhiteSpace(t.TargetNpcId)) == true)
-                return true;
-
-            // Check objective triggers
-            if (quest.Objectives?.Any(o => 
-                (o.StartTriggers?.Any(t => t.TriggerType == QuestTriggerType.NPCEventTrigger && 
-                                          !string.IsNullOrWhiteSpace(t.TargetNpcId)) == true) ||
-                (o.FinishTriggers?.Any(t => t.TriggerType == QuestTriggerType.NPCEventTrigger && 
-                                           !string.IsNullOrWhiteSpace(t.TargetNpcId)) == true)) == true)
-                return true;
-
-            return false;
-        }
-
         private static void AppendTriggerSubscriptions(StringBuilder sb, QuestBlueprint quest, string className)
         {
             var questId = string.IsNullOrWhiteSpace(quest.QuestId) ? className : quest.QuestId.Trim();
@@ -729,14 +726,9 @@ namespace Schedule1ModdingTool.Services
                              (quest.Objectives?.Any(o => o.StartTriggers?.Any() == true || o.FinishTriggers?.Any() == true) == true);
 
             var handlerMap = BuildHandlerMap(quest);
-            var hasNpcTriggers = HasNpcTriggers(quest);
 
             sb.AppendLine("        /// <summary>");
             sb.AppendLine("        /// Subscribes to triggers for this quest and its objectives.");
-            if (hasNpcTriggers)
-            {
-                sb.AppendLine("        /// Called when the quest begins (via onQuestBegin) to ensure NPCs are available.");
-            }
             sb.AppendLine("        /// </summary>");
             sb.AppendLine("        private void SubscribeToTriggers()");
             sb.AppendLine("        {");
@@ -829,168 +821,6 @@ namespace Schedule1ModdingTool.Services
                 }
             }
 
-            sb.AppendLine("        }");
-            sb.AppendLine();
-            
-            // Add retry helper methods if we have NPC triggers
-            if (hasNpcTriggers)
-            {
-                AppendNpcRetryHelpers(sb);
-            }
-        }
-
-        private static void AppendNpcRetryHelpers(StringBuilder sb)
-        {
-            sb.AppendLine("        /// <summary>");
-            sb.AppendLine("        /// Retries subscribing to an NPC trigger if the NPC wasn't found immediately.");
-            sb.AppendLine("        /// Keeps retrying indefinitely until the NPC is found.");
-            sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        private IEnumerator SubscribeToNpcTriggerWithRetry(string npcId, string componentType, string eventName, Action handler)");
-            sb.AppendLine("        {");
-            sb.AppendLine("            float retryDelay = 0.5f;");
-            sb.AppendLine("            int attemptCount = 0;");
-            sb.AppendLine();
-            sb.AppendLine("            while (true)");
-            sb.AppendLine("            {");
-            sb.AppendLine("                attemptCount++;");
-            sb.AppendLine("                var npc = NPC.All.FirstOrDefault(n => n.ID == npcId);");
-            sb.AppendLine("                if (npc != null)");
-            sb.AppendLine("                {");
-            sb.AppendLine("                    // Subscribe using the same pattern as SubscribeToTriggers()");
-            sb.AppendLine("                    if (componentType == \"NPCCustomer\")");
-            sb.AppendLine("                    {");
-            sb.AppendLine("                        switch (eventName)");
-            sb.AppendLine("                        {");
-            sb.AppendLine("                            case \"OnDealCompleted\":");
-            sb.AppendLine("                                npc.Customer.OnDealCompleted -= handler;");
-            sb.AppendLine("                                npc.Customer.OnDealCompleted += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                            case \"OnUnlocked\":");
-            sb.AppendLine("                                npc.Customer.OnUnlocked -= handler;");
-            sb.AppendLine("                                npc.Customer.OnUnlocked += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                            case \"OnContractAssigned\":");
-            sb.AppendLine("                                // OnContractAssigned has parameters, cannot use simple Action");
-            sb.AppendLine("                                MelonLogger.Warning($\"[Quest] OnContractAssigned requires Action<float, int, int, int>, cannot retry subscribe\");");
-            sb.AppendLine("                                yield break;");
-            sb.AppendLine("                        }");
-            sb.AppendLine("                    }");
-            sb.AppendLine("                    else if (componentType == \"NPCDealer\")");
-            sb.AppendLine("                    {");
-            sb.AppendLine("                        switch (eventName)");
-            sb.AppendLine("                        {");
-            sb.AppendLine("                            case \"OnRecruited\":");
-            sb.AppendLine("                                npc.Dealer.OnRecruited -= handler;");
-            sb.AppendLine("                                npc.Dealer.OnRecruited += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                            case \"OnContractAccepted\":");
-            sb.AppendLine("                                npc.Dealer.OnContractAccepted -= handler;");
-            sb.AppendLine("                                npc.Dealer.OnContractAccepted += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                        }");
-            sb.AppendLine("                    }");
-            sb.AppendLine("                    else");
-            sb.AppendLine("                    {");
-            sb.AppendLine("                        // Direct NPC events");
-            sb.AppendLine("                        switch (eventName)");
-            sb.AppendLine("                        {");
-            sb.AppendLine("                            case \"OnDeath\":");
-            sb.AppendLine("                                npc.OnDeath -= handler;");
-            sb.AppendLine("                                npc.OnDeath += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                            case \"OnInventoryChanged\":");
-            sb.AppendLine("                                npc.OnInventoryChanged -= handler;");
-            sb.AppendLine("                                npc.OnInventoryChanged += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                        }");
-            sb.AppendLine("                    }");
-            sb.AppendLine();
-            sb.AppendLine("                    MelonLogger.Msg($\"[Quest] Successfully subscribed to NPC trigger '{npcId}.{componentType}.{eventName}' after {attemptCount} attempts\");");
-            sb.AppendLine("                    yield break;");
-            sb.AppendLine("                }");
-            sb.AppendLine();
-            sb.AppendLine("                // Log every 10 attempts to avoid spam");
-            sb.AppendLine("                if (attemptCount % 10 == 0)");
-            sb.AppendLine("                {");
-            sb.AppendLine("                    MelonLogger.Msg($\"[Quest] Still waiting for NPC '{npcId}' to become available (attempt {attemptCount})...\");");
-            sb.AppendLine("                }");
-            sb.AppendLine();
-            sb.AppendLine("                yield return new WaitForSeconds(retryDelay);");
-            sb.AppendLine("            }");
-            sb.AppendLine("        }");
-            sb.AppendLine();
-            sb.AppendLine("        /// <summary>");
-            sb.AppendLine("        /// Retries subscribing to an NPC objective trigger if the NPC wasn't found immediately.");
-            sb.AppendLine("        /// Keeps retrying indefinitely until the NPC is found.");
-            sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        private IEnumerator SubscribeToNpcObjectiveTriggerWithRetry(string npcId, string componentType, string eventName, QuestEntry entry, Action handler)");
-            sb.AppendLine("        {");
-            sb.AppendLine("            float retryDelay = 0.5f;");
-            sb.AppendLine("            int attemptCount = 0;");
-            sb.AppendLine();
-            sb.AppendLine("            while (true)");
-            sb.AppendLine("            {");
-            sb.AppendLine("                attemptCount++;");
-            sb.AppendLine("                var npc = NPC.All.FirstOrDefault(n => n.ID == npcId);");
-            sb.AppendLine("                if (npc != null)");
-            sb.AppendLine("                {");
-            sb.AppendLine("                    // Subscribe using the same pattern as SubscribeToTriggers()");
-            sb.AppendLine("                    if (componentType == \"NPCCustomer\")");
-            sb.AppendLine("                    {");
-            sb.AppendLine("                        switch (eventName)");
-            sb.AppendLine("                        {");
-            sb.AppendLine("                            case \"OnDealCompleted\":");
-            sb.AppendLine("                                npc.Customer.OnDealCompleted -= handler;");
-            sb.AppendLine("                                npc.Customer.OnDealCompleted += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                            case \"OnUnlocked\":");
-            sb.AppendLine("                                npc.Customer.OnUnlocked -= handler;");
-            sb.AppendLine("                                npc.Customer.OnUnlocked += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                        }");
-            sb.AppendLine("                    }");
-            sb.AppendLine("                    else if (componentType == \"NPCDealer\")");
-            sb.AppendLine("                    {");
-            sb.AppendLine("                        switch (eventName)");
-            sb.AppendLine("                        {");
-            sb.AppendLine("                            case \"OnRecruited\":");
-            sb.AppendLine("                                npc.Dealer.OnRecruited -= handler;");
-            sb.AppendLine("                                npc.Dealer.OnRecruited += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                            case \"OnContractAccepted\":");
-            sb.AppendLine("                                npc.Dealer.OnContractAccepted -= handler;");
-            sb.AppendLine("                                npc.Dealer.OnContractAccepted += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                        }");
-            sb.AppendLine("                    }");
-            sb.AppendLine("                    else");
-            sb.AppendLine("                    {");
-            sb.AppendLine("                        // Direct NPC events");
-            sb.AppendLine("                        switch (eventName)");
-            sb.AppendLine("                        {");
-            sb.AppendLine("                            case \"OnDeath\":");
-            sb.AppendLine("                                npc.OnDeath -= handler;");
-            sb.AppendLine("                                npc.OnDeath += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                            case \"OnInventoryChanged\":");
-            sb.AppendLine("                                npc.OnInventoryChanged -= handler;");
-            sb.AppendLine("                                npc.OnInventoryChanged += handler;");
-            sb.AppendLine("                                break;");
-            sb.AppendLine("                        }");
-            sb.AppendLine("                    }");
-            sb.AppendLine();
-            sb.AppendLine("                    MelonLogger.Msg($\"[Quest] Successfully subscribed to NPC objective trigger '{npcId}.{componentType}.{eventName}' after {attemptCount} attempts\");");
-            sb.AppendLine("                    yield break;");
-            sb.AppendLine("                }");
-            sb.AppendLine();
-            sb.AppendLine("                // Log every 10 attempts to avoid spam");
-            sb.AppendLine("                if (attemptCount % 10 == 0)");
-            sb.AppendLine("                {");
-            sb.AppendLine("                    MelonLogger.Msg($\"[Quest] Still waiting for NPC '{npcId}' to become available (attempt {attemptCount})...\");");
-            sb.AppendLine("                }");
-            sb.AppendLine();
-            sb.AppendLine("                yield return new WaitForSeconds(retryDelay);");
-            sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
         }
@@ -1137,7 +967,11 @@ namespace Schedule1ModdingTool.Services
                 }
 
                 sb.AppendLine($"                var npc = NPC.All.FirstOrDefault(n => n.ID == \"{npcId}\");");
-                sb.AppendLine("                if (npc != null)");
+                sb.AppendLine("                if (npc == null)");
+                sb.AppendLine("                {");
+                sb.AppendLine($"                    MelonLogger.Warning($\"[Quest] NPC '{npcId}' not found when subscribing to trigger '{EscapeString(trigger.TargetAction)}'\");");
+                sb.AppendLine("                }");
+                sb.AppendLine("                else");
                 sb.AppendLine("                {");
                 
                 if (!string.IsNullOrWhiteSpace(handlerFieldName))
@@ -1159,23 +993,6 @@ namespace Schedule1ModdingTool.Services
                     sb.AppendLine("                    };");
                 }
                 
-                sb.AppendLine("                }");
-                sb.AppendLine("                else");
-                sb.AppendLine("                {");
-                sb.AppendLine("                    // NPC not found immediately, retry with coroutine");
-                var actionPartsForRetry = trigger.TargetAction.Split('.');
-                var componentTypeForRetry = actionPartsForRetry.Length >= 2 ? actionPartsForRetry[0] : "NPC";
-                var eventNameForRetry = actionPartsForRetry.Length >= 2 ? actionPartsForRetry[1] : trigger.TargetAction;
-                
-                if (!string.IsNullOrWhiteSpace(handlerFieldName))
-                {
-                    sb.AppendLine($"                    MelonCoroutines.Start(SubscribeToNpcTriggerWithRetry(\"{npcId}\", \"{EscapeString(componentTypeForRetry)}\", \"{EscapeString(eventNameForRetry)}\", {handlerFieldName}));");
-                }
-                else
-                {
-                    sb.AppendLine($"                    Action retryHandler = () => {{ {actionMethod}; }};");
-                    sb.AppendLine($"                    MelonCoroutines.Start(SubscribeToNpcTriggerWithRetry(\"{npcId}\", \"{EscapeString(componentTypeForRetry)}\", \"{EscapeString(eventNameForRetry)}\", retryHandler));");
-                }
                 sb.AppendLine("                }");
             }
             else
@@ -1247,7 +1064,11 @@ namespace Schedule1ModdingTool.Services
                 }
 
                 sb.AppendLine($"                var npc = NPC.All.FirstOrDefault(n => n.ID == \"{npcId}\");");
-                sb.AppendLine("                if (npc != null)");
+                sb.AppendLine("                if (npc == null)");
+                sb.AppendLine("                {");
+                sb.AppendLine($"                    MelonLogger.Warning($\"[Quest] NPC '{npcId}' not found when subscribing to objective trigger '{EscapeString(trigger.TargetAction)}'\");");
+                sb.AppendLine("                }");
+                sb.AppendLine("                else");
                 sb.AppendLine("                {");
                 
                 if (!string.IsNullOrWhiteSpace(handlerFieldName))
@@ -1276,23 +1097,6 @@ namespace Schedule1ModdingTool.Services
                     sb.AppendLine("                    };");
                 }
                 
-                sb.AppendLine("                }");
-                sb.AppendLine("                else");
-                sb.AppendLine("                {");
-                sb.AppendLine("                    // NPC not found immediately, retry with coroutine");
-                var actionPartsForObjRetry = trigger.TargetAction.Split('.');
-                var componentTypeForObjRetry = actionPartsForObjRetry.Length >= 2 ? actionPartsForObjRetry[0] : "NPC";
-                var eventNameForObjRetry = actionPartsForObjRetry.Length >= 2 ? actionPartsForObjRetry[1] : trigger.TargetAction;
-                
-                if (!string.IsNullOrWhiteSpace(handlerFieldName))
-                {
-                    sb.AppendLine($"                    MelonCoroutines.Start(SubscribeToNpcObjectiveTriggerWithRetry(\"{npcId}\", \"{EscapeString(componentTypeForObjRetry)}\", \"{EscapeString(eventNameForObjRetry)}\", {objectiveVar}, {handlerFieldName}));");
-                }
-                else
-                {
-                    sb.AppendLine($"                    Action retryHandler = () => {{ if ({objectiveVar} != null) {{ {objectiveVar}.{actionMethod}; }} }};");
-                    sb.AppendLine($"                    MelonCoroutines.Start(SubscribeToNpcObjectiveTriggerWithRetry(\"{npcId}\", \"{EscapeString(componentTypeForObjRetry)}\", \"{EscapeString(eventNameForObjRetry)}\", {objectiveVar}, retryHandler));");
-                }
                 sb.AppendLine("                }");
             }
             else

@@ -315,6 +315,7 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("using System.Collections;");
             sb.AppendLine("using System.Collections.Generic;");
             sb.AppendLine("using System.Linq;");
+            sb.AppendLine("using System.Reflection;");
             sb.AppendLine("using MelonLoader;");
             sb.AppendLine("using S1API.Quests;");
             sb.AppendLine("using S1API.Quests.Constants;");
@@ -386,6 +387,10 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine();
             sb.AppendLine("        private void RegisterQuests()");
             sb.AppendLine("        {");
+            sb.AppendLine("            // Access QuestManager.Quests via reflection (it's internal)");
+            sb.AppendLine("            var questsField = typeof(QuestManager).GetField(\"Quests\", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);");
+            sb.AppendLine("            var questsList = questsField?.GetValue(null) as System.Collections.Generic.List<Quest>;");
+            sb.AppendLine();
 
             // Register all quests
             foreach (var quest in project.Quests)
@@ -397,13 +402,29 @@ namespace Schedule1ModdingTool.Services
                 sb.AppendLine($"            // Register {className}");
                 sb.AppendLine($"            try");
                 sb.AppendLine("            {");
-                sb.AppendLine($"                var {questKey} = QuestManager.CreateQuest<{className}>() as {className};");
-                sb.AppendLine($"                if ({questKey} != null)");
+                sb.AppendLine("                // Check if quest already exists (loaded from save data)");
+                sb.AppendLine($"                Quest? existingQuest = null;");
+                sb.AppendLine("                if (questsList != null)");
                 sb.AppendLine("                {");
-                sb.AppendLine("                    // Quest initialization happens when Unity calls Start() on the base game quest component");
-                sb.AppendLine("                    // This triggers CreateInternal() via Harmony patch, which calls InitializeQuest() to set up HUD UI");
-                sb.AppendLine("                    // For AutoBegin quests, CreateInternal() will automatically call Begin()");
-                sb.AppendLine($"                    _registeredQuests[\"{EscapeString(quest.QuestId ?? className)}\"] = {questKey};");
+                sb.AppendLine($"                    existingQuest = questsList.FirstOrDefault(q => q.GetType() == typeof({className}));");
+                sb.AppendLine("                }");
+                sb.AppendLine();
+                sb.AppendLine($"                if (existingQuest != null)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    // Quest was already loaded from save data, skip creation");
+                sb.AppendLine($"                    _registeredQuests[\"{EscapeString(quest.QuestId ?? className)}\"] = existingQuest as {className};");
+                sb.AppendLine("                }");
+                sb.AppendLine("                else");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    // Quest doesn't exist, create it with consistent GUID");
+                sb.AppendLine($"                    var {questKey} = QuestManager.CreateQuest<{className}>(\"{EscapeString(questId)}\") as {className};");
+                sb.AppendLine($"                    if ({questKey} != null)");
+                sb.AppendLine("                    {");
+                sb.AppendLine("                        // Quest initialization happens when Unity calls Start() on the base game quest component");
+                sb.AppendLine("                        // This triggers CreateInternal() via Harmony patch, which calls InitializeQuest() to set up HUD UI");
+                sb.AppendLine("                        // For AutoBegin quests, CreateInternal() will automatically call Begin()");
+                sb.AppendLine($"                        _registeredQuests[\"{EscapeString(quest.QuestId ?? className)}\"] = {questKey};");
+                sb.AppendLine("                    }");
                 sb.AppendLine("                }");
                 sb.AppendLine("            }");
                 sb.AppendLine("            catch (Exception ex)");

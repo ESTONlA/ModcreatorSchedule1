@@ -49,6 +49,11 @@ namespace Schedule1ModdingTool.ViewModels
                         WorkspaceViewModel.UpdateQuestCount(_currentProject.Quests.Count);
                         WorkspaceViewModel.UpdateNpcCount(_currentProject.Npcs.Count);
                         UpdateWorkspaceProjectInfo();
+                        UpdateProcessState();
+                    }
+                    else
+                    {
+                        ProcessState = "Waiting for project...";
                     }
                     CommandManager.InvalidateRequerySuggested();
                 }
@@ -204,7 +209,7 @@ namespace Schedule1ModdingTool.ViewModels
             set => SetProperty(ref _workspaceViewModel, value);
         }
 
-        private string _processState = "Ready";
+        private string _processState = "Waiting for project...";
 
         public string ProcessState
         {
@@ -402,6 +407,22 @@ namespace Schedule1ModdingTool.ViewModels
             WorkspaceViewModel.ProjectInfo = $"{projectName}: {totalElements} mod elements";
         }
 
+        private void UpdateProcessState()
+        {
+            if (CurrentProject == null || string.IsNullOrWhiteSpace(CurrentProject.ProjectName))
+            {
+                ProcessState = "Waiting for project...";
+            }
+            else if (CurrentProject.IsModified)
+            {
+                ProcessState = "Ready (unsaved changes)";
+            }
+            else
+            {
+                ProcessState = "Ready";
+            }
+        }
+
         private void InitializeBlueprints()
         {
             AvailableBlueprints.Add(new QuestBlueprint(QuestBlueprintType.Standard)
@@ -434,6 +455,7 @@ namespace Schedule1ModdingTool.ViewModels
             if (!string.IsNullOrWhiteSpace(CurrentProject.ProjectName) && !ConfirmUnsavedChanges())
                 return;
 
+            ProcessState = "Opening project wizard...";
             var wizardVm = new NewProjectWizardViewModel();
             var wizardWindow = new Views.NewProjectWizardWindow
             {
@@ -447,6 +469,7 @@ namespace Schedule1ModdingTool.ViewModels
             {
                 try
                 {
+                    ProcessState = "Creating project...";
                     // Create the project folder if needed
                     var fullPath = vm.FullProjectPath;
                     if (!Directory.Exists(fullPath))
@@ -473,9 +496,11 @@ namespace Schedule1ModdingTool.ViewModels
                     newProject.FilePath = projectFilePath;
 
                     // Save the project file
+                    ProcessState = "Saving project...";
                     newProject.SaveToFile(projectFilePath);
 
                     // Load it back to ensure proper initialization
+                    ProcessState = "Loading project...";
                     CurrentProject = QuestProject.LoadFromFile(projectFilePath) ?? newProject;
                     NormalizeProjectResources();
                     SelectedQuest = null;
@@ -485,10 +510,12 @@ namespace Schedule1ModdingTool.ViewModels
                     wizardWindow.DialogResult = true;
                     wizardWindow.Close();
 
+                    UpdateProcessState();
                     AppUtils.ShowInfo($"Project created successfully at:\n{fullPath}");
                 }
                 catch (Exception ex)
                 {
+                    ProcessState = "Project creation failed";
                     AppUtils.ShowError($"Failed to create project: {ex.Message}");
                 }
             };
@@ -503,9 +530,17 @@ namespace Schedule1ModdingTool.ViewModels
                 {
                     Application.Current.Shutdown();
                 }
+                else
+                {
+                    UpdateProcessState();
+                }
             };
 
             wizardWindow.ShowDialog();
+            if (!wizardCompleted)
+            {
+                UpdateProcessState();
+            }
         }
 
         private void OpenProject()
@@ -514,28 +549,63 @@ namespace Schedule1ModdingTool.ViewModels
             if (!string.IsNullOrWhiteSpace(CurrentProject.ProjectName) && !ConfirmUnsavedChanges())
                 return;
 
+            ProcessState = "Opening project...";
             var project = _projectService.OpenProject();
             if (project != null)
             {
+                ProcessState = "Loading project...";
                 CurrentProject = project;
                 NormalizeProjectResources();
                 SelectedQuest = CurrentProject.Quests.FirstOrDefault();
+                UpdateProcessState();
             }
             else if (string.IsNullOrWhiteSpace(CurrentProject.ProjectName))
             {
                 // If user cancelled opening a project and no project is loaded, close the app
                 Application.Current.Shutdown();
             }
+            else
+            {
+                UpdateProcessState();
+            }
         }
 
         private void SaveProject()
         {
-            _projectService.SaveProject(CurrentProject);
+            try
+            {
+                ProcessState = "Saving project...";
+                var success = _projectService.SaveProject(CurrentProject);
+                UpdateProcessState();
+                if (!success)
+                {
+                    ProcessState = "Save failed";
+                }
+            }
+            catch (Exception)
+            {
+                ProcessState = "Save failed";
+                throw;
+            }
         }
 
         private void SaveProjectAs()
         {
-            _projectService.SaveProjectAs(CurrentProject);
+            try
+            {
+                ProcessState = "Saving project...";
+                var success = _projectService.SaveProjectAs(CurrentProject);
+                UpdateProcessState();
+                if (!success)
+                {
+                    ProcessState = "Save failed";
+                }
+            }
+            catch (Exception)
+            {
+                ProcessState = "Save failed";
+                throw;
+            }
         }
 
         private bool HasAnyElements() =>
@@ -935,6 +1005,7 @@ namespace Schedule1ModdingTool.ViewModels
                 {
                     System.Diagnostics.Debug.WriteLine("[AddResource] EnsureProjectDirectory returned false, returning");
                     // EnsureProjectDirectory already shows user-facing messages, so we just return
+                    UpdateProcessState();
                     return;
                 }
 
@@ -967,10 +1038,12 @@ namespace Schedule1ModdingTool.ViewModels
                 if (result != true || dialog.FileNames.Length == 0)
                 {
                     System.Diagnostics.Debug.WriteLine("[AddResource] No files selected or dialog cancelled, returning");
+                    UpdateProcessState();
                     return;
                 }
 
                 System.Diagnostics.Debug.WriteLine($"[AddResource] Processing {dialog.FileNames.Length} file(s)");
+                ProcessState = $"Adding {dialog.FileNames.Length} resource(s)...";
                 var resourcesDir = Path.Combine(projectDir, "Resources");
                 System.Diagnostics.Debug.WriteLine($"[AddResource] Resources directory: {resourcesDir}");
                 Directory.CreateDirectory(resourcesDir);
@@ -1024,10 +1097,12 @@ namespace Schedule1ModdingTool.ViewModels
                     var message = $"Some files could not be added:\n{string.Join("\n", failures)}";
                     AppUtils.ShowWarning(message, "Resource Import Issues");
                 }
+                UpdateProcessState();
                 System.Diagnostics.Debug.WriteLine("[AddResource] Method completed successfully");
             }
             catch (Exception ex)
             {
+                ProcessState = "Resource upload failed";
                 System.Diagnostics.Debug.WriteLine($"[AddResource] Unhandled exception: {ex.Message}\n{ex.StackTrace}");
                 AppUtils.ShowError($"An error occurred while adding resources: {ex.Message}\n\n{ex.StackTrace}", "Resource Upload Error");
             }
@@ -1420,51 +1495,60 @@ namespace Schedule1ModdingTool.ViewModels
 
         private void ExportModProject()
         {
+            TryExportModProject(showSuccessDialog: true, out _);
+        }
+
+        private bool TryExportModProject(bool showSuccessDialog, out string? generatedProjectPath)
+        {
+            generatedProjectPath = null;
+
             if (!HasAnyElements())
             {
                 AppUtils.ShowWarning("No mod elements in project. Add at least one quest or NPC before exporting.");
-                return;
+                return false;
             }
 
             if (string.IsNullOrWhiteSpace(CurrentProject.FilePath) || !File.Exists(CurrentProject.FilePath))
             {
                 AppUtils.ShowWarning("Project must be saved before exporting. Please save the project first.");
-                return;
+                return false;
             }
 
             // Validate resources before export
             var missingResources = ValidateProjectResources();
             if (missingResources.Count > 0)
             {
-                var message = $"Warning: {missingResources.Count} resource file(s) are missing:\n\n" +
-                             string.Join("\n\n", missingResources) +
-                             "\n\nThese resources will be excluded from the exported mod. Do you want to continue?";
+                var missingMessage = $"Warning: {missingResources.Count} resource file(s) are missing:\n\n" +
+                                     string.Join("\n\n", missingResources) +
+                                     "\n\nThese resources will be excluded from the exported mod. Do you want to continue?";
 
-                var result = MessageBox.Show(message, "Missing Resources", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (result != MessageBoxResult.Yes)
+                var confirmation = MessageBox.Show(missingMessage, "Missing Resources", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirmation != MessageBoxResult.Yes)
                 {
-                    return;
+                    return false;
                 }
             }
 
             try
             {
-                ProcessState = "Exporting...";
+                ProcessState = "Exporting mod project...";
                 // Use the project directory directly (where .qproj file is located)
                 var projectDir = Path.GetDirectoryName(CurrentProject.FilePath);
                 if (string.IsNullOrWhiteSpace(projectDir) || !Directory.Exists(projectDir))
                 {
                     AppUtils.ShowError("Project directory not found. Please save the project first.");
-                    ProcessState = "Ready";
-                    return;
+                    UpdateProcessState();
+                    return false;
                 }
 
                 _modSettings = ModSettings.Load(); // Reload settings
+                ProcessState = "Generating mod files...";
                 var result = _modProjectGenerator.GenerateModProject(CurrentProject, projectDir, _modSettings);
 
-                ProcessState = "Ready";
+                UpdateProcessState();
                 if (result.Success)
                 {
+                    generatedProjectPath = result.OutputPath;
                     var message = $"Mod project exported successfully to:\n{result.OutputPath}\n\nGenerated {result.GeneratedFiles.Count} files.";
 
                     var hasIssues = result.Errors.Count > 0 || result.Warnings.Count > 0;
@@ -1480,10 +1564,12 @@ namespace Schedule1ModdingTool.ViewModels
                         }
                         AppUtils.ShowWarning(message);
                     }
-                    else
+                    else if (showSuccessDialog)
                     {
                         AppUtils.ShowInfo(message);
                     }
+
+                    return true;
                 }
                 else
                 {
@@ -1497,79 +1583,44 @@ namespace Schedule1ModdingTool.ViewModels
                         errorMessage += $"\n\nWarnings:\n{string.Join("\n", result.Warnings)}";
                     }
                     AppUtils.ShowError($"Failed to export mod project:\n{errorMessage}");
+                    return false;
                 }
             }
             catch (Exception ex)
             {
-                ProcessState = "Error";
+                ProcessState = "Export failed";
                 AppUtils.ShowError($"Export failed: {ex.Message}");
+                return false;
             }
         }
 
         private void BuildMod()
         {
-            if (!HasAnyElements())
-            {
-                AppUtils.ShowWarning("No mod elements in project. Add at least one quest or NPC before building.");
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(CurrentProject.FilePath) || !File.Exists(CurrentProject.FilePath))
-            {
-                AppUtils.ShowWarning("Project must be saved before building. Please save the project first.");
-                return;
-            }
-
             try
             {
-                ProcessState = "Building...";
-                // Use the project directory directly (where .qproj file is located)
-                var projectDir = Path.GetDirectoryName(CurrentProject.FilePath);
-                if (string.IsNullOrWhiteSpace(projectDir) || !Directory.Exists(projectDir))
+                if (!TryExportModProject(showSuccessDialog: false, out var exportPath))
                 {
-                    AppUtils.ShowError("Project directory not found. Please save the project first.");
-                    ProcessState = "Ready";
                     return;
                 }
 
-                // Check if mod project already exists (look for .csproj in project directory)
-                var csprojFiles = Directory.GetFiles(projectDir, "*.csproj", SearchOption.TopDirectoryOnly);
-                if (csprojFiles.Length > 0)
+                if (string.IsNullOrWhiteSpace(exportPath) || !Directory.Exists(exportPath))
                 {
-                    // Mod project already exists, build it directly
-                    var existingBuildResult = _modBuildService.BuildModProject(projectDir, _modSettings);
-                    ProcessState = existingBuildResult.Success ? "Ready" : "Build failed";
-                    ShowBuildResult(existingBuildResult);
+                    AppUtils.ShowError("Generated project path is empty or missing. Please export the project again.");
                     return;
                 }
 
-                _modSettings = ModSettings.Load(); // Reload settings
-                
-                // Generate the project in the same directory as .qproj
-                var genResult = _modProjectGenerator.GenerateModProject(CurrentProject, projectDir, _modSettings);
-                
-                if (!genResult.Success)
+                ProcessState = "Building mod...";
+                var buildResult = _modBuildService.BuildModProject(exportPath, _modSettings);
+                UpdateProcessState();
+                if (!buildResult.Success)
                 {
-                    ProcessState = "Generation failed";
-                    AppUtils.ShowError($"Failed to generate mod project:\n{genResult.ErrorMessage}");
-                    return;
+                    ProcessState = "Build failed";
                 }
-
-                if (string.IsNullOrEmpty(genResult.OutputPath))
-                {
-                    ProcessState = "Ready";
-                    AppUtils.ShowError("Generated project path is empty.");
-                    return;
-                }
-
-                // Then build it
-                var buildResult = _modBuildService.BuildModProject(genResult.OutputPath, _modSettings);
-                ProcessState = buildResult.Success ? "Ready" : "Build failed";
                 ShowBuildResult(buildResult);
             }
             catch (Exception ex)
             {
-                ProcessState = "Error";
+                ProcessState = "Build failed";
                 AppUtils.ShowError($"Build failed: {ex.Message}");
             }
         }
@@ -1667,6 +1718,7 @@ namespace Schedule1ModdingTool.ViewModels
         {
             if (e.PropertyName == nameof(QuestProject.IsModified))
             {
+                UpdateProcessState();
                 CommandManager.InvalidateRequerySuggested();
             }
             else if (e.PropertyName == nameof(QuestProject.Quests))
@@ -1686,6 +1738,7 @@ namespace Schedule1ModdingTool.ViewModels
             else if (e.PropertyName == nameof(QuestProject.ProjectName))
             {
                 UpdateWorkspaceProjectInfo();
+                UpdateProcessState();
             }
         }
     }
