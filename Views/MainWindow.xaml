@@ -171,7 +171,7 @@
 				                         Width="18" Height="18" />
 			</Button>
 			<Separator Style="{StaticResource ToolbarSeparatorStyle}" />
-			<Button Command="{Binding RegenerateCodeCommand}" ToolTip="Regenerate Code (F5)"
+			<Button Command="{Binding RegenerateCodeCommand}" ToolTip="Regenerate Code - Auto-generates on save/build/tab switch (F5)"
 			        Style="{StaticResource ToolbarButtonStyle}">
 				<materialDesign:PackIcon Kind="{StaticResource CodeRefreshIcon}"
 				                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"

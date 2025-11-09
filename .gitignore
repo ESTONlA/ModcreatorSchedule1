@@ -367,3 +367,5 @@ FodyWeavers.xsd
 .embeddings_cache.json
 
 AGENTS.md
+CLAUDE.md
+.claude/

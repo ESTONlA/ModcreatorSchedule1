@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Schedule1ModdingTool.Models;
+using Schedule1ModdingTool.Services.CodeGeneration.Orchestration;
 using Schedule1ModdingTool.Utils;
 
 namespace Schedule1ModdingTool.Services
@@ -15,11 +16,11 @@ namespace Schedule1ModdingTool.Services
     /// </summary>
     public class ModProjectGeneratorService
     {
-        private readonly CodeGenerationService _codeGenService;
+        private readonly CodeGenerationOrchestrator _codeGenService;
 
         public ModProjectGeneratorService()
         {
-            _codeGenService = new CodeGenerationService();
+            _codeGenService = new CodeGenerationOrchestrator();
         }
 
         /// <summary>

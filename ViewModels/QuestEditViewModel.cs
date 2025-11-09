@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services;
+using Schedule1ModdingTool.Services.CodeGeneration.Orchestration;
 using Schedule1ModdingTool.Utils;
 
 namespace Schedule1ModdingTool.ViewModels
@@ -141,7 +142,7 @@ namespace Schedule1ModdingTool.ViewModels
         {
             try
             {
-                var codeService = new CodeGenerationService();
+                var codeService = new CodeGenerationOrchestrator();
                 GeneratedCode = codeService.GenerateQuestCode(_quest);
             }
             catch (Exception ex)
