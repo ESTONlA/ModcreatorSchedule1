@@ -6,6 +6,7 @@
              xmlns:models="clr-namespace:Schedule1ModdingTool.Models"
              xmlns:presets="clr-namespace:Schedule1ModdingTool.Data"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:views="clr-namespace:Schedule1ModdingTool.Views"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
 
@@ -23,58 +24,85 @@
 			<StackPanel>
 				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
 					<StackPanel Margin="12">
-						<TextBlock Text="Identity" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
+					<TextBlock Text="Identity" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="Class Name" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedNpc.ClassName, UpdateSourceTrigger=PropertyChanged}"
-						         Style="{StaticResource TextBoxStyle}" />
+						<views:InfoIcon PropertyName="ClassName" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedNpc.ClassName, UpdateSourceTrigger=PropertyChanged}"
+					         Style="{StaticResource TextBoxStyle}" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="Namespace" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedNpc.Namespace, UpdateSourceTrigger=PropertyChanged}"
-						         Style="{StaticResource TextBoxStyle}" />
+						<views:InfoIcon PropertyName="Namespace" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedNpc.Namespace, UpdateSourceTrigger=PropertyChanged}"
+					         Style="{StaticResource TextBoxStyle}" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="NPC ID" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedNpc.NpcId, UpdateSourceTrigger=PropertyChanged}"
-						         Style="{StaticResource TextBoxStyle}" />
+						<views:InfoIcon PropertyName="NpcId" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedNpc.NpcId, UpdateSourceTrigger=PropertyChanged}"
+					         Style="{StaticResource TextBoxStyle}" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="First Name" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedNpc.FirstName, UpdateSourceTrigger=PropertyChanged}"
-						         Style="{StaticResource TextBoxStyle}" />
+						<views:InfoIcon PropertyName="FirstName" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedNpc.FirstName, UpdateSourceTrigger=PropertyChanged}"
+					         Style="{StaticResource TextBoxStyle}" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="Last Name" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedNpc.LastName, UpdateSourceTrigger=PropertyChanged}"
-						         Style="{StaticResource TextBoxStyle}" />
+						<views:InfoIcon PropertyName="LastName" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedNpc.LastName, UpdateSourceTrigger=PropertyChanged}"
+					         Style="{StaticResource TextBoxStyle}" />
 					</StackPanel>
 				</Border>
 
 				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
 					<StackPanel Margin="12">
-						<TextBlock Text="Behavior" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
+					<TextBlock Text="Behavior" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
 
+					<StackPanel Orientation="Horizontal">
 						<CheckBox Content="Is Physical" IsChecked="{Binding SelectedNpc.IsPhysical}" Margin="0,2"
 						          Foreground="{StaticResource LightTextBrush}" />
+						<views:InfoIcon PropertyName="IsPhysical" />
+					</StackPanel>
+					<StackPanel Orientation="Horizontal">
 						<CheckBox Content="Enable Customer Systems"
 						          IsChecked="{Binding SelectedNpc.EnableCustomer}"
 						          Checked="EnableCustomer_Checked"
 						          Unchecked="EnableCustomer_Unchecked"
 						          Margin="0,2"
 						          Foreground="{StaticResource LightTextBrush}" />
+						<views:InfoIcon PropertyName="EnableCustomer" />
+					</StackPanel>
+					<StackPanel Orientation="Horizontal">
 						<CheckBox Content="Is Dealer"
 						          IsChecked="{Binding SelectedNpc.IsDealer}"
 						          Checked="IsDealer_Checked"
 						          Unchecked="IsDealer_Unchecked"
 						          Margin="0,2"
 						          Foreground="{StaticResource LightTextBrush}" />
+						<views:InfoIcon PropertyName="IsDealer" />
+					</StackPanel>
 					</StackPanel>
 				</Border>
 
 				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
 					<StackPanel Margin="12">
 						<TextBlock Text="Spawn Position" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
-						<CheckBox Content="Set spawn position"
-						          IsChecked="{Binding SelectedNpc.HasSpawnPosition}"
-						          Foreground="{StaticResource LightTextBrush}"
-						          Margin="0,0,0,8" />
+						<StackPanel Orientation="Horizontal">
+							<CheckBox Content="Set spawn position"
+							          IsChecked="{Binding SelectedNpc.HasSpawnPosition}"
+							          Foreground="{StaticResource LightTextBrush}"
+							          Margin="0,0,0,8" />
+							<views:InfoIcon PropertyName="HasSpawnPosition" />
+						</StackPanel>
 						<Grid Margin="0,0,0,4">
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition />
@@ -82,17 +110,26 @@
 								<ColumnDefinition />
 							</Grid.ColumnDefinitions>
 							<StackPanel Margin="0,0,8,0">
-								<Label Content="X" Style="{StaticResource LabelStyle}" />
+								<StackPanel Orientation="Horizontal">
+									<Label Content="X" Style="{StaticResource LabelStyle}" />
+									<views:InfoIcon PropertyName="SpawnX" />
+								</StackPanel>
 								<TextBox Text="{Binding SelectedNpc.SpawnX, UpdateSourceTrigger=LostFocus, StringFormat=F3}"
 								         Style="{StaticResource TextBoxStyle}" />
 							</StackPanel>
 							<StackPanel Grid.Column="1" Margin="0,0,8,0">
-								<Label Content="Y" Style="{StaticResource LabelStyle}" />
+								<StackPanel Orientation="Horizontal">
+									<Label Content="Y" Style="{StaticResource LabelStyle}" />
+									<views:InfoIcon PropertyName="SpawnY" />
+								</StackPanel>
 								<TextBox Text="{Binding SelectedNpc.SpawnY, UpdateSourceTrigger=LostFocus, StringFormat=F3}"
 								         Style="{StaticResource TextBoxStyle}" />
 							</StackPanel>
 							<StackPanel Grid.Column="2">
-								<Label Content="Z" Style="{StaticResource LabelStyle}" />
+								<StackPanel Orientation="Horizontal">
+									<Label Content="Z" Style="{StaticResource LabelStyle}" />
+									<views:InfoIcon PropertyName="SpawnZ" />
+								</StackPanel>
 								<TextBox Text="{Binding SelectedNpc.SpawnZ, UpdateSourceTrigger=LostFocus, StringFormat=F3}"
 								         Style="{StaticResource TextBoxStyle}" />
 							</StackPanel>
@@ -110,38 +147,56 @@
 				<Border Style="{StaticResource PanelStyle}" Margin="0,0,0,12">
 					<StackPanel Margin="12">
 						<TextBlock Text="Appearance" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12" />
-						<UniformGrid Columns="2" Rows="3" Margin="0,0,0,8">
-							<StackPanel Margin="4">
+					<UniformGrid Columns="2" Rows="3" Margin="0,0,0,8">
+						<StackPanel Margin="4">
+							<StackPanel Orientation="Horizontal">
 								<Label Content="Gender (0-1)" Style="{StaticResource LabelStyle}" />
-								<TextBox Text="{Binding SelectedNpc.Appearance.Gender, UpdateSourceTrigger=PropertyChanged}"
-								         Style="{StaticResource TextBoxStyle}" />
+								<views:InfoIcon PropertyName="Gender" />
 							</StackPanel>
-							<StackPanel Margin="4">
+							<TextBox Text="{Binding SelectedNpc.Appearance.Gender, UpdateSourceTrigger=PropertyChanged}"
+							         Style="{StaticResource TextBoxStyle}" />
+						</StackPanel>
+						<StackPanel Margin="4">
+							<StackPanel Orientation="Horizontal">
 								<Label Content="Height" Style="{StaticResource LabelStyle}" />
-								<TextBox Text="{Binding SelectedNpc.Appearance.Height, UpdateSourceTrigger=PropertyChanged}"
-								         Style="{StaticResource TextBoxStyle}" />
+								<views:InfoIcon PropertyName="Height" />
 							</StackPanel>
-							<StackPanel Margin="4">
+							<TextBox Text="{Binding SelectedNpc.Appearance.Height, UpdateSourceTrigger=PropertyChanged}"
+							         Style="{StaticResource TextBoxStyle}" />
+						</StackPanel>
+						<StackPanel Margin="4">
+							<StackPanel Orientation="Horizontal">
 								<Label Content="Weight" Style="{StaticResource LabelStyle}" />
-								<TextBox Text="{Binding SelectedNpc.Appearance.Weight, UpdateSourceTrigger=PropertyChanged}"
-								         Style="{StaticResource TextBoxStyle}" />
+								<views:InfoIcon PropertyName="Weight" />
 							</StackPanel>
-							<StackPanel Margin="4">
+							<TextBox Text="{Binding SelectedNpc.Appearance.Weight, UpdateSourceTrigger=PropertyChanged}"
+							         Style="{StaticResource TextBoxStyle}" />
+						</StackPanel>
+						<StackPanel Margin="4">
+							<StackPanel Orientation="Horizontal">
 								<Label Content="Pupil Dilation" Style="{StaticResource LabelStyle}" />
-								<TextBox Text="{Binding SelectedNpc.Appearance.PupilDilation, UpdateSourceTrigger=PropertyChanged}"
-								         Style="{StaticResource TextBoxStyle}" />
+								<views:InfoIcon PropertyName="PupilDilation" />
 							</StackPanel>
-							<StackPanel Margin="4">
+							<TextBox Text="{Binding SelectedNpc.Appearance.PupilDilation, UpdateSourceTrigger=PropertyChanged}"
+							         Style="{StaticResource TextBoxStyle}" />
+						</StackPanel>
+						<StackPanel Margin="4">
+							<StackPanel Orientation="Horizontal">
 								<Label Content="Eyebrow Scale" Style="{StaticResource LabelStyle}" />
-								<TextBox Text="{Binding SelectedNpc.Appearance.EyebrowScale, UpdateSourceTrigger=PropertyChanged}"
-								         Style="{StaticResource TextBoxStyle}" />
+								<views:InfoIcon PropertyName="EyebrowScale" />
 							</StackPanel>
-							<StackPanel Margin="4">
+							<TextBox Text="{Binding SelectedNpc.Appearance.EyebrowScale, UpdateSourceTrigger=PropertyChanged}"
+							         Style="{StaticResource TextBoxStyle}" />
+						</StackPanel>
+						<StackPanel Margin="4">
+							<StackPanel Orientation="Horizontal">
 								<Label Content="Eyebrow Thickness" Style="{StaticResource LabelStyle}" />
-								<TextBox Text="{Binding SelectedNpc.Appearance.EyebrowThickness, UpdateSourceTrigger=PropertyChanged}"
-								         Style="{StaticResource TextBoxStyle}" />
+								<views:InfoIcon PropertyName="EyebrowThickness" />
 							</StackPanel>
-						</UniformGrid>
+							<TextBox Text="{Binding SelectedNpc.Appearance.EyebrowThickness, UpdateSourceTrigger=PropertyChanged}"
+							         Style="{StaticResource TextBoxStyle}" />
+						</StackPanel>
+					</UniformGrid>
 
 						<StackPanel Orientation="Vertical">
 							<Label Content="Hair Path" Style="{StaticResource LabelStyle}" />

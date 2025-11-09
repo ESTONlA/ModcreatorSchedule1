@@ -7,6 +7,7 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:models="clr-namespace:Schedule1ModdingTool.Models"
              xmlns:utils="clr-namespace:Schedule1ModdingTool.Utils"
+             xmlns:views="clr-namespace:Schedule1ModdingTool.Views"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="300"
              VerticalAlignment="Stretch">
@@ -26,23 +27,35 @@
 				<Border Background="{StaticResource DarkPanelBrush}" BorderBrush="{StaticResource DarkBorderBrush}"
 				        BorderThickness="1" CornerRadius="4" Margin="0,0,0,8">
 					<StackPanel Margin="8">
-						<TextBlock Text="Quest Details" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"
+					<TextBlock Text="Quest Details" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"
 						           Foreground="{StaticResource LightTextBrush}" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="Class Name:" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedQuest.ClassName, UpdateSourceTrigger=PropertyChanged}"
+						<views:InfoIcon PropertyName="ClassName" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedQuest.ClassName, UpdateSourceTrigger=PropertyChanged}"
 						         Style="{StaticResource TextBoxStyle}" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="Quest ID:" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedQuest.QuestId, UpdateSourceTrigger=PropertyChanged}"
+						<views:InfoIcon PropertyName="QuestId" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedQuest.QuestId, UpdateSourceTrigger=PropertyChanged}"
 						         Style="{StaticResource TextBoxStyle}" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="Quest Title:" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedQuest.QuestTitle, UpdateSourceTrigger=PropertyChanged}"
+						<views:InfoIcon PropertyName="QuestTitle" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedQuest.QuestTitle, UpdateSourceTrigger=PropertyChanged}"
 						         Style="{StaticResource TextBoxStyle}" />
 
+					<StackPanel Orientation="Horizontal">
 						<Label Content="Quest Description:" Style="{StaticResource LabelStyle}" />
-						<TextBox Text="{Binding SelectedQuest.QuestDescription, UpdateSourceTrigger=PropertyChanged}"
+						<views:InfoIcon PropertyName="QuestDescription" />
+					</StackPanel>
+					<TextBox Text="{Binding SelectedQuest.QuestDescription, UpdateSourceTrigger=PropertyChanged}"
 						         Style="{StaticResource TextBoxStyle}"
 						         Height="60"
 						         TextWrapping="Wrap"
@@ -58,15 +71,21 @@
 						<TextBlock Text="Quest Settings" FontWeight="Bold" FontSize="14" Margin="0,0,0,8"
 						           Foreground="{StaticResource LightTextBrush}" />
 
+					<StackPanel Orientation="Horizontal">
 						<CheckBox Content="Auto Begin"
 						          IsChecked="{Binding SelectedQuest.AutoBegin}"
 						          Margin="0,2"
 						          Foreground="{StaticResource LightTextBrush}" />
+						<views:InfoIcon PropertyName="AutoBegin" />
+					</StackPanel>
 
+					<StackPanel Orientation="Horizontal">
 						<CheckBox Content="Custom Icon"
 						          IsChecked="{Binding SelectedQuest.CustomIcon}"
 						          Margin="0,2"
 						          Foreground="{StaticResource LightTextBrush}" />
+						<views:InfoIcon PropertyName="CustomIcon" />
+					</StackPanel>
 
 						<StackPanel Margin="0,4,0,2"
 						            Visibility="{Binding SelectedQuest.CustomIcon, Converter={StaticResource BooleanToVisibilityConverter}}">

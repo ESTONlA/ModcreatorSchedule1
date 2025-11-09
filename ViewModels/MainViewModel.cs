@@ -10,6 +10,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services;
+using Schedule1ModdingTool.Services.CodeGeneration.Orchestration;
 using Schedule1ModdingTool.Utils;
 using Schedule1ModdingTool.Views;
 
@@ -276,7 +277,7 @@ namespace Schedule1ModdingTool.ViewModels
         public ICommand DuplicateFolderCommand => _duplicateFolderCommand!;
         public ICommand DeleteFolderCommand => _deleteFolderCommand!;
 
-        private readonly CodeGenerationService _codeGenService;
+        private readonly CodeGenerationOrchestrator _codeGenService;
         private readonly ProjectService _projectService;
         private readonly ModProjectGeneratorService _modProjectGenerator;
         private readonly ModBuildService _modBuildService;
@@ -284,7 +285,7 @@ namespace Schedule1ModdingTool.ViewModels
 
         public MainViewModel()
         {
-            _codeGenService = new CodeGenerationService();
+            _codeGenService = new CodeGenerationOrchestrator();
             _projectService = new ProjectService();
             _modProjectGenerator = new ModProjectGeneratorService();
             _modBuildService = new ModBuildService();
@@ -574,6 +575,12 @@ namespace Schedule1ModdingTool.ViewModels
         {
             try
             {
+                // Auto-regenerate code before saving
+                if (SelectedQuest != null || SelectedNpc != null)
+                {
+                    RegenerateCode();
+                }
+
                 ProcessState = "Saving project...";
                 var success = _projectService.SaveProject(CurrentProject);
                 UpdateProcessState();
@@ -593,6 +600,12 @@ namespace Schedule1ModdingTool.ViewModels
         {
             try
             {
+                // Auto-regenerate code before saving
+                if (SelectedQuest != null || SelectedNpc != null)
+                {
+                    RegenerateCode();
+                }
+
                 ProcessState = "Saving project...";
                 var success = _projectService.SaveProjectAs(CurrentProject);
                 UpdateProcessState();
@@ -1531,6 +1544,12 @@ namespace Schedule1ModdingTool.ViewModels
 
             try
             {
+                // Auto-regenerate code before export
+                if (SelectedQuest != null || SelectedNpc != null)
+                {
+                    RegenerateCode();
+                }
+
                 ProcessState = "Exporting mod project...";
                 // Use the project directory directly (where .qproj file is located)
                 var projectDir = Path.GetDirectoryName(CurrentProject.FilePath);
