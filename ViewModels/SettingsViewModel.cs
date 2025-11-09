@@ -21,11 +21,13 @@ namespace Schedule1ModdingTool.ViewModels
         private ICommand? _cancelCommand;
         private ICommand? _browseGamePathCommand;
         private ICommand? _browseWorkspacePathCommand;
+        private ICommand? _browseS1ApiDllCommand;
 
         public ICommand SaveCommand => _saveCommand!;
         public ICommand CancelCommand => _cancelCommand!;
         public ICommand BrowseGamePathCommand => _browseGamePathCommand!;
         public ICommand BrowseWorkspacePathCommand => _browseWorkspacePathCommand!;
+        public ICommand BrowseS1ApiDllCommand => _browseS1ApiDllCommand!;
 
         public SettingsViewModel()
         {
@@ -39,6 +41,7 @@ namespace Schedule1ModdingTool.ViewModels
             _cancelCommand = new RelayCommand(Cancel);
             _browseGamePathCommand = new RelayCommand(BrowseGamePath);
             _browseWorkspacePathCommand = new RelayCommand(BrowseWorkspacePath);
+            _browseS1ApiDllCommand = new RelayCommand(BrowseS1ApiDllPath);
         }
 
         private void SaveSettings()
@@ -80,6 +83,21 @@ namespace Schedule1ModdingTool.ViewModels
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 Settings.WorkspacePath = dialog.SelectedPath;
+            }
+        }
+
+        private void BrowseS1ApiDllPath()
+        {
+            using var dialog = new System.Windows.Forms.OpenFileDialog
+            {
+                Title = "Select S1API.dll",
+                Filter = "S1API.dll|S1API.dll|DLL files (*.dll)|*.dll|All files (*.*)|*.*",
+                CheckFileExists = true
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                Settings.S1ApiDllPath = dialog.FileName;
             }
         }
 

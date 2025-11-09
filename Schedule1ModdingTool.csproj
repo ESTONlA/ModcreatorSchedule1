@@ -20,45 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="S1API\**" />
-    <EmbeddedResource Remove="S1API\**" />
-    <None Remove="S1API\**" />
-    <Page Remove="S1API\**" />
-    <Resource Remove="S1API\**" />
-    <Compile Remove="S1NotesApp\**" />
-    <EmbeddedResource Remove="S1NotesApp\**" />
-    <None Remove="S1NotesApp\**" />
-    <Page Remove="S1NotesApp\**" />
-    <Resource Remove="S1NotesApp\**" />
-    <Compile Remove="BarsNPCs\**" />
-    <EmbeddedResource Remove="BarsNPCs\**" />
-    <None Remove="BarsNPCs\**" />
-    <Page Remove="BarsNPCs\**" />
-    <Resource Remove="BarsNPCs\**" />
-    <Compile Remove="TestMod\**" />
-    <EmbeddedResource Remove="TestMod\**" />
-    <None Remove="TestMod\**" />
-    <Page Remove="TestMod\**" />
-    <Resource Remove="TestMod\**" />
-    <Compile Remove="CustomNPCTest\**" />
-    <EmbeddedResource Remove="CustomNPCTest\**" />
-    <None Remove="CustomNPCTest\**" />
-    <Page Remove="CustomNPCTest\**" />
-    <Resource Remove="docs\**" />
-    <Compile Remove="docs\**" />
-    <EmbeddedResource Remove="docs\**" />
-    <None Remove="docs\**" />
-    <Page Remove="docs\**" />
-    <Resource Remove="Empire-S1API\**" />
-    <Resource Remove="Empire-S1API\**" />
-    <Compile Remove="Empire-S1API\**" />
-    <EmbeddedResource Remove="Empire-S1API\**" />
-    <None Remove="Empire-S1API\**" />
-    <Page Remove="Empire-S1API\**" />
-    <Resource Remove="Empire-S1API\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="0Harmony">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Schedule I\MelonLoader\net35\0Harmony.dll</HintPath>
     </Reference>

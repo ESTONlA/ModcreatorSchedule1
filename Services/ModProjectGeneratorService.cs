@@ -132,8 +132,26 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("    <MelonLoaderPath Condition=\"'$(MelonLoaderPath)'==''\">$(GamePath)\\MelonLoader\\net35</MelonLoaderPath>");
             sb.AppendLine("  </PropertyGroup>");
             sb.AppendLine();
+            var customS1ApiPath = settings?.S1ApiDllPath?.Trim();
+            var useCustomS1Api = !string.IsNullOrWhiteSpace(customS1ApiPath);
+            if (useCustomS1Api)
+            {
+                customS1ApiPath = customS1ApiPath!.Replace("\\", "\\\\");
+            }
+
             sb.AppendLine("  <ItemGroup>");
-            sb.AppendLine("    <PackageReference Include=\"S1API.Forked\" Version=\"*\" />");
+            if (useCustomS1Api)
+            {
+                sb.AppendLine("    <!-- Using manually supplied S1API.dll -->");
+                sb.AppendLine("    <Reference Include=\"S1API\">");
+                sb.AppendLine($"      <HintPath>{customS1ApiPath}</HintPath>");
+                sb.AppendLine("      <Private>false</Private>");
+                sb.AppendLine("    </Reference>");
+            }
+            else
+            {
+                sb.AppendLine("    <PackageReference Include=\"S1API.Forked\" Version=\"*\" />");
+            }
             sb.AppendLine("    <PackageReference Include=\"LavaGang.MelonLoader\" Version=\"0.7.0\" />");
             sb.AppendLine("  </ItemGroup>");
             sb.AppendLine();
@@ -294,6 +312,7 @@ namespace Schedule1ModdingTool.Services
             var sb = new StringBuilder();
 
             sb.AppendLine("using System;");
+            sb.AppendLine("using System.Collections;");
             sb.AppendLine("using System.Collections.Generic;");
             sb.AppendLine("using System.Linq;");
             sb.AppendLine("using MelonLoader;");
@@ -314,25 +333,54 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("        public static Core? Instance { get; private set; }");
             sb.AppendLine();
             sb.AppendLine("        private readonly Dictionary<string, Quest> _registeredQuests = new Dictionary<string, Quest>();");
+            sb.AppendLine("        private bool _questsRegistered;");
             sb.AppendLine();
             sb.AppendLine("        public override void OnLateInitializeMelon()");
             sb.AppendLine("        {");
             sb.AppendLine("            Instance = this;");
-            sb.AppendLine("            // Triggers are handled in individual quest classes via SubscribeToTriggers()");
-            sb.AppendLine("            // No need to subscribe here to avoid duplicate subscriptions");
+            sb.AppendLine("            Player.LocalPlayerSpawned += HandleLocalPlayerSpawned;");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        public override void OnSceneWasInitialized(int buildIndex, string sceneName)");
             sb.AppendLine("        {");
-            sb.AppendLine("            if (sceneName == \"Main\")");
+            sb.AppendLine("            if (string.Equals(sceneName, \"Main\", StringComparison.OrdinalIgnoreCase))");
             sb.AppendLine("            {");
-            sb.AppendLine("                RegisterQuests();");
-            sb.AppendLine("                StartSceneInitQuests();");
+            sb.AppendLine("                _questsRegistered = false;");
             sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        public override void OnSceneWasUnloaded(int buildIndex, string sceneName)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (string.Equals(sceneName, \"Main\", StringComparison.OrdinalIgnoreCase))");
+            sb.AppendLine("            {");
+            sb.AppendLine("                _questsRegistered = false;");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private void HandleLocalPlayerSpawned(Player player)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (_questsRegistered)");
+            sb.AppendLine("                return;");
+            sb.AppendLine();
+            sb.AppendLine("            MelonCoroutines.Start(DelayedQuestRegistration());");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private System.Collections.IEnumerator DelayedQuestRegistration()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (_questsRegistered)");
+            sb.AppendLine("                yield break;");
+            sb.AppendLine();
+            sb.AppendLine("            _questsRegistered = true;");
+            sb.AppendLine("            // Wait a couple of frames to ensure Unity and S1API finish spawning Player/NPC systems");
+            sb.AppendLine("            yield return null;");
+            sb.AppendLine("            yield return null;");
+            sb.AppendLine("            RegisterQuests();");
+            sb.AppendLine("            StartSceneInitQuests();");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        public override void OnApplicationQuit()");
             sb.AppendLine("        {");
+            sb.AppendLine("            Player.LocalPlayerSpawned -= HandleLocalPlayerSpawned;");
             sb.AppendLine("            Instance = null;");
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -349,11 +397,12 @@ namespace Schedule1ModdingTool.Services
                 sb.AppendLine($"            // Register {className}");
                 sb.AppendLine($"            try");
                 sb.AppendLine("            {");
-                sb.AppendLine($"                var {questKey} = QuestManager.CreateQuest<{className}>(\"{questId}\") as {className};");
+                sb.AppendLine($"                var {questKey} = QuestManager.CreateQuest<{className}>() as {className};");
                 sb.AppendLine($"                if ({questKey} != null)");
                 sb.AppendLine("                {");
-                sb.AppendLine("                    // Quest initialization happens automatically in OnCreated()");
-                sb.AppendLine("                    // No need to call ConfigureQuest() anymore");
+                sb.AppendLine("                    // Quest initialization happens when Unity calls Start() on the base game quest component");
+                sb.AppendLine("                    // This triggers CreateInternal() via Harmony patch, which calls InitializeQuest() to set up HUD UI");
+                sb.AppendLine("                    // For AutoBegin quests, CreateInternal() will automatically call Begin()");
                 sb.AppendLine($"                    _registeredQuests[\"{EscapeString(quest.QuestId ?? className)}\"] = {questKey};");
                 sb.AppendLine("                }");
                 sb.AppendLine("            }");
@@ -380,6 +429,9 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine();
             sb.AppendLine("        private void StartSceneInitQuests()");
             sb.AppendLine("        {");
+            sb.AppendLine("            // Note: Quests with AutoBegin = true will automatically begin when CreateInternal() is called");
+            sb.AppendLine("            // (which happens when the base game quest's Start() Unity method is invoked).");
+            sb.AppendLine("            // We don't need to manually call Begin() here - the AutoBegin property handles it internally in S1API.");
 
             // Start scene-init quests
             var sceneInitQuests = project.Quests.Where(q => q.StartCondition?.TriggerType == QuestStartTrigger.SceneInit).ToList();
@@ -387,25 +439,16 @@ namespace Schedule1ModdingTool.Services
 
             if (sceneInitQuests.Any() || autoStartQuests.Any())
             {
-                sb.AppendLine("            // Start quests that should begin on scene initialization");
+                sb.AppendLine("            // Quests with AutoBegin = true will automatically begin when CreateInternal() is called");
+                sb.AppendLine("            // (which happens when the base game quest's Start() Unity method is invoked)");
+                sb.AppendLine("            // No manual Begin() calls needed - AutoBegin handles it internally in S1API");
                 foreach (var quest in sceneInitQuests.Concat(autoStartQuests))
                 {
                     var className = MakeSafeIdentifier(quest.ClassName, "GeneratedQuest");
                     var questKey = EscapeString(quest.QuestId ?? quest.ClassName);
 
-                    sb.AppendLine($"            // Start {className} if not completed");
-                    sb.AppendLine("            try");
-                    sb.AppendLine("            {");
-                    sb.AppendLine($"                if (_registeredQuests.TryGetValue(\"{questKey}\", out var quest))");
-                    sb.AppendLine("                {");
-                    sb.AppendLine("                    quest.Begin();");
-                    sb.AppendLine("                }");
-                    sb.AppendLine("            }");
-                    sb.AppendLine("            catch (Exception ex)");
-                    sb.AppendLine("            {");
-                    sb.AppendLine($"                MelonLogger.Warning($\"Failed to start quest {className}: {{ex.Message}}\");");
-                    sb.AppendLine("            }");
-                    sb.AppendLine();
+                    sb.AppendLine($"            // {className} will auto-begin if AutoBegin = true");
+                    sb.AppendLine($"            // Quest is registered in _registeredQuests[\"{questKey}\"]");
                 }
             }
             else
@@ -669,4 +712,3 @@ namespace Schedule1ModdingTool.Services
         public List<string> Warnings { get; } = new List<string>();
     }
 }
-

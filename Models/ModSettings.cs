@@ -28,6 +28,7 @@ namespace Schedule1ModdingTool.Models
         private string _defaultModAuthor = "Quest Creator";
         private string _defaultModVersion = "1.0.0";
         private string _workspacePath = "";
+        private string _s1ApiDllPath = "";
         private ExperienceLevel _experienceLevel = ExperienceLevel.SomeCoding;
         private bool _isFirstStartComplete = false;
 
@@ -71,6 +72,13 @@ namespace Schedule1ModdingTool.Models
         {
             get => _experienceLevel;
             set => SetProperty(ref _experienceLevel, value);
+        }
+
+        [JsonProperty("s1ApiDllPath")]
+        public string S1ApiDllPath
+        {
+            get => _s1ApiDllPath;
+            set => SetProperty(ref _s1ApiDllPath, value);
         }
 
         [JsonProperty("isFirstStartComplete")]

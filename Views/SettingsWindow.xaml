@@ -1,17 +1,17 @@
 <Window x:Class="Schedule1ModdingTool.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Settings" Height="650" Width="540"
+        Title="Settings" Height="700" Width="600"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{StaticResource DarkBackgroundBrush}"
         Foreground="{StaticResource LightTextBrush}">
-	<Border Margin="15"
+	<Border Margin="10"
 	        Background="{StaticResource DarkPanelBrush}"
 	        BorderBrush="{StaticResource DarkBorderBrush}"
 	        BorderThickness="1"
 	        CornerRadius="6"
-	        Padding="20">
+	        Padding="15">
 		<Grid>
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
@@ -19,10 +19,11 @@
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
-			<TextBlock Grid.Row="0" Text="Mod Generation Settings" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
+			<TextBlock Grid.Row="0" Text="Mod Generation Settings" FontSize="16" FontWeight="Bold" Margin="0,0,0,10" />
 
-			<StackPanel Grid.Row="1" Orientation="Vertical">
-				<GroupBox Header="Workspace" Margin="0,0,0,10">
+			<ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,5,0">
+				<StackPanel Orientation="Vertical">
+				<GroupBox Header="Workspace" Margin="0,0,0,8">
 					<StackPanel Margin="5">
 						<TextBlock Text="Default Workspace Path:" Margin="0,0,0,5" />
 						<Grid>
@@ -37,7 +38,7 @@
 					</StackPanel>
 				</GroupBox>
 
-				<GroupBox Header="Game Installation" Margin="0,0,0,10">
+				<GroupBox Header="Game Installation" Margin="0,0,0,8">
 					<StackPanel Margin="5">
 						<TextBlock Text="Game Install Path (optional, for auto-deploy):" Margin="0,0,0,5" />
 						<Grid>
@@ -52,7 +53,31 @@
 					</StackPanel>
 				</GroupBox>
 
-				<GroupBox Header="User Preferences" Margin="0,0,0,10">
+				<GroupBox Header="S1API Reference" Margin="0,0,0,8">
+					<StackPanel Margin="5">
+						<TextBlock Text="Custom S1API.dll (optional, overrides NuGet package):" Margin="0,0,0,5" />
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*" />
+								<ColumnDefinition Width="Auto" />
+							</Grid.ColumnDefinitions>
+							<TextBox Grid.Column="0"
+							         Text="{Binding Settings.S1ApiDllPath, UpdateSourceTrigger=PropertyChanged}"
+							         Margin="0,0,5,0" />
+							<Button Grid.Column="1"
+							        Content="Browse..."
+							        Command="{Binding BrowseS1ApiDllCommand}"
+							        Padding="10,0" />
+						</Grid>
+						<TextBlock Margin="0,8,0,0"
+						           Text="Leave blank to continue using the latest S1API.Forked NuGet package."
+						           TextWrapping="Wrap"
+						           Foreground="{StaticResource DimTextBrush}"
+						           FontSize="11" />
+					</StackPanel>
+				</GroupBox>
+
+				<GroupBox Header="User Preferences" Margin="0,0,0,8">
 					<StackPanel Margin="5">
 						<TextBlock Text="Coding Experience Level:" Margin="0,0,0,10" />
 						<StackPanel>
@@ -105,9 +130,10 @@
 						</Grid>
 					</StackPanel>
 				</GroupBox>
-			</StackPanel>
+				</StackPanel>
+			</ScrollViewer>
 
-			<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+			<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
 				<Button Content="Save" Command="{Binding SaveCommand}" Padding="15,5" Margin="0,0,10,0" MinWidth="75" />
 				<Button Content="Cancel" Command="{Binding CancelCommand}" Padding="15,5" MinWidth="75" />
 			</StackPanel>
