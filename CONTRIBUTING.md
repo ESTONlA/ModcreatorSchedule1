@@ -19,9 +19,8 @@ This document will guide you through the contribution process and help set expec
 ### Must Read Before Contributing
 
 1. **Read [CODING_STANDARDS.md](CODING_STANDARDS.md) thoroughly** - All contributions must follow the established coding standards.
-2. **Read [CLAUDE.md](CLAUDE.md)** - Understand the project architecture, design patterns, and development workflows.
-3. **Review existing code** - Familiarize yourself with the codebase structure and conventions before making changes.
-4. **Test your changes** - Ensure your changes build successfully and don't break existing functionality.
+2. **Review existing code** - Familiarize yourself with the codebase structure and conventions before making changes.
+3. **Test your changes** - Ensure your changes build successfully and don't break existing functionality.
 
 ### Code Quality Expectations
 
@@ -51,7 +50,7 @@ This document will guide you through the contribution process and help set expec
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ModcreatorSchedule1.git
+git clone https://github.com/ESTONlA/ModcreatorSchedule1.git
 cd ModcreatorSchedule1
 ```
 
@@ -187,7 +186,7 @@ We welcome various types of contributions:
 
 ```bash
 # Fork the repository on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/ModcreatorSchedule1.git
+git clone https://github.com/ESTONlA/ModcreatorSchedule1.git
 cd ModcreatorSchedule1
 
 # Create a feature branch
@@ -262,7 +261,6 @@ Before submitting a PR, ensure:
 If your changes affect:
 
 - **Public API** → Update XML documentation comments
-- **Architecture** → Update [CLAUDE.md](CLAUDE.md)
 - **User-facing features** → Update [README.md](README.md)
 - **Development process** → Update [CONTRIBUTING.md](CONTRIBUTING.md) or [CODING_STANDARDS.md](CODING_STANDARDS.md)
 
@@ -504,7 +502,6 @@ To test generated code:
 If you need help or have questions:
 
 1. **Check Documentation**
-   - [CLAUDE.md](CLAUDE.md) - Architecture and patterns
    - [CODING_STANDARDS.md](CODING_STANDARDS.md) - Code style
    - [README.md](README.md) - User documentation
 
@@ -583,7 +580,7 @@ git rebase -i HEAD~3
 - **Views (XAML)**: `Views/` and `Views/Controls/`
 - **Code Generation**: `Services/CodeGeneration/`
 - **Utilities**: `Utils/`
-- **Documentation**: `CLAUDE.md`, `CODING_STANDARDS.md`, `CONTRIBUTING.md`
+- **Documentation**: `CODING_STANDARDS.md`, `CONTRIBUTING.md`
 
 ## License
 
