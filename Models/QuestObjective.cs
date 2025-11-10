@@ -19,6 +19,8 @@ namespace Schedule1ModdingTool.Models
         private float _locationZ = 0f;
         private ObservableCollection<QuestObjectiveTrigger> _startTriggers = new ObservableCollection<QuestObjectiveTrigger>();
         private ObservableCollection<QuestObjectiveTrigger> _finishTriggers = new ObservableCollection<QuestObjectiveTrigger>();
+        private bool _autoStart = true;
+        private bool _createPOI = true;
 
         [Required(ErrorMessage = "Objective name is required")]
         [JsonProperty("name")]
@@ -95,6 +97,26 @@ namespace Schedule1ModdingTool.Models
             set => SetProperty(ref _finishTriggers, value);
         }
 
+        /// <summary>
+        /// Whether to automatically start this objective when created (if false, requires trigger)
+        /// </summary>
+        [JsonProperty("autoStart")]
+        public bool AutoStart
+        {
+            get => _autoStart;
+            set => SetProperty(ref _autoStart, value);
+        }
+
+        /// <summary>
+        /// Whether to create a POI (Point of Interest) marker for this objective
+        /// </summary>
+        [JsonProperty("createPOI")]
+        public bool CreatePOI
+        {
+            get => _createPOI;
+            set => SetProperty(ref _createPOI, value);
+        }
+
         public QuestObjective()
         {
         }
@@ -121,6 +143,8 @@ namespace Schedule1ModdingTool.Models
             LocationX = source.LocationX;
             LocationY = source.LocationY;
             LocationZ = source.LocationZ;
+            AutoStart = source.AutoStart;
+            CreatePOI = source.CreatePOI;
 
             StartTriggers.Clear();
             foreach (var trigger in source.StartTriggers)

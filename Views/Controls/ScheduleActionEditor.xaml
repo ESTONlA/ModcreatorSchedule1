@@ -1,0 +1,114 @@
+<UserControl x:Class="Schedule1ModdingTool.Views.Controls.ScheduleActionEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:models="clr-namespace:Schedule1ModdingTool.Models"
+             xmlns:controls="clr-namespace:Schedule1ModdingTool.Views.Controls"
+             xmlns:views="clr-namespace:Schedule1ModdingTool.Views"
+             mc:Ignorable="d"
+             d:DesignHeight="400" d:DesignWidth="500">
+    <Border Style="{StaticResource PanelStyle}" Padding="12">
+        <StackPanel>
+            <TextBlock Text="Action Details" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
+
+            <!-- Action Type -->
+            <Label Content="Action Type" Style="{StaticResource LabelStyle}"/>
+            <ComboBox x:Name="ActionTypeComboBox"
+                      ItemsSource="{Binding Source={x:Type models:ScheduleActionType}, Converter={StaticResource EnumToCollectionConverter}}"
+                      SelectedItem="{Binding ActionType}"
+                      SelectionChanged="ActionTypeComboBox_SelectionChanged"
+                      Style="{StaticResource ComboBoxStyle}"
+                      Margin="0,0,0,8"/>
+
+            <!-- Start Time -->
+            <controls:TimeInput Time="{Binding StartTime, Mode=TwoWay}"
+                              Label="Start Time"
+                              Margin="0,0,0,12"/>
+
+            <!-- Dynamic fields based on action type -->
+            <StackPanel x:Name="DynamicFieldsPanel">
+
+                <!-- WalkTo Fields -->
+                <StackPanel x:Name="WalkToFields" Visibility="Collapsed">
+                    <Label Content="Walk To Position" Style="{StaticResource LabelStyle}"/>
+                    <controls:Vector3Input X="{Binding PositionX, Mode=TwoWay}"
+                                         Y="{Binding PositionY, Mode=TwoWay}"
+                                         Z="{Binding PositionZ, Mode=TwoWay}"
+                                         Margin="0,0,0,8"/>
+                    <CheckBox Content="Face Destination Direction"
+                              IsChecked="{Binding FaceDestinationDirection}"
+                              Foreground="{StaticResource LightTextBrush}"
+                              Margin="0,0,0,12"/>
+                </StackPanel>
+
+                <!-- StayInBuilding Fields -->
+                <StackPanel x:Name="StayInBuildingFields" Visibility="Collapsed">
+                    <Label Content="Building Name" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding BuildingName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,8"/>
+                    <views:InfoIcon TooltipText="Building class name (e.g., 'NorthApartments')"
+                                  HorizontalAlignment="Left"
+                                  Margin="0,0,0,8"/>
+
+                    <Label Content="Duration (minutes)" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,12"/>
+                </StackPanel>
+
+                <!-- LocationDialogue Fields -->
+                <StackPanel x:Name="LocationDialogueFields" Visibility="Collapsed">
+                    <Label Content="Dialogue Position" Style="{StaticResource LabelStyle}"/>
+                    <controls:Vector3Input X="{Binding PositionX, Mode=TwoWay}"
+                                         Y="{Binding PositionY, Mode=TwoWay}"
+                                         Z="{Binding PositionZ, Mode=TwoWay}"
+                                         Margin="0,0,0,12"/>
+                </StackPanel>
+
+                <!-- DriveToCarPark Fields -->
+                <StackPanel x:Name="DriveToCarParkFields" Visibility="Collapsed">
+                    <Label Content="Parking Lot Name" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding ParkingLotName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,8"/>
+
+                    <Label Content="Vehicle ID" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding VehicleId, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,8"/>
+
+                    <Label Content="Vehicle Spawn Position" Style="{StaticResource LabelStyle}"/>
+                    <controls:Vector3Input X="{Binding VehicleSpawnX, Mode=TwoWay}"
+                                         Y="{Binding VehicleSpawnY, Mode=TwoWay}"
+                                         Z="{Binding VehicleSpawnZ, Mode=TwoWay}"
+                                         Margin="0,0,0,8"/>
+
+                    <Label Content="Vehicle Rotation (Euler Angles)" Style="{StaticResource LabelStyle}"/>
+                    <controls:Vector3Input X="{Binding VehicleRotationX, Mode=TwoWay}"
+                                         Y="{Binding VehicleRotationY, Mode=TwoWay}"
+                                         Z="{Binding VehicleRotationZ, Mode=TwoWay}"
+                                         Margin="0,0,0,8"/>
+
+                    <Label Content="Parking Alignment" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox SelectedItem="{Binding ParkingAlignment}"
+                              Style="{StaticResource ComboBoxStyle}"
+                              Margin="0,0,0,12">
+                        <ComboBoxItem Content="FrontToKerb"/>
+                        <ComboBoxItem Content="RearToKerb"/>
+                        <ComboBoxItem Content="Parallel"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- No extra fields for UseVendingMachine, UseATM, HandleDeal, EnsureDealSignal -->
+                <StackPanel x:Name="NoExtraFields" Visibility="Collapsed">
+                    <TextBlock Text="No additional configuration required for this action type."
+                               Foreground="{StaticResource DimTextBrush}"
+                               FontStyle="Italic"
+                               Margin="0,8,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

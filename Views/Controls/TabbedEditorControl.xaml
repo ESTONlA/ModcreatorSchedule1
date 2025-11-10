@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+
+    <!-- Shared DataTemplate for tabbed editor tab headers with icon and text -->
+    <DataTemplate x:Key="EditorTabHeaderTemplate">
+        <StackPanel Orientation="Horizontal">
+            <materialDesign:PackIcon Kind="{Binding}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=Foreground}"/>
+            <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- Style for tabbed editor controls - applies Material Design navigation rail style -->
+    <Style x:Key="EditorTabControlStyle" TargetType="TabControl" BasedOn="{StaticResource MaterialDesignNavigationRailTabControl}">
+        <Setter Property="materialDesign:ColorZoneAssist.Mode" Value="PrimaryMid"/>
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="TabItem" BasedOn="{StaticResource NavigationRailTabItemStyle}"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

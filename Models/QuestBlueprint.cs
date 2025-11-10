@@ -33,6 +33,8 @@ namespace Schedule1ModdingTool.Models
         private string _folderId = QuestProject.RootFolderId;
         private ObservableCollection<QuestTrigger> _questTriggers = new ObservableCollection<QuestTrigger>();
         private ObservableCollection<QuestFinishTrigger> _questFinishTriggers = new ObservableCollection<QuestFinishTrigger>();
+        private bool _trackOnBegin = true;
+        private bool _autoCompleteOnAllEntriesComplete = true;
 
         [Required(ErrorMessage = "Class name is required")]
         [JsonProperty("className")]
@@ -190,6 +192,26 @@ namespace Schedule1ModdingTool.Models
             set => SetProperty(ref _questFinishTriggers, value);
         }
 
+        /// <summary>
+        /// Whether to automatically track the quest when it begins
+        /// </summary>
+        [JsonProperty("trackOnBegin")]
+        public bool TrackOnBegin
+        {
+            get => _trackOnBegin;
+            set => SetProperty(ref _trackOnBegin, value);
+        }
+
+        /// <summary>
+        /// Whether to automatically complete the quest when all entries are complete
+        /// </summary>
+        [JsonProperty("autoCompleteOnAllEntriesComplete")]
+        public bool AutoCompleteOnAllEntriesComplete
+        {
+            get => _autoCompleteOnAllEntriesComplete;
+            set => SetProperty(ref _autoCompleteOnAllEntriesComplete, value);
+        }
+
         [JsonIgnore]
         public string DisplayName => string.IsNullOrEmpty(QuestTitle) ? ClassName : QuestTitle;
 
@@ -276,6 +298,8 @@ namespace Schedule1ModdingTool.Models
             QuestRewards = source.QuestRewards;
             GenerateDataClass = source.GenerateDataClass;
             BlueprintType = source.BlueprintType;
+            TrackOnBegin = source.TrackOnBegin;
+            AutoCompleteOnAllEntriesComplete = source.AutoCompleteOnAllEntriesComplete;
             Namespace = source.Namespace;
             ModName = source.ModName;
             ModVersion = source.ModVersion;

@@ -246,8 +246,8 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers
 
             if (actionParts.Length >= 2)
             {
-                var componentType = actionParts[0]; // NPCCustomer, NPCDealer, or NPC
-                var eventName = actionParts[1]; // OnDealCompleted, OnRecruited, etc.
+                var componentType = actionParts[0]; // NPCCustomer, NPCDealer, NPCRelationship, or NPC
+                var eventName = actionParts[1]; // OnDealCompleted, OnRecruited, OnChanged, etc.
 
                 if (componentType == "NPCCustomer")
                 {
@@ -256,6 +256,10 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers
                 else if (componentType == "NPCDealer")
                 {
                     eventPath = $"npc.Dealer.{eventName}";
+                }
+                else if (componentType == "NPCRelationship")
+                {
+                    eventPath = $"npc.Relationship.{eventName}";
                 }
                 else
                 {
@@ -268,6 +272,9 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers
                 eventPath = $"npc.{actionName}";
             }
 
+            // Get lambda signature for parameterized events
+            var lambdaSignature = GetLambdaSignature(trigger.TargetAction);
+
             builder.AppendLine($"var npc = NPC.All.FirstOrDefault(n => n.ID == \"{npcId}\");");
             builder.OpenBlock("if (npc == null)");
             builder.AppendLine($"MelonLogger.Warning($\"[Quest] NPC '{npcId}' not found when subscribing to trigger '{CodeFormatter.EscapeString(trigger.TargetAction)}'\");");
@@ -277,7 +284,7 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers
             if (!string.IsNullOrWhiteSpace(handlerFieldName))
             {
                 // Use Action field pattern
-                builder.AppendLine($"{handlerFieldName} ??= () =>");
+                builder.AppendLine($"{handlerFieldName} ??= {lambdaSignature} =>");
                 builder.OpenBlock();
                 if (objectiveVar != null)
                 {
@@ -297,7 +304,7 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers
             else
             {
                 // Fallback inline lambda
-                builder.AppendLine($"{eventPath} += () =>");
+                builder.AppendLine($"{eventPath} += {lambdaSignature} =>");
                 builder.OpenBlock();
                 if (objectiveVar != null)
                 {
@@ -316,6 +323,35 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers
         }
 
         /// <summary>
+        /// Gets the lambda signature string for a trigger action based on its parameters.
+        /// Returns "()" for no parameters, or parameter list like "(delta)" or "(type, notify)".
+        /// </summary>
+        private string GetLambdaSignature(string targetAction)
+        {
+            if (string.IsNullOrWhiteSpace(targetAction))
+                return "()";
+
+            // NPCRelationship.OnChanged -> Action<float>
+            if (targetAction == "NPCRelationship.OnChanged")
+                return "(delta)";
+
+            // NPCRelationship.OnUnlocked -> Action<UnlockType, bool>
+            if (targetAction == "NPCRelationship.OnUnlocked")
+                return "(type, notify)";
+
+            // NPCCustomer.OnContractAssigned -> Action<float, int, int, int>
+            if (targetAction == "NPCCustomer.OnContractAssigned")
+                return "(payment, quantity, windowStart, windowEnd)";
+
+            // TimeManager.OnSleepEnd -> Action<int>
+            if (targetAction == "TimeManager.OnSleepEnd")
+                return "(minutes)";
+
+            // Default: no parameters
+            return "()";
+        }
+
+        /// <summary>
         /// Generates subscription code for static Action triggers.
         /// </summary>
         private void GenerateStaticActionTriggerSubscription(
@@ -330,7 +366,51 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers
                 var targetClass = actionParts[0];
                 var actionName = actionParts[1];
 
-                builder.AppendLine($"{targetClass}.{actionName} += () =>");
+                // Special handling for Player.OnDeath (instance event on Player.Local)
+                if (targetClass == "Player" && actionName == "OnDeath")
+                {
+                    builder.OpenBlock("if (Player.Local != null)");
+                    builder.AppendLine("Player.Local.OnDeath += () =>");
+                    builder.OpenBlock();
+                    if (objectiveVar != null)
+                    {
+                        builder.OpenBlock($"if ({objectiveVar} != null)");
+                        builder.AppendLine($"{objectiveVar}.{actionMethod};");
+                        builder.CloseBlock();
+                    }
+                    else
+                    {
+                        builder.AppendLine($"{actionMethod};");
+                    }
+                    builder.CloseBlock(semicolon: true);
+                    builder.CloseBlock();
+                    return;
+                }
+
+                // Handle Player static events with parameters (PlayerSpawned, LocalPlayerSpawned, PlayerDespawned)
+                if (targetClass == "Player" && (actionName == "PlayerSpawned" || actionName == "LocalPlayerSpawned" || actionName == "PlayerDespawned"))
+                {
+                    builder.AppendLine($"{targetClass}.{actionName} += (player) =>");
+                    builder.OpenBlock();
+                    if (objectiveVar != null)
+                    {
+                        builder.OpenBlock($"if ({objectiveVar} != null)");
+                        builder.AppendLine($"{objectiveVar}.{actionMethod};");
+                        builder.CloseBlock();
+                    }
+                    else
+                    {
+                        builder.AppendLine($"{actionMethod};");
+                    }
+                    builder.CloseBlock(semicolon: true);
+                    return;
+                }
+
+                // Get lambda signature for parameterized events
+                var lambdaSignature = GetLambdaSignature(trigger.TargetAction);
+
+                // Standard static Action triggers
+                builder.AppendLine($"{targetClass}.{actionName} += {lambdaSignature} =>");
                 builder.OpenBlock();
                 if (objectiveVar != null)
                 {

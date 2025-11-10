@@ -151,6 +151,34 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Quest
             }
 
             builder.AppendLine();
+            
+            // Generate quest initialization code - override CreateInternal to set properties before base initialization
+            if (!quest.TrackOnBegin || !quest.AutoCompleteOnAllEntriesComplete)
+            {
+                builder.AppendBlockComment(
+                    "Quest initialization - sets tracking and auto-complete behavior",
+                    "Called during quest construction, before base initialization"
+                );
+                builder.OpenBlock("internal override void CreateInternal()");
+                
+                // Set properties before calling base
+                if (!quest.TrackOnBegin)
+                {
+                    builder.AppendComment("Disable automatic quest tracking");
+                    builder.AppendLine("S1Quest.TrackOnBegin = false;");
+                }
+                
+                if (!quest.AutoCompleteOnAllEntriesComplete)
+                {
+                    builder.AppendComment("Disable automatic quest completion when all entries complete");
+                    builder.AppendLine("S1Quest.AutoCompleteOnAllEntriesComplete = false;");
+                }
+                
+                builder.AppendLine();
+                builder.AppendLine("base.CreateInternal();");
+                builder.CloseBlock();
+                builder.AppendLine();
+            }
         }
 
         /// <summary>
@@ -164,9 +192,43 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Quest
             builder.AppendComment("Trigger event handlers");
             foreach (var handlerInfo in handlerInfos)
             {
-                builder.AppendLine($"private Action {handlerInfo.FieldName};");
+                var actionType = GetActionTypeForTrigger(handlerInfo.Trigger?.TargetAction);
+                builder.AppendLine($"private {actionType} {handlerInfo.FieldName};");
             }
             builder.AppendLine();
+        }
+
+        /// <summary>
+        /// Gets the Action type string for a trigger action based on its parameters.
+        /// Returns "Action" for no parameters, or parameterized Action types like "Action&lt;float&gt;" or "Action&lt;UnlockType, bool&gt;".
+        /// </summary>
+        private string GetActionTypeForTrigger(string? targetAction)
+        {
+            if (string.IsNullOrWhiteSpace(targetAction))
+                return "Action";
+
+            // NPCRelationship.OnChanged -> Action<float>
+            if (targetAction == "NPCRelationship.OnChanged")
+                return "Action<float>";
+
+            // NPCRelationship.OnUnlocked -> Action<UnlockType, bool>
+            if (targetAction == "NPCRelationship.OnUnlocked")
+                return "Action<NPCRelationship.UnlockType, bool>";
+
+            // NPCCustomer.OnContractAssigned -> Action<float, int, int, int>
+            if (targetAction == "NPCCustomer.OnContractAssigned")
+                return "Action<float, int, int, int>";
+
+            // TimeManager.OnSleepEnd -> Action<int>
+            if (targetAction == "TimeManager.OnSleepEnd")
+                return "Action<int>";
+
+            // Player static events -> Action<Player>
+            if (targetAction == "Player.PlayerSpawned" || targetAction == "Player.LocalPlayerSpawned" || targetAction == "Player.PlayerDespawned")
+                return "Action<Player>";
+
+            // Default: no parameters
+            return "Action";
         }
 
         /// <summary>

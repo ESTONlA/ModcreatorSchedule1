@@ -8,6 +8,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MaterialDesignThemes.Wpf;
+using Schedule1ModdingTool.ViewModels;
 
 namespace Schedule1ModdingTool.Utils
 {
@@ -543,6 +544,58 @@ namespace Schedule1ModdingTool.Utils
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter that converts an enum Type to a collection of all enum values
+    /// </summary>
+    public class EnumToCollectionConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is Type enumType && enumType.IsEnum)
+            {
+                return Enum.GetValues(enumType);
+            }
+            return Array.Empty<object>();
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter that determines if a workspace tab's close button should be visible.
+    /// Takes the tab and OpenTabs collection as input.
+    /// </summary>
+    public class WorkspaceTabCloseButtonVisibilityConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length < 2)
+                return Visibility.Visible;
+
+            var tab = values[0] as OpenElementTab;
+            var openTabs = values[1] as System.Collections.ObjectModel.ObservableCollection<OpenElementTab>;
+
+            if (tab == null || openTabs == null)
+                return Visibility.Visible;
+
+            // If it's not a workspace tab, always show close button
+            if (!tab.IsWorkspace)
+                return Visibility.Visible;
+
+            // For workspace tabs, only show close button if there are editor tabs
+            var hasEditorTabs = openTabs.Any(t => !t.IsWorkspace);
+            return hasEditorTabs ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }

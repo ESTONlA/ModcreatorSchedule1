@@ -34,6 +34,10 @@ namespace Schedule1ModdingTool.Models
         private float _spawnZ;
         private NpcAppearanceSettings _appearance = new NpcAppearanceSettings();
         private string _folderId = QuestProject.RootFolderId;
+        private NpcCustomerDefaults _customerDefaults = new NpcCustomerDefaults();
+        private NpcDealerDefaults _dealerDefaults = new NpcDealerDefaults();
+        private NpcRelationshipDefaults _relationshipDefaults = new NpcRelationshipDefaults();
+        private NpcInventoryDefaults _inventoryDefaults = new NpcInventoryDefaults();
 
         [Required]
         [JsonProperty("className")]
@@ -188,6 +192,37 @@ namespace Schedule1ModdingTool.Models
             set => SetProperty(ref _folderId, string.IsNullOrWhiteSpace(value) ? QuestProject.RootFolderId : value);
         }
 
+        [JsonProperty("customerDefaults")]
+        public NpcCustomerDefaults CustomerDefaults
+        {
+            get => _customerDefaults;
+            set => SetProperty(ref _customerDefaults, value ?? new NpcCustomerDefaults());
+        }
+
+        [JsonProperty("dealerDefaults")]
+        public NpcDealerDefaults DealerDefaults
+        {
+            get => _dealerDefaults;
+            set => SetProperty(ref _dealerDefaults, value ?? new NpcDealerDefaults());
+        }
+
+        [JsonProperty("relationshipDefaults")]
+        public NpcRelationshipDefaults RelationshipDefaults
+        {
+            get => _relationshipDefaults;
+            set => SetProperty(ref _relationshipDefaults, value ?? new NpcRelationshipDefaults());
+        }
+
+        [JsonProperty("inventoryDefaults")]
+        public NpcInventoryDefaults InventoryDefaults
+        {
+            get => _inventoryDefaults;
+            set => SetProperty(ref _inventoryDefaults, value ?? new NpcInventoryDefaults());
+        }
+
+        [JsonProperty("scheduleActions")]
+        public ObservableCollection<NpcScheduleAction> ScheduleActions { get; } = new();
+
         [JsonIgnore]
         public string DisplayName => string.IsNullOrWhiteSpace(FirstName)
             ? ClassName
@@ -226,6 +261,16 @@ namespace Schedule1ModdingTool.Models
             SpawnZ = source.SpawnZ;
             Appearance.CopyFrom(source.Appearance);
             FolderId = source.FolderId;
+            CustomerDefaults.CopyFrom(source.CustomerDefaults);
+            DealerDefaults.CopyFrom(source.DealerDefaults);
+            RelationshipDefaults.CopyFrom(source.RelationshipDefaults);
+            InventoryDefaults.CopyFrom(source.InventoryDefaults);
+
+            ScheduleActions.Clear();
+            foreach (var action in source.ScheduleActions)
+            {
+                ScheduleActions.Add(action.DeepCopy());
+            }
         }
 
         public NpcBlueprint DeepCopy()

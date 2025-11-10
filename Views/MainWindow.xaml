@@ -25,9 +25,14 @@
 			<views:NpcPropertiesControl
 				DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext}" />
 		</DataTemplate>
+		<DataTemplate x:Key="WorkspaceEditorTemplate">
+			<views:WorkspaceControl
+				DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext}" />
+		</DataTemplate>
 		<utils:ElementEditorTemplateSelector x:Key="ElementEditorTemplateSelector"
 		                                     QuestTemplate="{StaticResource QuestEditorTemplate}"
-		                                     NpcTemplate="{StaticResource NpcEditorTemplate}" />
+		                                     NpcTemplate="{StaticResource NpcEditorTemplate}"
+		                                     WorkspaceTemplate="{StaticResource WorkspaceEditorTemplate}" />
 	</Window.Resources>
 
 	<Grid>
@@ -276,6 +281,12 @@
 										        Cursor="Hand"
 										        Click="CloseTabButton_Click"
 										        Tag="{Binding}">
+											<Button.Visibility>
+												<MultiBinding Converter="{StaticResource WorkspaceTabCloseButtonVisibilityConverter}">
+													<Binding />
+													<Binding RelativeSource="{RelativeSource AncestorType=Window}" Path="DataContext.OpenTabs" />
+												</MultiBinding>
+											</Button.Visibility>
 											<Button.Style>
 												<Style TargetType="Button">
 													<Style.Triggers>

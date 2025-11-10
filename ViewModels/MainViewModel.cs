@@ -218,7 +218,12 @@ namespace Schedule1ModdingTool.ViewModels
                     if (_selectedTab != null)
                     {
                         _selectedTab.IsSelected = true;
-                        if (_selectedTab.Quest != null)
+                        // Don't set SelectedQuest/SelectedNpc for workspace tabs
+                        if (_selectedTab.IsWorkspace)
+                        {
+                            // Keep current selection, don't change it
+                        }
+                        else if (_selectedTab.Quest != null)
                         {
                             SelectedQuest = _selectedTab.Quest;
                             SelectedNpc = null;
@@ -798,6 +803,42 @@ namespace Schedule1ModdingTool.ViewModels
             OpenQuestInTab(quest);
         }
 
+        public void OpenWorkspaceTab()
+        {
+            // Check if workspace tab already exists
+            var existingTab = OpenTabs.FirstOrDefault(t => t.IsWorkspace);
+            if (existingTab != null)
+            {
+                SelectedTab = existingTab;
+                return;
+            }
+
+            // Create workspace tab and add it as the first tab
+            var tab = new OpenElementTab { IsWorkspace = true };
+            OpenTabs.Insert(0, tab);
+            SelectedTab = tab;
+        }
+
+        private void EnsureWorkspaceTabExists()
+        {
+            // Check if any editor tabs exist (non-workspace tabs)
+            var hasEditorTabs = OpenTabs.Any(t => !t.IsWorkspace);
+            
+            // If no editor tabs exist yet, we're about to add the first one
+            // So we need to add the workspace tab first
+            if (!hasEditorTabs)
+            {
+                // Check if workspace tab already exists
+                var workspaceTab = OpenTabs.FirstOrDefault(t => t.IsWorkspace);
+                if (workspaceTab == null)
+                {
+                    // Add workspace tab as the first tab
+                    var tab = new OpenElementTab { IsWorkspace = true };
+                    OpenTabs.Insert(0, tab);
+                }
+            }
+        }
+
         public void OpenQuestInTab(QuestBlueprint quest)
         {
             // Check if quest is already open
@@ -807,6 +848,9 @@ namespace Schedule1ModdingTool.ViewModels
                 SelectedTab = existingTab;
                 return;
             }
+
+            // Ensure workspace tab exists before adding editor tab
+            EnsureWorkspaceTabExists();
 
             // Create new tab
             var tab = new OpenElementTab { Quest = quest, Npc = null };
@@ -823,6 +867,9 @@ namespace Schedule1ModdingTool.ViewModels
                 return;
             }
 
+            // Ensure workspace tab exists before adding editor tab
+            EnsureWorkspaceTabExists();
+
             var tab = new OpenElementTab { Npc = npc };
             OpenTabs.Add(tab);
             SelectedTab = tab;
@@ -830,6 +877,32 @@ namespace Schedule1ModdingTool.ViewModels
 
         public void CloseTab(OpenElementTab tab)
         {
+            // If closing workspace tab, check if other tabs exist
+            if (tab.IsWorkspace)
+            {
+                var editorTabs = OpenTabs.Where(t => !t.IsWorkspace).ToList();
+                if (editorTabs.Count == 0)
+                {
+                    // No editor tabs exist, don't allow closing workspace tab
+                    return;
+                }
+            }
+
+            // If closing the last editor tab, also close workspace tab
+            if (!tab.IsWorkspace)
+            {
+                var editorTabs = OpenTabs.Where(t => !t.IsWorkspace).ToList();
+                if (editorTabs.Count == 1 && editorTabs[0] == tab)
+                {
+                    // This is the last editor tab, close workspace tab too
+                    var workspaceTab = OpenTabs.FirstOrDefault(t => t.IsWorkspace);
+                    if (workspaceTab != null)
+                    {
+                        OpenTabs.Remove(workspaceTab);
+                    }
+                }
+            }
+
             if (tab == SelectedTab)
             {
                 var index = OpenTabs.IndexOf(tab);

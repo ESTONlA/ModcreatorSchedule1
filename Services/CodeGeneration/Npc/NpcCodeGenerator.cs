@@ -14,11 +14,13 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
     {
         private readonly NpcHeaderGenerator _headerGenerator;
         private readonly NpcAppearanceGenerator _appearanceGenerator;
+        private readonly NpcScheduleGenerator _scheduleGenerator;
 
         public NpcCodeGenerator()
         {
             _headerGenerator = new NpcHeaderGenerator();
             _appearanceGenerator = new NpcAppearanceGenerator();
+            _scheduleGenerator = new NpcScheduleGenerator();
         }
 
         /// <summary>
@@ -111,33 +113,213 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
             if (npc.EnableCustomer)
             {
                 builder.AppendLine(".EnsureCustomer()");
-                builder.OpenBlock(".WithCustomerDefaults(cd =>");
-                builder.AppendLine("cd.WithSpending(400f, 900f)");
-                builder.AppendLine("  .WithOrdersPerWeek(1, 3)");
-                builder.AppendLine("  .WithPreferredOrderDay(Day.Monday)");
-                builder.AppendLine("  .WithOrderTime(900)");
-                builder.AppendLine("  .WithStandards(CustomerStandard.Moderate)");
-                builder.AppendLine("  .AllowDirectApproach(true);");
-                builder.CloseBlock();
-                builder.AppendLine(")");
+                GenerateCustomerDefaults(builder, npc.CustomerDefaults);
             }
 
             // Dealer configuration
             if (npc.IsDealer)
             {
                 builder.AppendLine(".EnsureDealer()");
-                builder.OpenBlock(".WithDealerDefaults(dd =>");
-                builder.AppendLine("dd.WithSigningFee(1000f)");
-                builder.AppendLine("  .WithCut(0.15f)");
-                builder.AppendLine("  .WithDealerType(DealerType.PlayerDealer);");
-                builder.CloseBlock();
-                builder.AppendLine(")");
+                GenerateDealerDefaults(builder, npc.DealerDefaults);
+            }
+
+            // Relationship defaults
+            if (ShouldGenerateRelationshipDefaults(npc.RelationshipDefaults))
+            {
+                GenerateRelationshipDefaults(builder, npc.RelationshipDefaults);
+            }
+
+            // Schedule
+            if (npc.ScheduleActions != null && npc.ScheduleActions.Count > 0)
+            {
+                _scheduleGenerator.Generate(builder, npc);
+            }
+
+            // Inventory defaults
+            if (ShouldGenerateInventoryDefaults(npc.InventoryDefaults))
+            {
+                GenerateInventoryDefaults(builder, npc.InventoryDefaults);
             }
 
             builder.AppendLine(";");
 
             builder.CloseBlock();
             builder.AppendLine();
+        }
+
+        private void GenerateCustomerDefaults(ICodeBuilder builder, NpcCustomerDefaults cd)
+        {
+            builder.OpenBlock(".WithCustomerDefaults(cd =>");
+            builder.AppendLine($"cd.WithSpending({cd.MinWeeklySpending}f, {cd.MaxWeeklySpending}f)");
+            builder.AppendLine($"  .WithOrdersPerWeek({cd.MinOrdersPerWeek}, {cd.MaxOrdersPerWeek})");
+            builder.AppendLine($"  .WithPreferredOrderDay(Day.{cd.PreferredOrderDay})");
+            builder.AppendLine($"  .WithOrderTime({cd.OrderTime})");
+            builder.AppendLine($"  .WithStandards(CustomerStandard.{cd.CustomerStandards})");
+            builder.AppendLine($"  .AllowDirectApproach({cd.AllowDirectApproach.ToString().ToLowerInvariant()})");
+
+            // Advanced features
+            if (cd.GuaranteeFirstSample)
+            {
+                builder.AppendLine($"  .GuaranteeFirstSample(true)");
+            }
+
+            if (cd.MutualRelationMinAt50 != 0 || cd.MutualRelationMaxAt100 != 0)
+            {
+                builder.AppendLine($"  .WithMutualRelationRequirement(minAt50: {cd.MutualRelationMinAt50}f, maxAt100: {cd.MutualRelationMaxAt100}f)");
+            }
+
+            if (cd.CallPoliceChance > 0)
+            {
+                builder.AppendLine($"  .WithCallPoliceChance({cd.CallPoliceChance}f)");
+            }
+
+            if (cd.BaseAddiction > 0 || cd.DependenceMultiplier != 1.0f)
+            {
+                builder.AppendLine($"  .WithDependence(baseAddiction: {cd.BaseAddiction}f, dependenceMultiplier: {cd.DependenceMultiplier}f)");
+            }
+
+            // Drug affinities
+            if (cd.DrugAffinities != null && cd.DrugAffinities.Count > 0)
+            {
+                builder.AppendLine("  .WithAffinities(new[]");
+                builder.AppendLine("  {");
+                for (int i = 0; i < cd.DrugAffinities.Count; i++)
+                {
+                    var affinity = cd.DrugAffinities[i];
+                    var comma = i < cd.DrugAffinities.Count - 1 ? "," : "";
+                    builder.AppendLine($"      (DrugType.{affinity.DrugType}, {affinity.AffinityValue}f){comma}");
+                }
+                builder.AppendLine("  })");
+            }
+
+            // Preferred properties
+            if (cd.PreferredProperties != null && cd.PreferredProperties.Count > 0)
+            {
+                var props = string.Join(", ", cd.PreferredProperties.Select(p => $"Property.{p}"));
+                builder.AppendLine($"  .WithPreferredProperties({props})");
+            }
+
+            builder.AppendLine(";");
+            builder.CloseBlock();
+            builder.AppendLine(")");
+        }
+
+        private void GenerateDealerDefaults(ICodeBuilder builder, NpcDealerDefaults dd)
+        {
+            builder.OpenBlock(".WithDealerDefaults(dd =>");
+            builder.AppendLine($"dd.WithSigningFee({dd.SigningFee}f)");
+            builder.AppendLine($"  .WithCut({dd.CommissionCut}f)");
+            builder.AppendLine($"  .WithDealerType(DealerType.{dd.DealerType})");
+
+            if (!string.IsNullOrWhiteSpace(dd.HomeName))
+            {
+                builder.AppendLine($"  .WithHomeName(\"{CodeFormatter.EscapeString(dd.HomeName)}\")");
+            }
+
+            if (dd.AllowInsufficientQuality)
+            {
+                builder.AppendLine("  .AllowInsufficientQuality(true)");
+            }
+
+            if (!dd.AllowExcessQuality)
+            {
+                builder.AppendLine("  .AllowExcessQuality(false)");
+            }
+
+            if (!string.IsNullOrWhiteSpace(dd.CompletedDealsVariable))
+            {
+                builder.AppendLine($"  .WithCompletedDealsVariable(\"{CodeFormatter.EscapeString(dd.CompletedDealsVariable)}\")");
+            }
+
+            builder.AppendLine(";");
+            builder.CloseBlock();
+            builder.AppendLine(")");
+        }
+
+        private void GenerateRelationshipDefaults(ICodeBuilder builder, NpcRelationshipDefaults rd)
+        {
+            builder.OpenBlock(".WithRelationshipDefaults(r =>");
+
+            if (rd.StartingDelta != 0)
+            {
+                builder.AppendLine($"r.WithDelta({rd.StartingDelta}f)");
+            }
+            else
+            {
+                builder.AppendLine("r.WithDelta(0f)");
+            }
+
+            if (rd.StartsUnlocked)
+            {
+                builder.AppendLine("  .SetUnlocked(true)");
+            }
+            else
+            {
+                builder.AppendLine("  .SetUnlocked(false)");
+            }
+
+            if (!string.IsNullOrWhiteSpace(rd.UnlockType))
+            {
+                builder.AppendLine($"  .SetUnlockType(NPCRelationship.UnlockType.{rd.UnlockType})");
+            }
+
+            if (rd.Connections != null && rd.Connections.Count > 0)
+            {
+                var connections = string.Join(", ", rd.Connections.Select(c => $"\"{CodeFormatter.EscapeString(c)}\""));
+                builder.AppendLine($"  .WithConnectionsById({connections})");
+            }
+
+            builder.AppendLine(";");
+            builder.CloseBlock();
+            builder.AppendLine(")");
+        }
+
+        private void GenerateInventoryDefaults(ICodeBuilder builder, NpcInventoryDefaults inv)
+        {
+            builder.OpenBlock(".WithInventoryDefaults(inv =>");
+
+            bool hasStartupItems = inv.StartupItems != null && inv.StartupItems.Count > 0;
+            bool hasCash = inv.EnableRandomCash;
+            bool hasClearNight = !inv.ClearInventoryEachNight;
+
+            if (hasStartupItems)
+            {
+                var items = string.Join(", ", inv.StartupItems.Select(i => $"\"{CodeFormatter.EscapeString(i)}\""));
+                builder.AppendLine($"inv.WithStartupItems({items})");
+            }
+            else
+            {
+                builder.AppendLine("inv");
+            }
+
+            if (hasCash)
+            {
+                builder.AppendLine($"   .WithRandomCash(min: {inv.RandomCashMin}f, max: {inv.RandomCashMax}f)");
+            }
+
+            if (hasClearNight)
+            {
+                builder.AppendLine("   .WithClearInventoryEachNight(false)");
+            }
+
+            builder.AppendLine(";");
+            builder.CloseBlock();
+            builder.AppendLine(")");
+        }
+
+        private bool ShouldGenerateRelationshipDefaults(NpcRelationshipDefaults rd)
+        {
+            return rd.StartingDelta != 0 ||
+                   rd.StartsUnlocked ||
+                   !string.IsNullOrWhiteSpace(rd.UnlockType) ||
+                   (rd.Connections != null && rd.Connections.Count > 0);
+        }
+
+        private bool ShouldGenerateInventoryDefaults(NpcInventoryDefaults inv)
+        {
+            return inv.EnableRandomCash ||
+                   !inv.ClearInventoryEachNight ||
+                   (inv.StartupItems != null && inv.StartupItems.Count > 0);
         }
 
         /// <summary>

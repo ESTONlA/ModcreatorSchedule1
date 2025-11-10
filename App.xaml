@@ -7,9 +7,15 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- Material Design -->
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Dark.xaml" />
+
+                <!-- Application Resources -->
                 <ResourceDictionary Source="Resources/DarkTheme.xaml" />
                 <ResourceDictionary Source="Resources/Icons.xaml" />
                 <ResourceDictionary Source="Resources/Styles.xaml" />
+                <ResourceDictionary Source="Views/Controls/TabbedEditorControl.xaml" />
             </ResourceDictionary.MergedDictionaries>
             
             <!-- Value Converters -->
@@ -28,10 +34,12 @@
             <utils:BooleanToTabForegroundConverter x:Key="BooleanToTabForegroundConverter"/>
             <utils:BooleanToGridLengthConverter x:Key="BooleanToGridLengthConverter"/>
             <utils:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
+            <utils:EnumToCollectionConverter x:Key="EnumToCollectionConverter"/>
             <utils:ExperienceLevelToStringConverter x:Key="ExperienceLevelToStringConverter"/>
             <utils:ColorHexToBrushConverter x:Key="ColorHexToBrushConverter"/>
             <utils:RelativeResourcePathConverter x:Key="RelativeResourcePathConverter"/>
             <utils:BreadcrumbSeparatorVisibilityConverter x:Key="BreadcrumbSeparatorVisibilityConverter"/>
+            <utils:WorkspaceTabCloseButtonVisibilityConverter x:Key="WorkspaceTabCloseButtonVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -79,23 +79,30 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Quest
                 builder.AppendComment($"Objective \"{CodeFormatter.EscapeString(objective.Title)}\" ({objective.Name})");
 
                 // Create entry
-                builder.AppendLine($"{objectiveVar} = AddEntry(\"{CodeFormatter.EscapeString(objective.Title)}\");");
-
-                // Set POI position if objective has a location
-                if (objective.HasLocation)
+                if (objective.HasLocation && objective.CreatePOI)
                 {
-                    builder.AppendLine($"{objectiveVar}.POIPosition = {CodeFormatter.FormatVector3(objective)};");
+                    builder.AppendLine($"{objectiveVar} = AddEntry(\"{CodeFormatter.EscapeString(objective.Title)}\", {CodeFormatter.FormatVector3(objective)});");
+                }
+                else
+                {
+                    builder.AppendLine($"{objectiveVar} = AddEntry(\"{CodeFormatter.EscapeString(objective.Title)}\");");
                 }
 
                 // Determine if entry should start active or inactive
-                if (objective.StartTriggers?.Any() == true)
+                bool shouldAutoStart = objective.AutoStart && (objective.StartTriggers?.Any() != true);
+                if (shouldAutoStart)
+                {
+                    builder.AppendLine($"{objectiveVar}.Begin();");
+                }
+                else if (objective.StartTriggers?.Any() == true)
                 {
                     builder.AppendLine($"{objectiveVar}.SetState(QuestState.Inactive);");
                     builder.AppendComment("Entry will be activated by start trigger");
                 }
                 else
                 {
-                    builder.AppendLine($"{objectiveVar}.Begin();");
+                    builder.AppendLine($"{objectiveVar}.SetState(QuestState.Inactive);");
+                    builder.AppendComment("Entry starts inactive (AutoStart is disabled)");
                 }
 
                 builder.AppendComment($"Required progress: {objective.RequiredProgress}");

@@ -560,5 +560,79 @@ namespace Schedule1ModdingTool.Views
                 comboBox.ItemsSource = Enum.GetValues(typeof(QuestFinishType));
             }
         }
+
+        private void AddObjectiveStartTrigger_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is QuestObjective objective)
+            {
+                var defaultTrigger = _availableTriggers?.FirstOrDefault(t => t.TargetAction == "TimeManager.OnDayPass");
+                var trigger = new QuestObjectiveTrigger
+                {
+                    TriggerType = QuestTriggerType.ActionTrigger,
+                    TriggerTarget = QuestTriggerTarget.ObjectiveStart,
+                    TargetAction = defaultTrigger?.TargetAction ?? "TimeManager.OnDayPass",
+                    ObjectiveName = objective.Name,
+                    SelectedTriggerMetadata = defaultTrigger
+                };
+                objective.StartTriggers.Add(trigger);
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.CurrentProject.MarkAsModified();
+                }
+            }
+        }
+
+        private void RemoveObjectiveStartTrigger_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is QuestObjectiveTrigger trigger)
+            {
+                if (DataContext is MainViewModel vm && vm.SelectedQuest != null)
+                {
+                    var objective = vm.SelectedQuest.Objectives.FirstOrDefault(obj => obj.StartTriggers.Contains(trigger));
+                    if (objective != null)
+                    {
+                        objective.StartTriggers.Remove(trigger);
+                        vm.CurrentProject.MarkAsModified();
+                    }
+                }
+            }
+        }
+
+        private void AddObjectiveFinishTrigger_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is QuestObjective objective)
+            {
+                var defaultTrigger = _availableTriggers?.FirstOrDefault(t => t.TargetAction == "TimeManager.OnDayPass");
+                var trigger = new QuestObjectiveTrigger
+                {
+                    TriggerType = QuestTriggerType.ActionTrigger,
+                    TriggerTarget = QuestTriggerTarget.ObjectiveFinish,
+                    TargetAction = defaultTrigger?.TargetAction ?? "TimeManager.OnDayPass",
+                    ObjectiveName = objective.Name,
+                    SelectedTriggerMetadata = defaultTrigger
+                };
+                objective.FinishTriggers.Add(trigger);
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.CurrentProject.MarkAsModified();
+                }
+            }
+        }
+
+        private void RemoveObjectiveFinishTrigger_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is QuestObjectiveTrigger trigger)
+            {
+                if (DataContext is MainViewModel vm && vm.SelectedQuest != null)
+                {
+                    var objective = vm.SelectedQuest.Objectives.FirstOrDefault(obj => obj.FinishTriggers.Contains(trigger));
+                    if (objective != null)
+                    {
+                        objective.FinishTriggers.Remove(trigger);
+                        vm.CurrentProject.MarkAsModified();
+                    }
+                }
+            }
+        }
     }
 }

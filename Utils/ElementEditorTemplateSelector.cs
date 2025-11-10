@@ -11,11 +11,17 @@ namespace Schedule1ModdingTool.Utils
     {
         public DataTemplate? QuestTemplate { get; set; }
         public DataTemplate? NpcTemplate { get; set; }
+        public DataTemplate? WorkspaceTemplate { get; set; }
 
         public override DataTemplate? SelectTemplate(object item, DependencyObject container)
         {
             if (item is OpenElementTab tab)
             {
+                if (tab.IsWorkspace && WorkspaceTemplate != null)
+                {
+                    return WorkspaceTemplate;
+                }
+
                 if (tab.Quest != null && QuestTemplate != null)
                 {
                     return QuestTemplate;

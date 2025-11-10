@@ -29,7 +29,10 @@ namespace Schedule1ModdingTool.Services
             var allTriggers = GetAvailableTriggers();
             return allTriggers
                 .Where(t => t.TriggerType == QuestTriggerType.NPCEventTrigger || 
-                           t.TargetAction.Contains("NPC."))
+                           t.TargetAction.Contains("NPC.") ||
+                           t.TargetAction.Contains("NPCCustomer.") ||
+                           t.TargetAction.Contains("NPCDealer.") ||
+                           t.TargetAction.Contains("NPCRelationship."))
                 .ToList();
         }
 
@@ -136,6 +139,27 @@ namespace Schedule1ModdingTool.Services
                 RequiresNpcId = true
             });
 
+            // NPCRelationship triggers
+            catalog.Add(new TriggerMetadata
+            {
+                TriggerType = QuestTriggerType.NPCEventTrigger,
+                TargetAction = "NPCRelationship.OnChanged",
+                Description = "Triggered when an NPC's relationship delta changes (parameter: float delta)",
+                SourceClass = "S1API.Entities.NPCRelationship",
+                Parameters = new[] { "float delta" },
+                RequiresNpcId = true
+            });
+
+            catalog.Add(new TriggerMetadata
+            {
+                TriggerType = QuestTriggerType.NPCEventTrigger,
+                TargetAction = "NPCRelationship.OnUnlocked",
+                Description = "Triggered when an NPC is unlocked (parameters: UnlockType type, bool notify)",
+                SourceClass = "S1API.Entities.NPCRelationship",
+                Parameters = new[] { "UnlockType type", "bool notify" },
+                RequiresNpcId = true
+            });
+
             // NPCCustomer triggers
             catalog.Add(new TriggerMetadata
             {
@@ -196,6 +220,43 @@ namespace Schedule1ModdingTool.Services
                 SourceClass = "S1API.Entities.NPCDealer",
                 Parameters = Array.Empty<string>(),
                 RequiresNpcId = true
+            });
+
+            // Player triggers
+            catalog.Add(new TriggerMetadata
+            {
+                TriggerType = QuestTriggerType.ActionTrigger,
+                TargetAction = "Player.OnDeath",
+                Description = "Triggered when the local player dies",
+                SourceClass = "S1API.Entities.Player",
+                Parameters = Array.Empty<string>()
+            });
+
+            catalog.Add(new TriggerMetadata
+            {
+                TriggerType = QuestTriggerType.ActionTrigger,
+                TargetAction = "Player.PlayerSpawned",
+                Description = "Triggered when any player spawns (parameter: Player player)",
+                SourceClass = "S1API.Entities.Player",
+                Parameters = new[] { "Player player" }
+            });
+
+            catalog.Add(new TriggerMetadata
+            {
+                TriggerType = QuestTriggerType.ActionTrigger,
+                TargetAction = "Player.LocalPlayerSpawned",
+                Description = "Triggered when the local player spawns (parameter: Player player)",
+                SourceClass = "S1API.Entities.Player",
+                Parameters = new[] { "Player player" }
+            });
+
+            catalog.Add(new TriggerMetadata
+            {
+                TriggerType = QuestTriggerType.ActionTrigger,
+                TargetAction = "Player.PlayerDespawned",
+                Description = "Triggered when any player despawns (parameter: Player player)",
+                SourceClass = "S1API.Entities.Player",
+                Parameters = new[] { "Player player" }
             });
 
             // QuestEntry triggers (for objectives)
