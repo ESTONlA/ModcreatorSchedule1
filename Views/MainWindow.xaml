@@ -236,7 +236,8 @@
 					<!-- Tab Control Host -->
 					<Border Background="{StaticResource DarkPanelBrush}"
 					        BorderBrush="{StaticResource DarkBorderBrush}"
-					        BorderThickness="0,0,0,1">
+					        BorderThickness="0,0,0,1"
+					        VerticalAlignment="Stretch">
 						<Border.Style>
 							<Style TargetType="Border">
 								<Setter Property="Visibility" Value="Visible" />
@@ -254,6 +255,7 @@
 						            SelectedItem="{Binding SelectedTab}"
 						            Background="Transparent"
 						            BorderThickness="0"
+						            VerticalAlignment="Stretch"
 						            ContentTemplateSelector="{StaticResource ElementEditorTemplateSelector}">
 							<TabControl.ItemContainerStyle>
 								<Style TargetType="TabItem" BasedOn="{StaticResource TabItemStyle}" />
@@ -330,7 +332,7 @@
 					</Border>
 
 					<!-- Workspace View (when no tabs open or Resources selected) -->
-					<ContentControl DataContext="{Binding}">
+					<ContentControl DataContext="{Binding}" VerticalAlignment="Stretch">
 						<ContentControl.Style>
 							<Style TargetType="ContentControl">
 								<Setter Property="Content">

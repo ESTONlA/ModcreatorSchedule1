@@ -15,9 +15,10 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </UserControl.Resources>
 
-    <Grid Margin="8" Loaded="Grid_Loaded">
+    <Grid Margin="8" Loaded="Grid_Loaded" VerticalAlignment="Stretch">
         <TabControl Style="{StaticResource MaterialDesignNavigationRailTabControl}"
-                    materialDesign:ColorZoneAssist.Mode="PrimaryMid">
+                    materialDesign:ColorZoneAssist.Mode="PrimaryMid"
+                    VerticalAlignment="Stretch">
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem" BasedOn="{StaticResource NavigationRailTabItemStyle}"/>
             </TabControl.ItemContainerStyle>

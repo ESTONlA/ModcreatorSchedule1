@@ -16,8 +16,8 @@
         <utils:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
     </UserControl.Resources>
 
-    <Grid Margin="8">
-        <TabControl Style="{StaticResource EditorTabControlStyle}">
+    <Grid Margin="8" VerticalAlignment="Stretch">
+        <TabControl Style="{StaticResource EditorTabControlStyle}" VerticalAlignment="Stretch">
 
             <!-- Tab 1: Quest Details & Settings -->
             <TabItem Header="Quest Details">
@@ -138,6 +138,235 @@
                                           IsChecked="{Binding SelectedQuest.AutoCompleteOnAllEntriesComplete}"
                                           Foreground="{StaticResource LightTextBrush}" Margin="0,2"/>
                             </StackPanel>
+                        </Border>
+
+                        <!-- Quest Triggers -->
+                        <Border Style="{StaticResource PanelStyle}"
+                                Margin="0,0,12,12"
+                                MinWidth="300"
+                                MaxWidth="500"
+                                VerticalAlignment="Top">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="800">
+                                <StackPanel Margin="12">
+                                    <TextBlock Text="Quest Triggers" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
+
+                                    <!-- Quest Start Triggers -->
+                                    <DockPanel Margin="0,0,0,12">
+                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                                            <TextBlock Text="Start Triggers" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <views:InfoIcon TooltipText="These triggers control when the quest starts. You can also set up triggers for individual quest objectives in the Objectives tab." />
+                                        </StackPanel>
+                                        <Button Content="+ Add Start Trigger"
+                                                Click="AddQuestStartTrigger_Click"
+                                                Style="{StaticResource IconButtonStyle}"
+                                                DockPanel.Dock="Right"
+                                                HorizontalAlignment="Right"/>
+                                    </DockPanel>
+
+                                    <ItemsControl ItemsSource="{Binding SelectedQuest.QuestTriggers}" Margin="0,0,0,16">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{StaticResource DarkBackgroundBrush}"
+                                                        BorderBrush="{StaticResource DarkBorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="3"
+                                                        Margin="0,0,0,8"
+                                                        Padding="12">
+                                                    <StackPanel>
+                                                        <DockPanel Margin="0,0,0,8">
+                                                            <Button DockPanel.Dock="Right"
+                                                                    Click="RemoveQuestStartTrigger_Click"
+                                                                    Tag="{Binding}"
+                                                                    Style="{StaticResource IconButtonStyle}"
+                                                                    ToolTip="Remove Trigger">
+                                                                <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}" Width="16" Height="16"/>
+                                                            </Button>
+                                                        </DockPanel>
+
+                                                        <Label Content="Trigger Type" Style="{StaticResource LabelStyle}"/>
+                                                        <ComboBox SelectedItem="{Binding TriggerType}"
+                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                  IsEditable="False"
+                                                                  Loaded="TriggerTypeComboBox_Loaded"
+                                                                  SelectionChanged="TriggerTypeComboBox_SelectionChanged" />
+
+                                                        <Label Content="Target Action" Style="{StaticResource LabelStyle}"/>
+                                                        <ComboBox SelectedItem="{Binding SelectedTriggerMetadata, Mode=TwoWay}"
+                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                  IsEditable="False"
+                                                                  Loaded="TriggerComboBox_Loaded"
+                                                                  SelectionChanged="TriggerComboBox_SelectionChanged">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="{Binding TargetAction}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                                                        <TextBlock Text="{Binding Description}"
+                                                                                   Foreground="{StaticResource MediumTextBrush}"
+                                                                                   FontSize="10" />
+                                                                    </StackPanel>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+
+                                                        <TextBlock Text="{Binding SelectedTriggerMetadata.Description}"
+                                                                   Foreground="{StaticResource MediumTextBrush}"
+                                                                   FontSize="10"
+                                                                   TextWrapping="Wrap"
+                                                                   Margin="4,4,0,8"
+                                                                   Visibility="{Binding SelectedTriggerMetadata, Converter={StaticResource NullToVisibilityConverter}}" />
+
+                                                        <Label Content="NPC ID (if NPC trigger)"
+                                                               Style="{StaticResource LabelStyle}"
+                                                               Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NPCEventTrigger}" />
+                                                        <ComboBox SelectedValue="{Binding TargetNpcId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  SelectedValuePath="Id"
+                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                  IsEditable="True"
+                                                                  Loaded="NpcComboBox_Loaded"
+                                                                  LostFocus="NpcComboBox_LostFocus"
+                                                                  Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NPCEventTrigger}">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                                                        <TextBlock Text="(" Foreground="{StaticResource MediumTextBrush}" />
+                                                                        <TextBlock Text="{Binding Id}" Foreground="{StaticResource MediumTextBrush}" />
+                                                                        <TextBlock Text=")" Foreground="{StaticResource MediumTextBrush}" />
+                                                                        <TextBlock Text=" - " Foreground="{StaticResource MediumTextBrush}" Margin="4,0,4,0" />
+                                                                        <TextBlock Foreground="{StaticResource MediumTextBrush}" FontSize="10">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Text" Value="Base Game" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsModNpc}" Value="True">
+                                                                                            <Setter Property="Text" Value="Mod" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </StackPanel>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Quest Finish Triggers -->
+                                    <DockPanel Margin="0,0,0,12">
+                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                                            <TextBlock Text="Finish Triggers" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <views:InfoIcon TooltipText="These triggers control when the quest finishes. You can also set up triggers for individual quest objectives in the Objectives tab." />
+                                        </StackPanel>
+                                        <Button Content="+ Add Finish Trigger"
+                                                Click="AddQuestFinishTrigger_Click"
+                                                Style="{StaticResource IconButtonStyle}"
+                                                DockPanel.Dock="Right"
+                                                HorizontalAlignment="Right"/>
+                                    </DockPanel>
+
+                                    <ItemsControl ItemsSource="{Binding SelectedQuest.QuestFinishTriggers}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="{StaticResource DarkBackgroundBrush}"
+                                                        BorderBrush="{StaticResource DarkBorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="3"
+                                                        Margin="0,0,0,8"
+                                                        Padding="12">
+                                                    <StackPanel>
+                                                        <DockPanel Margin="0,0,0,8">
+                                                            <Button DockPanel.Dock="Right"
+                                                                    Click="RemoveQuestFinishTrigger_Click"
+                                                                    Tag="{Binding}"
+                                                                    Style="{StaticResource IconButtonStyle}"
+                                                                    ToolTip="Remove Trigger">
+                                                                <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}" Width="16" Height="16"/>
+                                                            </Button>
+                                                        </DockPanel>
+
+                                                        <Label Content="Trigger Type" Style="{StaticResource LabelStyle}"/>
+                                                        <ComboBox SelectedItem="{Binding TriggerType}"
+                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                  IsEditable="False"
+                                                                  Loaded="TriggerTypeComboBox_Loaded"
+                                                                  SelectionChanged="TriggerTypeComboBox_SelectionChanged" />
+
+                                                        <Label Content="Target Action" Style="{StaticResource LabelStyle}"/>
+                                                        <ComboBox SelectedItem="{Binding SelectedTriggerMetadata, Mode=TwoWay}"
+                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                  IsEditable="False"
+                                                                  Loaded="TriggerComboBox_Loaded"
+                                                                  SelectionChanged="TriggerComboBox_SelectionChanged">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="{Binding TargetAction}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                                                        <TextBlock Text="{Binding Description}"
+                                                                                   Foreground="{StaticResource MediumTextBrush}"
+                                                                                   FontSize="10" />
+                                                                    </StackPanel>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+
+                                                        <TextBlock Text="{Binding SelectedTriggerMetadata.Description}"
+                                                                   Foreground="{StaticResource MediumTextBrush}"
+                                                                   FontSize="10"
+                                                                   TextWrapping="Wrap"
+                                                                   Margin="4,4,0,8"
+                                                                   Visibility="{Binding SelectedTriggerMetadata, Converter={StaticResource NullToVisibilityConverter}}" />
+
+                                                        <Label Content="NPC ID (if NPC trigger)"
+                                                               Style="{StaticResource LabelStyle}"
+                                                               Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NPCEventTrigger}" />
+                                                        <ComboBox SelectedValue="{Binding TargetNpcId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  SelectedValuePath="Id"
+                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                  IsEditable="True"
+                                                                  Loaded="NpcComboBox_Loaded"
+                                                                  LostFocus="NpcComboBox_LostFocus"
+                                                                  Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NPCEventTrigger}">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                                                        <TextBlock Text="(" Foreground="{StaticResource MediumTextBrush}" />
+                                                                        <TextBlock Text="{Binding Id}" Foreground="{StaticResource MediumTextBrush}" />
+                                                                        <TextBlock Text=")" Foreground="{StaticResource MediumTextBrush}" />
+                                                                        <TextBlock Text=" - " Foreground="{StaticResource MediumTextBrush}" Margin="4,0,4,0" />
+                                                                        <TextBlock Foreground="{StaticResource MediumTextBrush}" FontSize="10">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Text" Value="Base Game" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsModNpc}" Value="True">
+                                                                                            <Setter Property="Text" Value="Mod" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </StackPanel>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+
+                                                        <Label Content="Finish Type" Style="{StaticResource LabelStyle}"/>
+                                                        <ComboBox SelectedItem="{Binding FinishType}"
+                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                  IsEditable="False"
+                                                                  Loaded="FinishTypeComboBox_Loaded" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
                         </Border>
                     </WrapPanel>
                 </ScrollViewer>
@@ -432,243 +661,6 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </Grid>
-            </TabItem>
-
-            <!-- Tab 4: Triggers -->
-            <TabItem Header="Triggers">
-                <TabItem.HeaderTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="LightningBolt"
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,8,0"
-                                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=Foreground}"/>
-                            <TextBlock Text="{Binding}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </TabItem.HeaderTemplate>
-
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="12" MaxWidth="800" HorizontalAlignment="Left">
-                        <!-- Quest Start Triggers -->
-                        <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,16">
-                            <StackPanel Margin="12">
-                                <DockPanel Margin="0,0,0,12">
-                                    <TextBlock Text="Start Triggers" Style="{StaticResource PanelHeaderStyle}" DockPanel.Dock="Left"/>
-                                    <Button Content="+ Add Start Trigger"
-                                            Click="AddQuestStartTrigger_Click"
-                                            Style="{StaticResource IconButtonStyle}"
-                                            DockPanel.Dock="Right"
-                                            HorizontalAlignment="Right"/>
-                                </DockPanel>
-
-                                <ItemsControl ItemsSource="{Binding SelectedQuest.QuestTriggers}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{StaticResource DarkBackgroundBrush}"
-                                                    BorderBrush="{StaticResource DarkBorderBrush}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="3"
-                                                    Margin="0,0,0,8"
-                                                    Padding="12">
-                                                <StackPanel>
-                                                    <DockPanel Margin="0,0,0,8">
-                                                        <Button DockPanel.Dock="Right"
-                                                                Click="RemoveQuestStartTrigger_Click"
-                                                                Tag="{Binding}"
-                                                                Style="{StaticResource IconButtonStyle}"
-                                                                ToolTip="Remove Trigger">
-                                                            <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}" Width="16" Height="16"/>
-                                                        </Button>
-                                                    </DockPanel>
-
-                                                    <Label Content="Trigger Type" Style="{StaticResource LabelStyle}"/>
-                                                    <ComboBox SelectedItem="{Binding TriggerType}"
-                                                              Style="{StaticResource ComboBoxStyle}"
-                                                              IsEditable="False"
-                                                              Loaded="TriggerTypeComboBox_Loaded"
-                                                              SelectionChanged="TriggerTypeComboBox_SelectionChanged" />
-
-                                                    <Label Content="Target Action" Style="{StaticResource LabelStyle}"/>
-                                                    <ComboBox SelectedItem="{Binding SelectedTriggerMetadata, Mode=TwoWay}"
-                                                              Style="{StaticResource ComboBoxStyle}"
-                                                              IsEditable="False"
-                                                              Loaded="TriggerComboBox_Loaded"
-                                                              SelectionChanged="TriggerComboBox_SelectionChanged">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="{Binding TargetAction}" FontWeight="SemiBold" Margin="0,0,8,0" />
-                                                                    <TextBlock Text="{Binding Description}"
-                                                                               Foreground="{StaticResource MediumTextBrush}"
-                                                                               FontSize="10" />
-                                                                </StackPanel>
-                                                            </DataTemplate>
-                                                        </ComboBox.ItemTemplate>
-                                                    </ComboBox>
-
-                                                    <TextBlock Text="{Binding SelectedTriggerMetadata.Description}"
-                                                               Foreground="{StaticResource MediumTextBrush}"
-                                                               FontSize="10"
-                                                               TextWrapping="Wrap"
-                                                               Margin="4,4,0,8"
-                                                               Visibility="{Binding SelectedTriggerMetadata, Converter={StaticResource NullToVisibilityConverter}}" />
-
-                                                    <Label Content="NPC ID (if NPC trigger)"
-                                                           Style="{StaticResource LabelStyle}"
-                                                           Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NPCEventTrigger}" />
-                                                    <ComboBox SelectedValue="{Binding TargetNpcId, UpdateSourceTrigger=PropertyChanged}"
-                                                              SelectedValuePath="Id"
-                                                              Style="{StaticResource ComboBoxStyle}"
-                                                              IsEditable="True"
-                                                              Loaded="NpcComboBox_Loaded"
-                                                              LostFocus="NpcComboBox_LostFocus"
-                                                              Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NPCEventTrigger}">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="0,0,8,0" />
-                                                                    <TextBlock Text="(" Foreground="{StaticResource MediumTextBrush}" />
-                                                                    <TextBlock Text="{Binding Id}" Foreground="{StaticResource MediumTextBrush}" />
-                                                                    <TextBlock Text=")" Foreground="{StaticResource MediumTextBrush}" />
-                                                                    <TextBlock Text=" - " Foreground="{StaticResource MediumTextBrush}" Margin="4,0,4,0" />
-                                                                    <TextBlock Foreground="{StaticResource MediumTextBrush}" FontSize="10">
-                                                                        <TextBlock.Style>
-                                                                            <Style TargetType="TextBlock">
-                                                                                <Setter Property="Text" Value="Base Game" />
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding IsModNpc}" Value="True">
-                                                                                        <Setter Property="Text" Value="Mod" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </TextBlock.Style>
-                                                                    </TextBlock>
-                                                                </StackPanel>
-                                                            </DataTemplate>
-                                                        </ComboBox.ItemTemplate>
-                                                    </ComboBox>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Quest Finish Triggers -->
-                        <Border Style="{StaticResource PanelStyle}">
-                            <StackPanel Margin="12">
-                                <DockPanel Margin="0,0,0,12">
-                                    <TextBlock Text="Finish Triggers" Style="{StaticResource PanelHeaderStyle}" DockPanel.Dock="Left"/>
-                                    <Button Content="+ Add Finish Trigger"
-                                            Click="AddQuestFinishTrigger_Click"
-                                            Style="{StaticResource IconButtonStyle}"
-                                            DockPanel.Dock="Right"
-                                            HorizontalAlignment="Right"/>
-                                </DockPanel>
-
-                                <ItemsControl ItemsSource="{Binding SelectedQuest.QuestFinishTriggers}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{StaticResource DarkBackgroundBrush}"
-                                                    BorderBrush="{StaticResource DarkBorderBrush}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="3"
-                                                    Margin="0,0,0,8"
-                                                    Padding="12">
-                                                <StackPanel>
-                                                    <DockPanel Margin="0,0,0,8">
-                                                        <Button DockPanel.Dock="Right"
-                                                                Click="RemoveQuestFinishTrigger_Click"
-                                                                Tag="{Binding}"
-                                                                Style="{StaticResource IconButtonStyle}"
-                                                                ToolTip="Remove Trigger">
-                                                            <materialDesign:PackIcon Kind="{StaticResource DeleteIcon}" Width="16" Height="16"/>
-                                                        </Button>
-                                                    </DockPanel>
-
-                                                    <Label Content="Trigger Type" Style="{StaticResource LabelStyle}"/>
-                                                    <ComboBox SelectedItem="{Binding TriggerType}"
-                                                              Style="{StaticResource ComboBoxStyle}"
-                                                              IsEditable="False"
-                                                              Loaded="TriggerTypeComboBox_Loaded"
-                                                              SelectionChanged="TriggerTypeComboBox_SelectionChanged" />
-
-                                                    <Label Content="Target Action" Style="{StaticResource LabelStyle}"/>
-                                                    <ComboBox SelectedItem="{Binding SelectedTriggerMetadata, Mode=TwoWay}"
-                                                              Style="{StaticResource ComboBoxStyle}"
-                                                              IsEditable="False"
-                                                              Loaded="TriggerComboBox_Loaded"
-                                                              SelectionChanged="TriggerComboBox_SelectionChanged">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="{Binding TargetAction}" FontWeight="SemiBold" Margin="0,0,8,0" />
-                                                                    <TextBlock Text="{Binding Description}"
-                                                                               Foreground="{StaticResource MediumTextBrush}"
-                                                                               FontSize="10" />
-                                                                </StackPanel>
-                                                            </DataTemplate>
-                                                        </ComboBox.ItemTemplate>
-                                                    </ComboBox>
-
-                                                    <TextBlock Text="{Binding SelectedTriggerMetadata.Description}"
-                                                               Foreground="{StaticResource MediumTextBrush}"
-                                                               FontSize="10"
-                                                               TextWrapping="Wrap"
-                                                               Margin="4,4,0,8"
-                                                               Visibility="{Binding SelectedTriggerMetadata, Converter={StaticResource NullToVisibilityConverter}}" />
-
-                                                    <Label Content="NPC ID (if NPC trigger)"
-                                                           Style="{StaticResource LabelStyle}"
-                                                           Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NPCEventTrigger}" />
-                                                    <ComboBox SelectedValue="{Binding TargetNpcId, UpdateSourceTrigger=PropertyChanged}"
-                                                              SelectedValuePath="Id"
-                                                              Style="{StaticResource ComboBoxStyle}"
-                                                              IsEditable="True"
-                                                              Loaded="NpcComboBox_Loaded"
-                                                              LostFocus="NpcComboBox_LostFocus"
-                                                              Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=NPCEventTrigger}">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="0,0,8,0" />
-                                                                    <TextBlock Text="(" Foreground="{StaticResource MediumTextBrush}" />
-                                                                    <TextBlock Text="{Binding Id}" Foreground="{StaticResource MediumTextBrush}" />
-                                                                    <TextBlock Text=")" Foreground="{StaticResource MediumTextBrush}" />
-                                                                    <TextBlock Text=" - " Foreground="{StaticResource MediumTextBrush}" Margin="4,0,4,0" />
-                                                                    <TextBlock Foreground="{StaticResource MediumTextBrush}" FontSize="10">
-                                                                        <TextBlock.Style>
-                                                                            <Style TargetType="TextBlock">
-                                                                                <Setter Property="Text" Value="Base Game" />
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding IsModNpc}" Value="True">
-                                                                                        <Setter Property="Text" Value="Mod" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </TextBlock.Style>
-                                                                    </TextBlock>
-                                                                </StackPanel>
-                                                            </DataTemplate>
-                                                        </ComboBox.ItemTemplate>
-                                                    </ComboBox>
-
-                                                    <Label Content="Finish Type" Style="{StaticResource LabelStyle}"/>
-                                                    <ComboBox SelectedItem="{Binding FinishType}"
-                                                              Style="{StaticResource ComboBoxStyle}"
-                                                              IsEditable="False"
-                                                              Loaded="FinishTypeComboBox_Loaded" />
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
             </TabItem>
 
         </TabControl>
