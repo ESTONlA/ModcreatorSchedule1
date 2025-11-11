@@ -5,7 +5,7 @@ patreon: # Replace with a single Patreon username
 open_collective: # Replace with a single Open Collective username
 ko_fi: estonla
 custom:
-  https://ko-fi.com/ifbars
+  - https://ko-fi.com/ifbars
 
 
 tidelift: # Replace with a single Tidelift platform-name/package-name e.g., npm/babel
