@@ -50,7 +50,7 @@
 				          Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource NewProjectIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -58,7 +58,7 @@
 				          Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource FolderOpenIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -67,7 +67,7 @@
 				          Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource SaveIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -75,7 +75,7 @@
 				          Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource SaveAsIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -87,14 +87,14 @@
 				<MenuItem Header="_Add Quest" Command="{Binding AddQuestCommand}" Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource PlusIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
 				<MenuItem Header="_Remove Quest" Command="{Binding RemoveQuestCommand}" Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource DeleteIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -103,7 +103,7 @@
 				          Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource CodeRefreshIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -113,7 +113,7 @@
 				          Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource ExportIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -121,7 +121,7 @@
 				          Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource BuildIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -131,7 +131,7 @@
 				          IsChecked="{Binding IsCodeVisible, Mode=OneWay}" Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource EyeIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -140,7 +140,7 @@
 				<MenuItem Header="_Settings" Command="{Binding OpenSettingsCommand}" Style="{StaticResource DarkMenuItemStyle}">
 					<MenuItem.Icon>
 						<materialDesign:PackIcon Kind="{StaticResource SettingsIcon}"
-						                         Foreground="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=Foreground}"
+						                         Foreground="{StaticResource LightTextBrush}"
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
@@ -223,7 +223,7 @@
 			              Style="{StaticResource SplitterStyle}" />
 
 			<!-- Central Workspace with Tabs -->
-			<Grid Grid.Column="2">
+			<Grid Grid.Column="2" x:Name="WorkspaceGrid">
 				<Grid.RowDefinitions>
 					<RowDefinition Height="*" MinHeight="0" />
 					<RowDefinition Height="Auto" />
@@ -361,6 +361,7 @@
 
 				<!-- Code View Splitter -->
 				<GridSplitter Grid.Row="1"
+				              x:Name="CodeSplitter"
 				              Height="5"
 				              Margin="0,4,0,4"
 				              HorizontalAlignment="Stretch"
@@ -369,7 +370,8 @@
 				              ResizeDirection="Rows"
 				              ShowsPreview="True"
 				              Visibility="{Binding IsCodeVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-				              IsEnabled="{Binding IsCodeVisible}" />
+				              IsEnabled="{Binding IsCodeVisible}"
+				              DragCompleted="CodeSplitter_DragCompleted" />
 
 				<!-- Generated Code Panel -->
 				<Border Grid.Row="2" Style="{StaticResource PanelStyle}"

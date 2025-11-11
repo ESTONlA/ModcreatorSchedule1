@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,6 +12,8 @@ namespace Schedule1ModdingTool.Views
     /// </summary>
     public partial class MainWindow : Window
     {
+        private GridLength? _storedCodeRowHeight; // Store user's preferred height
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -26,6 +30,152 @@ namespace Schedule1ModdingTool.Views
 
             // Show wizard on startup if no project is loaded
             Loaded += MainWindow_Loaded;
+            
+            // Subscribe to IsCodeVisible changes to fix grid divider issue
+            if (DataContext is MainViewModel vm)
+            {
+                vm.PropertyChanged += MainViewModel_PropertyChanged;
+            }
+        }
+        
+        private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MainViewModel.IsCodeVisible) && sender is MainViewModel vm)
+            {
+                if (CodeContentRow == null) return;
+                
+                if (!vm.IsCodeVisible)
+                {
+                    // When hiding: store the current height ratio, then collapse
+                    StoreCurrentHeightRatio();
+                    // Set height to 0 to ensure proper collapse
+                    CodeContentRow.Height = new GridLength(0);
+                }
+                else
+                {
+                    // When showing: restore stored height or default to half-and-half (1*)
+                    // Use Dispatcher to ensure this happens after the binding updates
+                    Dispatcher.BeginInvoke(new System.Action(() =>
+                    {
+                        if (CodeContentRow != null && vm.IsCodeVisible)
+                        {
+                            if (_storedCodeRowHeight.HasValue)
+                            {
+                                CodeContentRow.Height = _storedCodeRowHeight.Value;
+                            }
+                            else
+                            {
+                                // Default to half-and-half: both rows get 1*
+                                CodeContentRow.Height = new GridLength(1, GridUnitType.Star);
+                            }
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.Loaded);
+                }
+            }
+        }
+        
+        private void StoreCurrentHeightRatio()
+        {
+            if (CodeContentRow == null || WorkspaceGrid == null) return;
+            
+            var currentHeight = CodeContentRow.Height;
+            if (currentHeight.Value <= 0) return;
+            
+            // Get the row definitions from the workspace grid
+            if (WorkspaceGrid.RowDefinitions.Count < 3) return;
+            
+            var topRow = WorkspaceGrid.RowDefinitions[0];
+            var codeRow = WorkspaceGrid.RowDefinitions[2];
+            
+            // Calculate the ratio between top and code rows
+            if (codeRow.Height.GridUnitType == GridUnitType.Star)
+            {
+                // Already in star units, store directly
+                _storedCodeRowHeight = codeRow.Height;
+            }
+            else if (codeRow.Height.GridUnitType == GridUnitType.Pixel && topRow.Height.GridUnitType == GridUnitType.Pixel)
+            {
+                // Both are pixels - calculate the ratio directly
+                var topPixels = topRow.Height.Value;
+                var codePixels = codeRow.Height.Value;
+                if (topPixels > 0)
+                {
+                    // Calculate star ratio: codePixels / topPixels
+                    var ratio = codePixels / topPixels;
+                    _storedCodeRowHeight = new GridLength(ratio, GridUnitType.Star);
+                }
+                else
+                {
+                    _storedCodeRowHeight = new GridLength(1, GridUnitType.Star);
+                }
+            }
+            else if (codeRow.Height.GridUnitType == GridUnitType.Pixel)
+            {
+                // Code row is pixels, top row is stars - need to calculate star ratio based on actual rendered heights
+                // Use LayoutUpdated to measure after layout completes
+                WorkspaceGrid.LayoutUpdated += OnWorkspaceGridLayoutUpdated;
+            }
+        }
+        
+        private void OnWorkspaceGridLayoutUpdated(object? sender, EventArgs e)
+        {
+            // Unsubscribe immediately to avoid multiple calls
+            if (WorkspaceGrid != null)
+            {
+                WorkspaceGrid.LayoutUpdated -= OnWorkspaceGridLayoutUpdated;
+            }
+            
+            if (WorkspaceGrid == null || WorkspaceGrid.RowDefinitions.Count < 3) return;
+            
+            // Measure actual rendered heights
+            var topRow = WorkspaceGrid.RowDefinitions[0];
+            var codeRow = WorkspaceGrid.RowDefinitions[2];
+            
+            // Get the actual rendered height of the grid
+            var gridActualHeight = WorkspaceGrid.ActualHeight;
+            if (gridActualHeight <= 0) return;
+            
+            // Find the Grid elements in each row to measure their heights
+            var topRowElement = WorkspaceGrid.Children.Cast<UIElement>()
+                .FirstOrDefault(c => Grid.GetRow(c) == 0) as FrameworkElement;
+            var codeRowElement = WorkspaceGrid.Children.Cast<UIElement>()
+                .FirstOrDefault(c => Grid.GetRow(c) == 2) as FrameworkElement;
+            
+            if (topRowElement != null && codeRowElement != null)
+            {
+                var topActualHeight = topRowElement.ActualHeight;
+                var codeActualHeight = codeRowElement.ActualHeight;
+                
+                if (topActualHeight > 0)
+                {
+                    // Calculate star ratio based on actual rendered heights
+                    var ratio = codeActualHeight / topActualHeight;
+                    _storedCodeRowHeight = new GridLength(ratio, GridUnitType.Star);
+                }
+                else
+                {
+                    _storedCodeRowHeight = new GridLength(1, GridUnitType.Star);
+                }
+            }
+            else
+            {
+                // Fallback: if code row is pixels, estimate based on pixel value
+                if (codeRow.Height.GridUnitType == GridUnitType.Pixel && topRow.Height.GridUnitType == GridUnitType.Star)
+                {
+                    // Estimate: assume top row takes most of the space, code row is smaller
+                    // Store as 1* for half-and-half as reasonable default
+                    _storedCodeRowHeight = new GridLength(1, GridUnitType.Star);
+                }
+            }
+        }
+        
+        private void CodeSplitter_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            // When user finishes dragging the splitter, store the new height ratio
+            if (DataContext is MainViewModel vm && vm.IsCodeVisible)
+            {
+                StoreCurrentHeightRatio();
+            }
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -107,6 +257,13 @@ namespace Schedule1ModdingTool.Views
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             var vm = DataContext as MainViewModel;
+            
+            // Unsubscribe from property changes
+            if (vm != null)
+            {
+                vm.PropertyChanged -= MainViewModel_PropertyChanged;
+            }
+            
             if (vm?.CurrentProject.IsModified == true)
             {
                 var result = MessageBox.Show(

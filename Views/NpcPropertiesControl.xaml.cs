@@ -1,10 +1,12 @@
 using System.Drawing;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Schedule1ModdingTool.Data;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Utils;
 using Schedule1ModdingTool.ViewModels;
+using Schedule1ModdingTool.Views.Controls;
 
 namespace Schedule1ModdingTool.Views
 {
@@ -197,14 +199,32 @@ namespace Schedule1ModdingTool.Views
         // Relationship Defaults Handlers
         private void AddConnection_Click(object sender, RoutedEventArgs e)
         {
-            if (CurrentNpc == null || string.IsNullOrWhiteSpace(ConnectionIdTextBox.Text))
+            if (CurrentNpc == null || ConnectionIdTextBox == null || string.IsNullOrWhiteSpace(ConnectionIdTextBox.Text))
                 return;
 
             var npcId = ConnectionIdTextBox.Text.Trim();
+            
+            // Validate the NPC ID format
+            if (!ValidationHelpers.IsValidNpcId(npcId))
+            {
+                // Auto-correct if possible
+                var corrected = ValidationHelpers.NormalizeNpcId(npcId);
+                if (ValidationHelpers.IsValidNpcId(corrected))
+                {
+                    npcId = corrected;
+                    ConnectionIdTextBox.Text = corrected;
+                }
+                else
+                {
+                    AppUtils.ShowWarning($"Invalid NPC ID format: {npcId}\n\nNPC IDs must be lowercase with underscores (e.g., 'bobby_cooley')");
+                    return;
+                }
+            }
+
             if (!CurrentNpc.RelationshipDefaults.Connections.Contains(npcId))
             {
                 CurrentNpc.RelationshipDefaults.Connections.Add(npcId);
-                ConnectionIdTextBox.Clear();
+                ConnectionIdTextBox.Text = string.Empty;
             }
         }
 
@@ -229,11 +249,31 @@ namespace Schedule1ModdingTool.Views
             var newAction = new NpcScheduleAction
             {
                 ActionType = ScheduleActionType.WalkTo,
-                StartTime = 900
+                StartTime = 10 // Use time 10 (0:10 AM) instead of 0 to avoid sort comparison issues
             };
 
             CurrentNpc.ScheduleActions.Add(newAction);
-            ScheduleActionsListBox.SelectedItem = newAction;
+            
+            // Sort actions by time after adding
+            var sorted = CurrentNpc.ScheduleActions.OrderBy(a => a.StartTime).ToList();
+            CurrentNpc.ScheduleActions.Clear();
+            foreach (var action in sorted)
+            {
+                CurrentNpc.ScheduleActions.Add(action);
+            }
+            
+            // Update ViewModel's SelectedScheduleAction to trigger binding
+            // The newAction reference is preserved since we're re-adding the same objects
+            if (ViewModel != null)
+            {
+                ViewModel.SelectedScheduleAction = newAction;
+            }
+            
+            // Warn if time is 0
+            if (newAction.StartTime == 0)
+            {
+                AppUtils.ShowWarning("Warning: Scheduling actions at time 0 (midnight) can cause sort comparison issues.\n\nConsider using time 1 or later (e.g., 10 minutes = 0:10 AM).");
+            }
         }
 
         private void RemoveScheduleAction_Click(object sender, RoutedEventArgs e)

@@ -56,8 +56,8 @@
                                         <Label Content="Class Name" Style="{StaticResource LabelStyle}"/>
                                         <views:InfoIcon PropertyName="ClassName"/>
                                     </StackPanel>
-                                    <TextBox Text="{Binding SelectedNpc.ClassName, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource TextBoxStyle}"/>
+                                    <controls:ValidatedTextBox Text="{Binding SelectedNpc.ClassName, UpdateSourceTrigger=PropertyChanged}"
+                                                               ValidationType="ClassName"/>
 
                                     <StackPanel Orientation="Horizontal">
                                         <Label Content="Namespace" Style="{StaticResource LabelStyle}"/>
@@ -70,8 +70,8 @@
                                         <Label Content="NPC ID" Style="{StaticResource LabelStyle}"/>
                                         <views:InfoIcon PropertyName="NpcId"/>
                                     </StackPanel>
-                                    <TextBox Text="{Binding SelectedNpc.NpcId, UpdateSourceTrigger=PropertyChanged}"
-                                             Style="{StaticResource TextBoxStyle}"/>
+                                    <controls:ValidatedTextBox Text="{Binding SelectedNpc.NpcId, UpdateSourceTrigger=PropertyChanged}"
+                                                               ValidationType="NpcId"/>
 
                                     <StackPanel Orientation="Horizontal">
                                         <Label Content="First Name" Style="{StaticResource LabelStyle}"/>
@@ -175,10 +175,10 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBox x:Name="ConnectionIdTextBox"
-                                                 Grid.Column="0"
-                                                 Style="{StaticResource TextBoxStyle}"
-                                                 Margin="0,0,4,0"/>
+                                        <controls:ValidatedTextBox x:Name="ConnectionIdTextBox"
+                                                                   Grid.Column="0"
+                                                                   ValidationType="NpcId"
+                                                                   Margin="0,0,4,0"/>
                                         <Button Grid.Column="1" Content="Add"
                                                 Style="{StaticResource IconButtonStyle}"
                                                 Click="AddConnection_Click"
@@ -512,7 +512,7 @@
 
                             <ListBox x:Name="ScheduleActionsListBox"
                                      ItemsSource="{Binding SelectedNpc.ScheduleActions}"
-                                     SelectedItem="{Binding SelectedScheduleAction}"
+                                     SelectedItem="{Binding SelectedScheduleAction, Mode=TwoWay}"
                                      Background="{StaticResource DarkBackgroundBrush}"
                                      Foreground="{StaticResource LightTextBrush}"
                                      BorderBrush="{StaticResource DarkBorderBrush}"

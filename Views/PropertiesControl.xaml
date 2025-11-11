@@ -48,15 +48,15 @@
                                     <Label Content="Class Name" Style="{StaticResource LabelStyle}" />
                                     <views:InfoIcon PropertyName="ClassName" />
                                 </StackPanel>
-                                <TextBox Text="{Binding SelectedQuest.ClassName, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource TextBoxStyle}" />
+                                <controls:ValidatedTextBox Text="{Binding SelectedQuest.ClassName, UpdateSourceTrigger=PropertyChanged}"
+                                                           ValidationType="ClassName"/>
 
                                 <StackPanel Orientation="Horizontal">
                                     <Label Content="Quest ID" Style="{StaticResource LabelStyle}" />
                                     <views:InfoIcon PropertyName="QuestId" />
                                 </StackPanel>
-                                <TextBox Text="{Binding SelectedQuest.QuestId, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource TextBoxStyle}" />
+                                <controls:ValidatedTextBox Text="{Binding SelectedQuest.QuestId, UpdateSourceTrigger=PropertyChanged}"
+                                                           ValidationType="QuestId"/>
 
                                 <StackPanel Orientation="Horizontal">
                                     <Label Content="Quest Title" Style="{StaticResource LabelStyle}" />

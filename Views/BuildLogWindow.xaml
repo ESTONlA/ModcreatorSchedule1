@@ -1,7 +1,7 @@
 <Window x:Class="Schedule1ModdingTool.Views.BuildLogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Build Log" Height="600" Width="800"
+        Title="Build Log" Height="700" Width="1000"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         Background="{StaticResource DarkBackgroundBrush}"
@@ -12,25 +12,334 @@
 		<Grid>
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
-			<TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="16" FontWeight="Bold" Margin="0,0,0,10" />
+			<!-- Header -->
+			<TextBlock Grid.Row="0" 
+			           Text="{Binding Title}" 
+			           FontSize="18" 
+			           FontWeight="Bold" 
+			           Margin="0,0,0,12" />
 
-			<TextBox Grid.Row="1"
-			         Text="{Binding LogContent, Mode=OneWay}"
-			         IsReadOnly="True"
-			         TextWrapping="Wrap"
-			         VerticalScrollBarVisibility="Auto"
-			         HorizontalScrollBarVisibility="Auto"
-			         FontFamily="Consolas"
-			         FontSize="11"
-			         Padding="8" />
+			<!-- Summary Bar -->
+			<Border Grid.Row="1"
+			        Background="{StaticResource DarkBackgroundBrush}"
+			        BorderBrush="{StaticResource DarkBorderBrush}"
+			        BorderThickness="1"
+			        Padding="12"
+			        Margin="0,0,0,12"
+			        CornerRadius="4">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
 
-			<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-				<Button Content="Save Log..." Command="{Binding SaveLogCommand}" Padding="15,5" Margin="0,0,10,0" MinWidth="100" />
-				<Button Content="Close" Command="{Binding CloseCommand}" Padding="15,5" MinWidth="100" IsCancel="True" />
+					<!-- Error Summary -->
+					<StackPanel Grid.Column="0" Orientation="Horizontal">
+						<TextBlock Text="Errors:" 
+						           FontWeight="Bold" 
+						           Foreground="{StaticResource ErrorBrush}"
+						           Margin="0,0,8,0"
+						           VerticalAlignment="Center" />
+						<TextBlock Text="{Binding ErrorCount}" 
+						           FontSize="16"
+						           FontWeight="Bold"
+						           Foreground="{StaticResource ErrorBrush}"
+						           VerticalAlignment="Center" />
+					</StackPanel>
+
+					<!-- Warning Summary -->
+					<StackPanel Grid.Column="1" Orientation="Horizontal" Margin="20,0,0,0">
+						<TextBlock Text="Warnings:" 
+						           FontWeight="Bold" 
+						           Foreground="{StaticResource WarningBrush}"
+						           Margin="0,0,8,0"
+						           VerticalAlignment="Center" />
+						<TextBlock Text="{Binding WarningCount}" 
+						           FontSize="16"
+						           FontWeight="Bold"
+						           Foreground="{StaticResource WarningBrush}"
+						           VerticalAlignment="Center" />
+					</StackPanel>
+
+					<!-- Search Box -->
+					<StackPanel Grid.Column="2" Orientation="Horizontal" Margin="20,0,0,0">
+						<TextBox Text="{Binding SearchFilter, UpdateSourceTrigger=PropertyChanged}"
+						         Width="200"
+						         Padding="8,4"
+						         Background="{StaticResource DarkBackgroundBrush}"
+						         Foreground="{StaticResource LightTextBrush}"
+						         BorderBrush="{StaticResource DarkBorderBrush}"
+						         VerticalContentAlignment="Center">
+							<TextBox.Style>
+								<Style TargetType="TextBox">
+									<Setter Property="Template">
+										<Setter.Value>
+											<ControlTemplate TargetType="TextBox">
+												<Border Background="{TemplateBinding Background}"
+												        BorderBrush="{TemplateBinding BorderBrush}"
+												        BorderThickness="1"
+												        CornerRadius="2"
+												        Padding="{TemplateBinding Padding}">
+													<ScrollViewer x:Name="PART_ContentHost" />
+												</Border>
+											</ControlTemplate>
+										</Setter.Value>
+									</Setter>
+								</Style>
+							</TextBox.Style>
+						</TextBox>
+						<Button Content="✕" 
+						        Command="{Binding ClearFilterCommand}"
+						        Padding="6,2"
+						        Margin="4,0,0,0"
+						        Width="24"
+						        Height="24"
+						        FontSize="10"
+						        Visibility="{Binding SearchFilter, Converter={StaticResource StringToVisibilityConverter}}"
+						        ToolTip="Clear filter" />
+					</StackPanel>
+				</Grid>
+			</Border>
+
+			<!-- Tab Control for Errors/Warnings/Full Log -->
+			<TabControl Grid.Row="2"
+			           SelectedIndex="{Binding SelectedTabIndex}"
+			           Background="{StaticResource DarkBackgroundBrush}"
+			           BorderBrush="{StaticResource DarkBorderBrush}">
+				<TabControl.Resources>
+					<Style TargetType="TabItem">
+						<Setter Property="Template">
+							<Setter.Value>
+								<ControlTemplate TargetType="TabItem">
+									<Border Name="Border"
+									        Background="{StaticResource DarkPanelBrush}"
+									        BorderBrush="{StaticResource DarkBorderBrush}"
+									        BorderThickness="1,1,1,0"
+									        Margin="0,0,2,0"
+									        Padding="12,6">
+										<ContentPresenter ContentSource="Header" />
+									</Border>
+									<ControlTemplate.Triggers>
+										<Trigger Property="IsSelected" Value="True">
+											<Setter TargetName="Border" Property="Background" Value="{StaticResource DarkBackgroundBrush}" />
+											<Setter TargetName="Border" Property="BorderThickness" Value="1,1,1,2" />
+										</Trigger>
+									</ControlTemplate.Triggers>
+								</ControlTemplate>
+							</Setter.Value>
+						</Setter>
+					</Style>
+				</TabControl.Resources>
+
+				<!-- Errors Tab -->
+				<TabItem>
+					<TabItem.Header>
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Text="Errors" 
+							           Foreground="{StaticResource ErrorBrush}"
+							           FontWeight="Bold" />
+							<TextBlock Text="{Binding ErrorCount, StringFormat=' ({0})'}" 
+							           Foreground="{StaticResource ErrorBrush}"
+							           Margin="4,0,0,0" />
+						</StackPanel>
+					</TabItem.Header>
+					<ListBox ItemsSource="{Binding FilteredErrors}"
+					         Background="{StaticResource DarkBackgroundBrush}"
+					         BorderThickness="0"
+					         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+					         ScrollViewer.VerticalScrollBarVisibility="Auto">
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<Border Background="{StaticResource DarkPanelBrush}"
+								        BorderBrush="{StaticResource DarkBorderBrush}"
+								        BorderThickness="0,0,0,1"
+								        Padding="12"
+								        Margin="0,0,0,4">
+									<Grid>
+										<Grid.RowDefinitions>
+											<RowDefinition Height="Auto" />
+											<RowDefinition Height="Auto" />
+											<RowDefinition Height="Auto" />
+										</Grid.RowDefinitions>
+
+										<!-- Error Message -->
+										<TextBlock Grid.Row="0"
+										           Text="{Binding Message}"
+										           Foreground="{StaticResource ErrorBrush}"
+										           FontWeight="SemiBold"
+										           TextWrapping="Wrap"
+										           Margin="0,0,0,4" />
+
+										<!-- File Path and Location -->
+										<StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,4">
+											<TextBlock Text="{Binding FilePath}" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           FontFamily="Consolas"
+											           FontSize="11"
+											           Visibility="{Binding FilePath, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="(" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding LineNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="{Binding LineNumber}" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding LineNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="," 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding ColumnNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="{Binding ColumnNumber}" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding ColumnNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text=")" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding LineNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text=" : " 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding ErrorCode, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="{Binding ErrorCode}" 
+											           Foreground="{StaticResource WarningBrush}"
+											           FontFamily="Consolas"
+											           FontSize="11"
+											           Visibility="{Binding ErrorCode, Converter={StaticResource NullToVisibilityConverter}}" />
+										</StackPanel>
+
+										<!-- Full Text -->
+										<TextBlock Grid.Row="2"
+										           Text="{Binding FullText}"
+										           Foreground="{StaticResource DimTextBrush}"
+										           FontFamily="Consolas"
+										           FontSize="10"
+										           TextWrapping="Wrap"
+										           Margin="0,4,0,0" />
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+				</TabItem>
+
+				<!-- Warnings Tab -->
+				<TabItem>
+					<TabItem.Header>
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Text="Warnings" 
+							           Foreground="{StaticResource WarningBrush}"
+							           FontWeight="Bold" />
+							<TextBlock Text="{Binding WarningCount, StringFormat=' ({0})'}" 
+							           Foreground="{StaticResource WarningBrush}"
+							           Margin="4,0,0,0" />
+						</StackPanel>
+					</TabItem.Header>
+					<ListBox ItemsSource="{Binding FilteredWarnings}"
+					         Background="{StaticResource DarkBackgroundBrush}"
+					         BorderThickness="0"
+					         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+					         ScrollViewer.VerticalScrollBarVisibility="Auto">
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<Border Background="{StaticResource DarkPanelBrush}"
+								        BorderBrush="{StaticResource DarkBorderBrush}"
+								        BorderThickness="0,0,0,1"
+								        Padding="12"
+								        Margin="0,0,0,4">
+									<Grid>
+										<Grid.RowDefinitions>
+											<RowDefinition Height="Auto" />
+											<RowDefinition Height="Auto" />
+											<RowDefinition Height="Auto" />
+										</Grid.RowDefinitions>
+
+										<!-- Warning Message -->
+										<TextBlock Grid.Row="0"
+										           Text="{Binding Message}"
+										           Foreground="{StaticResource WarningBrush}"
+										           FontWeight="SemiBold"
+										           TextWrapping="Wrap"
+										           Margin="0,0,0,4" />
+
+										<!-- File Path and Location -->
+										<StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,4">
+											<TextBlock Text="{Binding FilePath}" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           FontFamily="Consolas"
+											           FontSize="11"
+											           Visibility="{Binding FilePath, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="(" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding LineNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="{Binding LineNumber}" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding LineNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="," 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding ColumnNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="{Binding ColumnNumber}" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding ColumnNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text=")" 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding LineNumber, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text=" : " 
+											           Foreground="{StaticResource MediumTextBrush}"
+											           Visibility="{Binding ErrorCode, Converter={StaticResource NullToVisibilityConverter}}" />
+											<TextBlock Text="{Binding ErrorCode}" 
+											           Foreground="{StaticResource WarningBrush}"
+											           FontFamily="Consolas"
+											           FontSize="11"
+											           Visibility="{Binding ErrorCode, Converter={StaticResource NullToVisibilityConverter}}" />
+										</StackPanel>
+
+										<!-- Full Text -->
+										<TextBlock Grid.Row="2"
+										           Text="{Binding FullText}"
+										           Foreground="{StaticResource DimTextBrush}"
+										           FontFamily="Consolas"
+										           FontSize="10"
+										           TextWrapping="Wrap"
+										           Margin="0,4,0,0" />
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+				</TabItem>
+
+				<!-- Full Log Tab -->
+				<TabItem Header="Full Log">
+					<TextBox Text="{Binding LogContent, Mode=OneWay}"
+					         IsReadOnly="True"
+					         TextWrapping="Wrap"
+					         VerticalScrollBarVisibility="Auto"
+					         HorizontalScrollBarVisibility="Auto"
+					         FontFamily="Consolas"
+					         FontSize="11"
+					         Padding="8"
+					         Background="{StaticResource DarkBackgroundBrush}"
+					         Foreground="{StaticResource LightTextBrush}"
+					         BorderThickness="0" />
+				</TabItem>
+			</TabControl>
+
+			<!-- Footer Buttons -->
+			<StackPanel Grid.Row="3" 
+			           Orientation="Horizontal" 
+			           HorizontalAlignment="Right" 
+			           Margin="0,12,0,0">
+				<Button Content="Save Log..." 
+				        Command="{Binding SaveLogCommand}" 
+				        Padding="15,5" 
+				        Margin="0,0,10,0" 
+				        MinWidth="100" />
+				<Button Content="Close" 
+				        Command="{Binding CloseCommand}" 
+				        Padding="15,5" 
+				        MinWidth="100" 
+				        IsCancel="True" />
 			</StackPanel>
 		</Grid>
 	</Border>

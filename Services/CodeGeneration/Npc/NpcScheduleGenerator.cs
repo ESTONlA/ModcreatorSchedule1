@@ -45,7 +45,7 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
                         break;
 
                     case ScheduleActionType.UseVendingMachine:
-                        builder.AppendLine($"    .UseVendingMachine({action.StartTime})");
+                        GenerateUseVendingMachine(builder, action);
                         break;
 
                     case ScheduleActionType.DriveToCarPark:
@@ -53,14 +53,18 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
                         break;
 
                     case ScheduleActionType.UseATM:
-                        builder.AppendLine($"    .UseATM({action.StartTime})");
+                        GenerateUseATM(builder, action);
                         break;
 
                     case ScheduleActionType.HandleDeal:
                         if (npc.IsDealer)
                         {
-                            builder.AppendLine($"    .HandleDeal({action.StartTime})");
+                            GenerateHandleDeal(builder, action);
                         }
+                        break;
+
+                    case ScheduleActionType.SitAtSeatSet:
+                        GenerateSitAtSeatSet(builder, action);
                         break;
                 }
             }
@@ -73,15 +77,32 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
         private void GenerateWalkTo(ICodeBuilder builder, NpcScheduleAction action)
         {
             var pos = CodeFormatter.FormatVector3(action.PositionX, action.PositionY, action.PositionZ);
-
-            if (action.FaceDestinationDirection)
+            
+            var parameters = new System.Collections.Generic.List<string>();
+            parameters.Add($"{pos}");
+            parameters.Add($"{action.StartTime}");
+            
+            if (!action.FaceDestinationDirection)
+                parameters.Add("faceDestinationDir: false");
+            else if (action.Within != 1.0f || action.WarpIfSkipped || action.HasForward)
+                parameters.Add("faceDestinationDir: true");
+            
+            if (action.Within != 1.0f)
+                parameters.Add($"within: {action.Within}f");
+            
+            if (action.WarpIfSkipped)
+                parameters.Add("warpIfSkipped: true");
+            
+            if (action.HasForward)
             {
-                builder.AppendLine($"    .WalkTo({pos}, {action.StartTime}, faceDestinationDir: true)");
+                var forward = CodeFormatter.FormatVector3(action.ForwardX, action.ForwardY, action.ForwardZ);
+                parameters.Add($"forward: {forward}");
             }
-            else
-            {
-                builder.AppendLine($"    .WalkTo({pos}, {action.StartTime})");
-            }
+            
+            if (!string.IsNullOrWhiteSpace(action.ActionName))
+                parameters.Add($"name: {CodeFormatter.EscapeString(action.ActionName)}");
+            
+            builder.AppendLine($"    .WalkTo({string.Join(", ", parameters)})");
         }
 
         private void GenerateStayInBuilding(ICodeBuilder builder, NpcScheduleAction action)
@@ -93,21 +114,55 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
                 return;
             }
 
-            var safeBuilding = CodeFormatter.EscapeString(action.BuildingName);
-            if (action.Duration > 0)
-            {
-                builder.AppendLine($"    .StayInBuilding(Building.Get<{safeBuilding}>(), {action.StartTime}, {action.Duration})");
-            }
-            else
-            {
-                builder.AppendLine($"    .StayInBuilding(Building.Get<{safeBuilding}>(), {action.StartTime})");
-            }
+            // BuildingName is a type name (e.g., "NorthApartments"), not a string literal
+            var buildingTypeName = action.BuildingName;
+            var parameters = new System.Collections.Generic.List<string>();
+            parameters.Add($"Building.Get<{buildingTypeName}>()");
+            parameters.Add($"{action.StartTime}");
+            
+            if (action.Duration > 0 && action.Duration != 60)
+                parameters.Add($"durationMinutes: {action.Duration}");
+            else if (action.Duration > 0)
+                parameters.Add($"{action.Duration}");
+            
+            if (action.DoorIndex.HasValue)
+                parameters.Add($"doorIndex: {action.DoorIndex.Value}");
+            
+            if (!string.IsNullOrWhiteSpace(action.ActionName))
+                parameters.Add($"name: {CodeFormatter.EscapeString(action.ActionName)}");
+            
+            builder.AppendLine($"    .StayInBuilding({string.Join(", ", parameters)})");
         }
 
         private void GenerateLocationDialogue(ICodeBuilder builder, NpcScheduleAction action)
         {
             var pos = CodeFormatter.FormatVector3(action.PositionX, action.PositionY, action.PositionZ);
-            builder.AppendLine($"    .LocationDialogue({pos}, {action.StartTime})");
+            
+            var parameters = new System.Collections.Generic.List<string>();
+            parameters.Add($"{pos}");
+            parameters.Add($"{action.StartTime}");
+            
+            if (!action.FaceDestinationDirection)
+                parameters.Add("faceDestinationDir: false");
+            else if (action.Within != 1.0f || action.WarpIfSkipped || action.GreetingOverrideToEnable != -1 || action.ChoiceToEnable != -1)
+                parameters.Add("faceDestinationDir: true");
+            
+            if (action.Within != 1.0f)
+                parameters.Add($"within: {action.Within}f");
+            
+            if (action.WarpIfSkipped)
+                parameters.Add("warpIfSkipped: true");
+            
+            if (action.GreetingOverrideToEnable != -1)
+                parameters.Add($"greetingOverrideToEnable: {action.GreetingOverrideToEnable}");
+            
+            if (action.ChoiceToEnable != -1)
+                parameters.Add($"choiceToEnable: {action.ChoiceToEnable}");
+            
+            if (!string.IsNullOrWhiteSpace(action.ActionName))
+                parameters.Add($"name: {CodeFormatter.EscapeString(action.ActionName)}");
+            
+            builder.AppendLine($"    .LocationDialogue({string.Join(", ", parameters)})");
         }
 
         private void GenerateDriveToCarPark(ICodeBuilder builder, NpcScheduleAction action)
@@ -124,8 +179,84 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
             var spawnPos = CodeFormatter.FormatVector3(action.VehicleSpawnX, action.VehicleSpawnY, action.VehicleSpawnZ);
             var rotation = $"Quaternion.Euler({action.VehicleRotationX}f, {action.VehicleRotationY}f, {action.VehicleRotationZ}f)";
 
-            builder.AppendLine($"    .DriveToCarParkWithCreateVehicle(\"{safeParkingLot}\", \"{safeVehicle}\",");
-            builder.AppendLine($"        {action.StartTime}, {spawnPos}, {rotation}, ParkingAlignment.{action.ParkingAlignment})");
+            var parameters = new System.Collections.Generic.List<string>();
+            parameters.Add($"\"{safeParkingLot}\"");
+            parameters.Add($"\"{safeVehicle}\"");
+            parameters.Add($"{action.StartTime}");
+            parameters.Add($"{spawnPos}");
+            parameters.Add($"{rotation}");
+            
+            if (action.ParkingAlignment != "FrontToKerb")
+                parameters.Add($"alignment: ParkingAlignment.{action.ParkingAlignment}");
+            
+            if (action.OverrideParkingType.HasValue)
+                parameters.Add($"overrideParkingType: {action.OverrideParkingType.Value.ToString().ToLower()}");
+            
+            if (!string.IsNullOrWhiteSpace(action.ActionName))
+                parameters.Add($"name: {CodeFormatter.EscapeString(action.ActionName)}");
+
+            builder.AppendLine($"    .DriveToCarParkWithCreateVehicle({string.Join(", ", parameters)})");
+        }
+
+        private void GenerateUseVendingMachine(ICodeBuilder builder, NpcScheduleAction action)
+        {
+            var parameters = new System.Collections.Generic.List<string>();
+            parameters.Add($"{action.StartTime}");
+            
+            if (!string.IsNullOrWhiteSpace(action.MachineGUID))
+                parameters.Add($"machineGUID: {CodeFormatter.EscapeString(action.MachineGUID)}");
+            
+            if (!string.IsNullOrWhiteSpace(action.ActionName))
+                parameters.Add($"name: {CodeFormatter.EscapeString(action.ActionName)}");
+            
+            builder.AppendLine($"    .UseVendingMachine({string.Join(", ", parameters)})");
+        }
+
+        private void GenerateUseATM(ICodeBuilder builder, NpcScheduleAction action)
+        {
+            var parameters = new System.Collections.Generic.List<string>();
+            parameters.Add($"{action.StartTime}");
+            
+            if (!string.IsNullOrWhiteSpace(action.ATMGUID))
+                parameters.Add($"atmGUID: {CodeFormatter.EscapeString(action.ATMGUID)}");
+            
+            if (!string.IsNullOrWhiteSpace(action.ActionName))
+                parameters.Add($"name: {CodeFormatter.EscapeString(action.ActionName)}");
+            
+            builder.AppendLine($"    .UseATM({string.Join(", ", parameters)})");
+        }
+
+        private void GenerateHandleDeal(ICodeBuilder builder, NpcScheduleAction action)
+        {
+            var parameters = new System.Collections.Generic.List<string>();
+            parameters.Add($"{action.StartTime}");
+            
+            if (!string.IsNullOrWhiteSpace(action.ActionName))
+                parameters.Add($"name: {CodeFormatter.EscapeString(action.ActionName)}");
+            
+            builder.AppendLine($"    .HandleDeal({string.Join(", ", parameters)})");
+        }
+
+        private void GenerateSitAtSeatSet(ICodeBuilder builder, NpcScheduleAction action)
+        {
+            if (string.IsNullOrWhiteSpace(action.SeatSetName))
+            {
+                builder.AppendLine($"    // .SitAtSeatSet(seatSetName, {action.StartTime})");
+                return;
+            }
+
+            var safeSeatSet = CodeFormatter.EscapeString(action.SeatSetName);
+            var parameters = new System.Collections.Generic.List<string>();
+            parameters.Add($"\"{safeSeatSet}\"");
+            parameters.Add($"{action.StartTime}");
+            
+            if (action.WarpIfSkipped)
+                parameters.Add("warpIfSkipped: true");
+            
+            if (!string.IsNullOrWhiteSpace(action.ActionName))
+                parameters.Add($"name: {CodeFormatter.EscapeString(action.ActionName)}");
+            
+            builder.AppendLine($"    .SitAtSeatSet({string.Join(", ", parameters)})");
         }
     }
 }

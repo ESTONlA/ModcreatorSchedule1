@@ -1,0 +1,24 @@
+<UserControl x:Class="Schedule1ModdingTool.Views.Controls.ValidatedTextBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:Schedule1ModdingTool.Views.Controls"
+             mc:Ignorable="d"
+             d:DesignHeight="50" d:DesignWidth="300">
+    <StackPanel>
+        <TextBox x:Name="InnerTextBox"
+                 Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource TextBoxStyle}"
+                 LostFocus="InnerTextBox_LostFocus"
+                 TextChanged="InnerTextBox_TextChanged"/>
+        <TextBlock x:Name="ErrorTextBlock"
+                   Text="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                   Foreground="{StaticResource ErrorBrush}"
+                   FontSize="11"
+                   Margin="4,2,0,0"
+                   Visibility="{Binding IsValid, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                   TextWrapping="Wrap"/>
+    </StackPanel>
+</UserControl>
+

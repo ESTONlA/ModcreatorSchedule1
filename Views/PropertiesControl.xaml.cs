@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services;
+using Schedule1ModdingTool.Utils;
 using Schedule1ModdingTool.ViewModels;
 using ComboBox = System.Windows.Controls.ComboBox;
 
@@ -425,12 +426,27 @@ namespace Schedule1ModdingTool.Views
             if (_availableNpcs == null || comboBox.DataContext is not QuestTrigger trigger || string.IsNullOrWhiteSpace(trigger.TargetNpcId))
                 return;
 
-            // Check if the ID needs migration (PascalCase format or wrong format)
-            if (!trigger.TargetNpcId.Contains("_") || trigger.TargetNpcId != trigger.TargetNpcId.ToLowerInvariant())
+            var npcId = trigger.TargetNpcId.Trim();
+
+            // First, validate the format - if invalid, try to normalize
+            if (!ValidationHelpers.IsValidNpcId(npcId))
             {
-                // Try to find matching NPC by exact ID match (case-insensitive)
+                // Try to normalize the ID
+                var normalized = ValidationHelpers.NormalizeNpcId(npcId);
+                
+                // Try to find matching NPC by normalized ID (case-insensitive)
                 var match = _availableNpcs.FirstOrDefault(n => 
-                    n.Id.Equals(trigger.TargetNpcId, StringComparison.OrdinalIgnoreCase));
+                    n.Id.Equals(normalized, StringComparison.OrdinalIgnoreCase));
+                
+                if (match != null)
+                {
+                    trigger.TargetNpcId = match.Id;
+                    return;
+                }
+
+                // Try to find by original ID (case-insensitive) before normalization
+                match = _availableNpcs.FirstOrDefault(n => 
+                    n.Id.Equals(npcId, StringComparison.OrdinalIgnoreCase));
                 
                 if (match != null)
                 {
@@ -440,7 +456,7 @@ namespace Schedule1ModdingTool.Views
 
                 // Try to find by display name without spaces (e.g., "KyleCooley" matches "Kyle Cooley")
                 match = _availableNpcs.FirstOrDefault(n => 
-                    n.DisplayName.Replace(" ", "").Equals(trigger.TargetNpcId, StringComparison.OrdinalIgnoreCase));
+                    n.DisplayName.Replace(" ", "").Equals(npcId, StringComparison.OrdinalIgnoreCase));
                 
                 if (match != null)
                 {
@@ -448,33 +464,23 @@ namespace Schedule1ModdingTool.Views
                     return;
                 }
 
-                // Convert PascalCase to game format
-                // "KyleCooley" -> "Kyle Cooley" -> "kyle_cooley"
-                var words = new System.Text.StringBuilder();
-                for (int i = 0; i < trigger.TargetNpcId.Length; i++)
+                // If normalized ID is valid format, use it
+                if (ValidationHelpers.IsValidNpcId(normalized))
                 {
-                    if (i > 0 && char.IsUpper(trigger.TargetNpcId[i]))
-                    {
-                        words.Append(' ');
-                    }
-                    words.Append(trigger.TargetNpcId[i]);
+                    trigger.TargetNpcId = normalized;
                 }
-                var displayName = words.ToString().Trim();
-                var convertedId = string.Join("_", displayName.Split(' ').Select(p => p.ToLowerInvariant()));
+                // Otherwise, keep original but it will be invalid (user will see validation error)
+            }
+            else
+            {
+                // ID is already valid format, but check if it matches an actual NPC (case-insensitive)
+                var match = _availableNpcs.FirstOrDefault(n => 
+                    n.Id.Equals(npcId, StringComparison.OrdinalIgnoreCase));
                 
-                // Try to find by converted ID
-                var convertedMatch = _availableNpcs.FirstOrDefault(n => 
-                    n.Id.Equals(convertedId, StringComparison.OrdinalIgnoreCase) ||
-                    n.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase));
-                
-                if (convertedMatch != null)
+                if (match != null && match.Id != npcId)
                 {
-                    trigger.TargetNpcId = convertedMatch.Id;
-                }
-                else
-                {
-                    // No match found, but convert to game format anyway
-                    trigger.TargetNpcId = convertedId;
+                    // Fix case sensitivity
+                    trigger.TargetNpcId = match.Id;
                 }
             }
         }

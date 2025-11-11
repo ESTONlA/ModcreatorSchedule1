@@ -26,6 +26,7 @@ namespace Schedule1ModdingTool.ViewModels
         private QuestBlueprint? _selectedQuest;
         private NpcBlueprint? _selectedNpc;
         private ResourceAsset? _selectedResource;
+        private NpcScheduleAction? _selectedScheduleAction;
         private string _generatedCode = "";
         private bool _isCodeVisible = false;
         private readonly AppearancePreviewService _appearancePreviewService = new AppearancePreviewService();
@@ -152,6 +153,12 @@ namespace Schedule1ModdingTool.ViewModels
                     CommandManager.InvalidateRequerySuggested();
                 }
             }
+        }
+
+        public NpcScheduleAction? SelectedScheduleAction
+        {
+            get => _selectedScheduleAction;
+            set => SetProperty(ref _selectedScheduleAction, value);
         }
 
         public string GeneratedCode

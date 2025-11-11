@@ -324,16 +324,11 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
 
         /// <summary>
         /// Generates the NPC constructor.
+        /// Identity is now configured via ConfigurePrefab using WithIdentity, not in the constructor.
         /// </summary>
         private void GenerateConstructor(ICodeBuilder builder, NpcBlueprint npc, string className)
         {
-            builder.AppendLine($"public {className}() : base(");
-            builder.IncreaseIndent();
-            builder.AppendLine($"id: \"{CodeFormatter.EscapeString(npc.NpcId)}\",");
-            builder.AppendLine($"firstName: \"{CodeFormatter.EscapeString(npc.FirstName)}\",");
-            builder.AppendLine($"lastName: \"{CodeFormatter.EscapeString(npc.LastName)}\",");
-            builder.AppendLine("icon: null)");
-            builder.DecreaseIndent();
+            builder.AppendLine($"public {className}() : base()");
             builder.OpenBlock();
             builder.CloseBlock();
             builder.AppendLine();
@@ -341,6 +336,7 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
 
         /// <summary>
         /// Generates the OnCreated method for NPC initialization.
+        /// InitializeActions is no longer needed - actions are initialized automatically.
         /// </summary>
         private void GenerateOnCreatedMethod(ICodeBuilder builder)
         {
@@ -348,7 +344,6 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
             builder.AppendLine("base.OnCreated();");
             builder.AppendLine("Appearance.Build();");
             builder.AppendLine("Schedule.Enable();");
-            builder.AppendLine("Schedule.InitializeActions();");
             builder.CloseBlock();
         }
 

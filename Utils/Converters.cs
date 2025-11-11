@@ -8,6 +8,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MaterialDesignThemes.Wpf;
+using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.ViewModels;
 
 namespace Schedule1ModdingTool.Utils
@@ -520,6 +521,58 @@ namespace Schedule1ModdingTool.Utils
                 }
             }
             return Binding.DoNothing;
+        }
+    }
+
+    /// <summary>
+    /// Converter for ScheduleActionType to color brush
+    /// </summary>
+    public class ActionTypeToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is ScheduleActionType actionType)
+            {
+                return actionType switch
+                {
+                    ScheduleActionType.WalkTo => new SolidColorBrush(System.Windows.Media.Color.FromRgb(100, 150, 255)),
+                    ScheduleActionType.StayInBuilding => new SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 200, 100)),
+                    ScheduleActionType.LocationDialogue => new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 200, 100)),
+                    ScheduleActionType.UseVendingMachine => new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 150, 150)),
+                    ScheduleActionType.DriveToCarPark => new SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 150, 255)),
+                    ScheduleActionType.UseATM => new SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 255, 200)),
+                    ScheduleActionType.HandleDeal => new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 200, 200)),
+                    ScheduleActionType.EnsureDealSignal => new SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 255, 200)),
+                    ScheduleActionType.SitAtSeatSet => new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 255, 150)),
+                    _ => new SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 150, 150))
+                };
+            }
+            return new SolidColorBrush(System.Windows.Media.Color.FromRgb(150, 150, 150));
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converter for hour label X position offset
+    /// </summary>
+    public class HourLabelOffsetConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double x)
+            {
+                return x - 20; // Offset to center label
+            }
+            return 0;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
         }
     }
 

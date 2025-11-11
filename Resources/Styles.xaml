@@ -317,7 +317,7 @@
     </Style>
 
     <Style TargetType="ContextMenu">
-        <Setter Property="Background" Value="#3A3A3D"/>
+        <Setter Property="Background" Value="{StaticResource DarkBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource LightTextBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource DarkBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -405,9 +405,9 @@
                                Focusable="False"
                                HorizontalOffset="-1"
                                VerticalOffset="-3">
-                            <Border Background="#3A3A3D"
-                                    BorderBrush="{StaticResource DarkBorderBrush}"
-                                    BorderThickness="1"
+                            <Border Background="{StaticResource DarkPanelBrush}"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
                                     CornerRadius="4"
                                     Padding="2"
                                     SnapsToDevicePixels="True">
@@ -834,6 +834,19 @@
     <Style x:Key="SelectedNavigationItemStyle" TargetType="Button" BasedOn="{StaticResource NavigationItemStyle}">
         <Setter Property="Background" Value="#1F2A3D"/>
         <Setter Property="Foreground" Value="{StaticResource AccentOrangeBrush}"/>
+    </Style>
+
+    <!-- Validation Styles -->
+    <Style x:Key="InvalidTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource BaseTextBoxStyle}">
+        <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+
+    <Style x:Key="ValidationErrorTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Margin" Value="4,2,0,0"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
 
 </ResourceDictionary>

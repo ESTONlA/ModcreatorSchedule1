@@ -26,6 +26,34 @@ namespace Schedule1ModdingTool.Models
         private float _vehicleRotationX;
         private float _vehicleRotationY;
         private float _vehicleRotationZ;
+        
+        // WalkTo & LocationDialogue parameters
+        private float _within = 1.0f;
+        private bool _warpIfSkipped;
+        private float _forwardX;
+        private float _forwardY;
+        private float _forwardZ;
+        private bool _hasForward;
+        
+        // LocationDialogue specific
+        private int _greetingOverrideToEnable = -1;
+        private int _choiceToEnable = -1;
+        
+        // StayInBuilding parameters
+        private int? _doorIndex;
+        
+        // UseVendingMachine & UseATM parameters
+        private string _machineGUID = string.Empty;
+        private string _atmGUID = string.Empty;
+        
+        // DriveToCarPark parameters
+        private bool? _overrideParkingType;
+        
+        // SitAtSeatSet parameters
+        private string _seatSetName = string.Empty;
+        
+        // Custom name for actions
+        private string _actionName = string.Empty;
 
         [JsonProperty("actionType")]
         public ScheduleActionType ActionType
@@ -158,6 +186,133 @@ namespace Schedule1ModdingTool.Models
             set => SetProperty(ref _vehicleRotationZ, value);
         }
 
+        [JsonProperty("within")]
+        public float Within
+        {
+            get => _within;
+            set => SetProperty(ref _within, value);
+        }
+
+        [JsonProperty("warpIfSkipped")]
+        public bool WarpIfSkipped
+        {
+            get => _warpIfSkipped;
+            set => SetProperty(ref _warpIfSkipped, value);
+        }
+
+        [JsonProperty("forwardX")]
+        public float ForwardX
+        {
+            get => _forwardX;
+            set
+            {
+                if (SetProperty(ref _forwardX, value))
+                {
+                    OnPropertyChanged(nameof(HasForward));
+                }
+            }
+        }
+
+        [JsonProperty("forwardY")]
+        public float ForwardY
+        {
+            get => _forwardY;
+            set
+            {
+                if (SetProperty(ref _forwardY, value))
+                {
+                    OnPropertyChanged(nameof(HasForward));
+                }
+            }
+        }
+
+        [JsonProperty("forwardZ")]
+        public float ForwardZ
+        {
+            get => _forwardZ;
+            set
+            {
+                if (SetProperty(ref _forwardZ, value))
+                {
+                    OnPropertyChanged(nameof(HasForward));
+                }
+            }
+        }
+
+        [JsonIgnore]
+        public bool HasForward
+        {
+            get => _hasForward;
+            set
+            {
+                if (SetProperty(ref _hasForward, value))
+                {
+                    if (!value)
+                    {
+                        ForwardX = 0;
+                        ForwardY = 0;
+                        ForwardZ = 0;
+                    }
+                }
+            }
+        }
+
+        [JsonProperty("greetingOverrideToEnable")]
+        public int GreetingOverrideToEnable
+        {
+            get => _greetingOverrideToEnable;
+            set => SetProperty(ref _greetingOverrideToEnable, value);
+        }
+
+        [JsonProperty("choiceToEnable")]
+        public int ChoiceToEnable
+        {
+            get => _choiceToEnable;
+            set => SetProperty(ref _choiceToEnable, value);
+        }
+
+        [JsonProperty("doorIndex")]
+        public int? DoorIndex
+        {
+            get => _doorIndex;
+            set => SetProperty(ref _doorIndex, value);
+        }
+
+        [JsonProperty("machineGUID")]
+        public string MachineGUID
+        {
+            get => _machineGUID;
+            set => SetProperty(ref _machineGUID, value ?? string.Empty);
+        }
+
+        [JsonProperty("atmGUID")]
+        public string ATMGUID
+        {
+            get => _atmGUID;
+            set => SetProperty(ref _atmGUID, value ?? string.Empty);
+        }
+
+        [JsonProperty("overrideParkingType")]
+        public bool? OverrideParkingType
+        {
+            get => _overrideParkingType;
+            set => SetProperty(ref _overrideParkingType, value);
+        }
+
+        [JsonProperty("seatSetName")]
+        public string SeatSetName
+        {
+            get => _seatSetName;
+            set => SetProperty(ref _seatSetName, value ?? string.Empty);
+        }
+
+        [JsonProperty("actionName")]
+        public string ActionName
+        {
+            get => _actionName;
+            set => SetProperty(ref _actionName, value ?? string.Empty);
+        }
+
         [JsonIgnore]
         public string DisplayName => $"{StartTime:D4} - {ActionType}";
 
@@ -181,7 +336,21 @@ namespace Schedule1ModdingTool.Models
                 VehicleSpawnZ = VehicleSpawnZ,
                 VehicleRotationX = VehicleRotationX,
                 VehicleRotationY = VehicleRotationY,
-                VehicleRotationZ = VehicleRotationZ
+                VehicleRotationZ = VehicleRotationZ,
+                Within = Within,
+                WarpIfSkipped = WarpIfSkipped,
+                ForwardX = ForwardX,
+                ForwardY = ForwardY,
+                ForwardZ = ForwardZ,
+                HasForward = HasForward,
+                GreetingOverrideToEnable = GreetingOverrideToEnable,
+                ChoiceToEnable = ChoiceToEnable,
+                DoorIndex = DoorIndex,
+                MachineGUID = MachineGUID,
+                ATMGUID = ATMGUID,
+                OverrideParkingType = OverrideParkingType,
+                SeatSetName = SeatSetName,
+                ActionName = ActionName
             };
         }
     }
@@ -213,6 +382,9 @@ namespace Schedule1ModdingTool.Models
         HandleDeal,
 
         [Description("Ensure Deal Signal (Customer Only)")]
-        EnsureDealSignal
+        EnsureDealSignal,
+
+        [Description("Sit at Seat Set")]
+        SitAtSeatSet
     }
 }

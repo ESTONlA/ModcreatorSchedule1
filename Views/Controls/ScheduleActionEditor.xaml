@@ -6,8 +6,12 @@
              xmlns:models="clr-namespace:Schedule1ModdingTool.Models"
              xmlns:controls="clr-namespace:Schedule1ModdingTool.Views.Controls"
              xmlns:views="clr-namespace:Schedule1ModdingTool.Views"
+             xmlns:utils="clr-namespace:Schedule1ModdingTool.Utils"
              mc:Ignorable="d"
              d:DesignHeight="400" d:DesignWidth="500">
+    <UserControl.Resources>
+        <utils:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
     <Border Style="{StaticResource PanelStyle}" Padding="12">
         <StackPanel>
             <TextBlock Text="Action Details" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
@@ -24,7 +28,14 @@
             <!-- Start Time -->
             <controls:TimeInput Time="{Binding StartTime, Mode=TwoWay}"
                               Label="Start Time"
-                              Margin="0,0,0,12"/>
+                              Margin="0,0,0,8"/>
+
+            <!-- Custom Action Name (optional) -->
+            <Label Content="Custom Action Name (Optional)" Style="{StaticResource LabelStyle}"/>
+            <TextBox Text="{Binding ActionName, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource TextBoxStyle}"
+                     Margin="0,0,0,12"
+                     ToolTip="Optional custom name for this action. Leave empty to use default."/>
 
             <!-- Dynamic fields based on action type -->
             <StackPanel x:Name="DynamicFieldsPanel">
@@ -39,23 +50,52 @@
                     <CheckBox Content="Face Destination Direction"
                               IsChecked="{Binding FaceDestinationDirection}"
                               Foreground="{StaticResource LightTextBrush}"
-                              Margin="0,0,0,12"/>
+                              Margin="0,0,0,8"/>
+                    <Label Content="Within Distance" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding Within, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,8"
+                             ToolTip="Distance threshold (in world units) within which NPC is considered to have arrived. Default: 1.0"/>
+                    <CheckBox Content="Warp If Skipped"
+                              IsChecked="{Binding WarpIfSkipped}"
+                              Foreground="{StaticResource LightTextBrush}"
+                              Margin="0,0,0,8"
+                              ToolTip="Whether to warp NPC to destination if action is skipped"/>
+                    <CheckBox Content="Use Custom Forward Direction"
+                              IsChecked="{Binding HasForward}"
+                              Foreground="{StaticResource LightTextBrush}"
+                              Margin="0,0,0,8"/>
+                    <StackPanel Visibility="{Binding HasForward, Converter={StaticResource BoolToVisibilityConverter}}" Margin="20,0,0,12">
+                        <Label Content="Forward Direction Vector" Style="{StaticResource LabelStyle}"/>
+                        <controls:Vector3Input X="{Binding ForwardX, Mode=TwoWay}"
+                                             Y="{Binding ForwardY, Mode=TwoWay}"
+                                             Z="{Binding ForwardZ, Mode=TwoWay}"
+                                             Margin="0,0,0,12"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- StayInBuilding Fields -->
                 <StackPanel x:Name="StayInBuildingFields" Visibility="Collapsed">
-                    <Label Content="Building Name" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding BuildingName, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource TextBoxStyle}"
-                             Margin="0,0,0,8"/>
-                    <views:InfoIcon TooltipText="Building class name (e.g., 'NorthApartments')"
+                    <Label Content="Building" Style="{StaticResource LabelStyle}"/>
+                    <views:BuildingSelector x:Name="BuildingSelector"
+                                          SelectedBuildingTypeName="{Binding BuildingName, Mode=TwoWay}"
+                                          Margin="0,0,0,8"/>
+                    <views:InfoIcon TooltipText="Select a building identifier type from S1API.Map.Buildings namespace"
                                   HorizontalAlignment="Left"
                                   Margin="0,0,0,8"/>
 
                     <Label Content="Duration (minutes)" Style="{StaticResource LabelStyle}"/>
                     <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource TextBoxStyle}"
-                             Margin="0,0,0,12"/>
+                             Margin="0,0,0,8"
+                             ToolTip="Duration for which NPC should remain in building. Default: 60 minutes"/>
+                    <Label Content="Door Index (Optional)" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="DoorIndexTextBox"
+                             Text="{Binding DoorIndex, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,12"
+                             ToolTip="Optional door index to use when entering building. Leave empty to use default."
+                             LostFocus="DoorIndexTextBox_LostFocus"/>
                 </StackPanel>
 
                 <!-- LocationDialogue Fields -->
@@ -64,7 +104,30 @@
                     <controls:Vector3Input X="{Binding PositionX, Mode=TwoWay}"
                                          Y="{Binding PositionY, Mode=TwoWay}"
                                          Z="{Binding PositionZ, Mode=TwoWay}"
-                                         Margin="0,0,0,12"/>
+                                         Margin="0,0,0,8"/>
+                    <CheckBox Content="Face Destination Direction"
+                              IsChecked="{Binding FaceDestinationDirection}"
+                              Foreground="{StaticResource LightTextBrush}"
+                              Margin="0,0,0,8"/>
+                    <Label Content="Within Distance" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding Within, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,8"
+                             ToolTip="Distance threshold (in world units) within which NPC is considered to have arrived. Default: 1.0"/>
+                    <CheckBox Content="Warp If Skipped"
+                              IsChecked="{Binding WarpIfSkipped}"
+                              Foreground="{StaticResource LightTextBrush}"
+                              Margin="0,0,0,8"/>
+                    <Label Content="Greeting Override Index" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding GreetingOverrideToEnable, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,8"
+                             ToolTip="Greeting override index to enable upon arrival. Use -1 to disable. Default: -1"/>
+                    <Label Content="Choice Index" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding ChoiceToEnable, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,12"
+                             ToolTip="Choice index to enable upon arrival. Use -1 to disable. Default: -1"/>
                 </StackPanel>
 
                 <!-- DriveToCarPark Fields -->
@@ -72,12 +135,14 @@
                     <Label Content="Parking Lot Name" Style="{StaticResource LabelStyle}"/>
                     <TextBox Text="{Binding ParkingLotName, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource TextBoxStyle}"
-                             Margin="0,0,0,8"/>
+                             Margin="0,0,0,8"
+                             ToolTip="GameObject name of the parking lot"/>
 
-                    <Label Content="Vehicle ID" Style="{StaticResource LabelStyle}"/>
+                    <Label Content="Vehicle Code" Style="{StaticResource LabelStyle}"/>
                     <TextBox Text="{Binding VehicleId, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource TextBoxStyle}"
-                             Margin="0,0,0,8"/>
+                             Margin="0,0,0,8"
+                             ToolTip="Vehicle code to create (e.g., 'Sedan', 'SUV', etc.)"/>
 
                     <Label Content="Vehicle Spawn Position" Style="{StaticResource LabelStyle}"/>
                     <controls:Vector3Input X="{Binding VehicleSpawnX, Mode=TwoWay}"
@@ -94,19 +159,60 @@
                     <Label Content="Parking Alignment" Style="{StaticResource LabelStyle}"/>
                     <ComboBox SelectedItem="{Binding ParkingAlignment}"
                               Style="{StaticResource ComboBoxStyle}"
-                              Margin="0,0,0,12">
+                              Margin="0,0,0,8">
                         <ComboBoxItem Content="FrontToKerb"/>
                         <ComboBoxItem Content="RearToKerb"/>
                         <ComboBoxItem Content="Parallel"/>
                     </ComboBox>
+                    <Label Content="Override Parking Type (Optional)" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox x:Name="OverrideParkingTypeComboBox"
+                              SelectionChanged="OverrideParkingTypeComboBox_SelectionChanged"
+                              Style="{StaticResource ComboBoxStyle}"
+                              Margin="0,0,0,12">
+                        <ComboBoxItem Content="(Default)" Tag="{x:Null}"/>
+                        <ComboBoxItem Content="True" Tag="True"/>
+                        <ComboBoxItem Content="False" Tag="False"/>
+                    </ComboBox>
                 </StackPanel>
 
-                <!-- No extra fields for UseVendingMachine, UseATM, HandleDeal, EnsureDealSignal -->
+                <!-- SitAtSeatSet Fields -->
+                <StackPanel x:Name="SitAtSeatSetFields" Visibility="Collapsed">
+                    <Label Content="Seat Set Name" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding SeatSetName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,8"
+                             ToolTip="GameObject name of the AvatarSeatSet to use"/>
+                    <CheckBox Content="Warp If Skipped"
+                              IsChecked="{Binding WarpIfSkipped}"
+                              Foreground="{StaticResource LightTextBrush}"
+                              Margin="0,0,0,12"
+                              ToolTip="Whether to warp NPC to seat if action is skipped"/>
+                </StackPanel>
+
+                <!-- UseVendingMachine Fields -->
+                <StackPanel x:Name="UseVendingMachineFields" Visibility="Collapsed">
+                    <Label Content="Machine GUID (Optional)" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding MachineGUID, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,12"
+                             ToolTip="Optional GUID of specific vending machine. Leave empty to use nearest reachable machine."/>
+                </StackPanel>
+
+                <!-- UseATM Fields -->
+                <StackPanel x:Name="UseATMFields" Visibility="Collapsed">
+                    <Label Content="ATM GUID (Optional)" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding ATMGUID, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource TextBoxStyle}"
+                             Margin="0,0,0,12"
+                             ToolTip="Optional GUID of specific ATM. Leave empty to use default resolution."/>
+                </StackPanel>
+
+                <!-- No extra fields for HandleDeal, EnsureDealSignal -->
                 <StackPanel x:Name="NoExtraFields" Visibility="Collapsed">
                     <TextBlock Text="No additional configuration required for this action type."
                                Foreground="{StaticResource DimTextBrush}"
                                FontStyle="Italic"
-                               Margin="0,8,0,0"/>
+                               Margin="0,8,0,12"/>
                 </StackPanel>
             </StackPanel>
         </StackPanel>
