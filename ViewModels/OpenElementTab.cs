@@ -1,5 +1,4 @@
 using Schedule1ModdingTool.Models;
-using Schedule1ModdingTool.Utils;
 
 namespace Schedule1ModdingTool.ViewModels
 {

@@ -33,5 +33,11 @@
     <Content Remove="ModCreatorConnector\**" />
     <EmbeddedResource Remove="ModCreatorConnector\**" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="Resources\Contributors\IfBars.png" />
+    <Resource Include="Resources\Contributors\IfBars.png" />
+    <None Remove="Resources\Contributors\Estonia.png" />
+    <Resource Include="Resources\Contributors\Estonia.png" />
+  </ItemGroup>
 
 </Project>

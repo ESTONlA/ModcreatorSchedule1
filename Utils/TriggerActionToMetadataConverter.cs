@@ -1,8 +1,5 @@
-using System;
 using System.Globalization;
-using System.Linq;
 using System.Windows.Data;
-using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services;
 
 namespace Schedule1ModdingTool.Utils

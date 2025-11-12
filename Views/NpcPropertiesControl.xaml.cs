@@ -1,13 +1,10 @@
 using System.Collections.ObjectModel;
-using System.Drawing;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Schedule1ModdingTool.Data;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Utils;
 using Schedule1ModdingTool.ViewModels;
-using Schedule1ModdingTool.Views.Controls;
 
 namespace Schedule1ModdingTool.Views
 {

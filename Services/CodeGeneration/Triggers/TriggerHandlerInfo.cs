@@ -1,4 +1,3 @@
-using System;
 using Schedule1ModdingTool.Models;
 
 namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers

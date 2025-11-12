@@ -1,5 +1,3 @@
-using System.Windows.Controls;
-
 namespace Schedule1ModdingTool.Views
 {
     /// <summary>

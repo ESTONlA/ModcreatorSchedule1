@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -12,7 +9,6 @@ using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services;
 using Schedule1ModdingTool.Services.CodeGeneration.Orchestration;
 using Schedule1ModdingTool.Utils;
-using Schedule1ModdingTool.Views;
 
 namespace Schedule1ModdingTool.ViewModels
 {
@@ -71,17 +67,15 @@ namespace Schedule1ModdingTool.ViewModels
                 if (ReferenceEquals(_currentProject, value))
                     return;
 
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                var newProject = value; // Store non-null value for compiler
-
+                ArgumentNullException.ThrowIfNull(value);
+                var newProject = value;
+                
                 if (_currentProject != null)
                 {
                     _currentProject.PropertyChanged -= CurrentProjectOnPropertyChanged;
                 }
 
-                if (SetProperty(ref _currentProject, newProject!))
+                if (SetProperty(ref _currentProject!, newProject))
                 {
                     if (_currentProject != null)
                     {

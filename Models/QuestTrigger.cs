@@ -1,4 +1,3 @@
-using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Schedule1ModdingTool.Services;

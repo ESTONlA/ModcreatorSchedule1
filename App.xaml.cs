@@ -1,9 +1,7 @@
-using System;
 using System.IO;
 using System.Windows;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services;
-using Schedule1ModdingTool.ViewModels;
 using Schedule1ModdingTool.Views;
 
 namespace Schedule1ModdingTool

@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Utils;

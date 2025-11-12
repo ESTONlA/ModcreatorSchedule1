@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Schedule1ModdingTool.Data
 {
     public sealed class AppearancePresetOption

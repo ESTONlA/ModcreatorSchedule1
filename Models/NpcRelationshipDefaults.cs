@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using Newtonsoft.Json;
-using Schedule1ModdingTool.Utils;
 
 namespace Schedule1ModdingTool.Models
 {

@@ -1,5 +1,4 @@
 using System.IO;
-using Microsoft.Win32;
 using Schedule1ModdingTool.Models;
 
 namespace Schedule1ModdingTool.Services

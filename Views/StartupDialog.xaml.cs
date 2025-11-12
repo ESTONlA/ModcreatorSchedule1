@@ -1,11 +1,9 @@
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using Schedule1ModdingTool.Models;
-using Schedule1ModdingTool.Services;
 using Schedule1ModdingTool.Utils;
 using Schedule1ModdingTool.ViewModels;
 
@@ -159,7 +157,11 @@ namespace Schedule1ModdingTool.Views
 
         private void Donate_Click(object sender, RoutedEventArgs e)
         {
-            OpenUrl("https://ko-fi.com");
+            var donateDialog = new DonateDialog
+            {
+                Owner = this
+            };
+            donateDialog.ShowDialog();
         }
 
         private void Preferences_Click(object sender, RoutedEventArgs e)

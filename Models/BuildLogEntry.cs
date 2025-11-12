@@ -1,5 +1,3 @@
-using System;
-
 namespace Schedule1ModdingTool.Models
 {
     /// <summary>

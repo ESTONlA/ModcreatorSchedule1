@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.ViewModels;

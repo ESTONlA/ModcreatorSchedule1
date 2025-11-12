@@ -1,4 +1,3 @@
-using System;
 using Microsoft.CodeAnalysis.CSharp;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services.CodeGeneration.Abstractions;

@@ -9,6 +9,7 @@ These standards ensure consistency, maintainability, and predictability across t
 * Follow the MVVM (Model-View-ViewModel) pattern consistently throughout the application.
 * Keep UI logic in code-behind minimal - prefer ViewModel properties and commands where possible.
 * Write clean, self-documenting code with meaningful names.
+* All pull requests must compile without any CS (C# compiler) warnings. Fix all warnings before submitting PRs.
 
 ## File and Namespace Structure
 

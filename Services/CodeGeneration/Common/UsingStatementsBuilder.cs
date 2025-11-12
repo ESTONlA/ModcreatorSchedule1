@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Schedule1ModdingTool.Services.CodeGeneration.Abstractions;
 
 namespace Schedule1ModdingTool.Services.CodeGeneration.Common

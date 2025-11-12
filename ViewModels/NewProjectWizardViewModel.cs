@@ -1,7 +1,6 @@
 using System.IO;
 using System.Windows.Input;
 using Schedule1ModdingTool.Models;
-using Schedule1ModdingTool.Services;
 using Schedule1ModdingTool.Utils;
 
 namespace Schedule1ModdingTool.ViewModels

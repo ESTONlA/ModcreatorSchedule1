@@ -1,4 +1,3 @@
-using System;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services.CodeGeneration.Abstractions;
 

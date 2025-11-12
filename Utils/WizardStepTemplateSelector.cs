@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using Schedule1ModdingTool.ViewModels;
 
 namespace Schedule1ModdingTool.Utils
 {
