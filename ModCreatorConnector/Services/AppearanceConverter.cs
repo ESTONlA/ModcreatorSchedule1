@@ -38,7 +38,7 @@ namespace ModCreatorConnector.Services
                 : (baseSettings?.SkinColor ?? new Color32(150, 120, 95, 255));
 
             // Hair properties
-            avatarSettings.HairPath = GetString(jobj, "hairPath", baseSettings?.HairPath ?? string.Empty);
+            avatarSettings.HairPath = GetString(jobj, "hairPath", baseSettings?.HairPath ?? string.Empty) ?? string.Empty;
             var hairColorJson = GetString(jobj, "hairColor", null);
             avatarSettings.HairColor = hairColorJson != null 
                 ? HexToColor(hairColorJson) 
@@ -61,7 +61,7 @@ namespace ModCreatorConnector.Services
                 : (baseSettings?.EyeBallTint ?? Color.white);
             
             avatarSettings.PupilDilation = GetFloat(jobj, "pupilDilation", baseSettings?.PupilDilation ?? 0.5f);
-            avatarSettings.EyeballMaterialIdentifier = GetString(jobj, "eyeballMaterialId", baseSettings?.EyeballMaterialIdentifier ?? "Default");
+            avatarSettings.EyeballMaterialIdentifier = GetString(jobj, "eyeballMaterialId", baseSettings?.EyeballMaterialIdentifier ?? "Default") ?? "Default";
 
             // Eyebrow properties
             avatarSettings.EyebrowScale = GetFloat(jobj, "eyebrowScale", baseSettings?.EyebrowScale ?? 1.0f);
@@ -181,13 +181,13 @@ namespace ModCreatorConnector.Services
                 : defaultValue;
         }
 
-        private static string GetString(JToken token, string propertyName, string defaultValue)
+        private static string? GetString(JToken token, string propertyName, string? defaultValue)
         {
             var value = token[propertyName];
             return value?.Value<string>() ?? defaultValue;
         }
 
-        private static Color HexToColor(string hex)
+        private static Color HexToColor(string? hex)
         {
             if (string.IsNullOrWhiteSpace(hex))
                 return Color.white;

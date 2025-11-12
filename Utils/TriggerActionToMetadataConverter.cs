@@ -12,9 +12,9 @@ namespace Schedule1ModdingTool.Utils
     /// </summary>
     public class TriggerActionToMetadataConverter : IValueConverter
     {
-        public System.Collections.ObjectModel.ObservableCollection<TriggerMetadata> AvailableTriggers { get; set; }
+        public System.Collections.ObjectModel.ObservableCollection<TriggerMetadata>? AvailableTriggers { get; set; }
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is string targetAction && !string.IsNullOrWhiteSpace(targetAction) && AvailableTriggers != null)
             {
@@ -23,7 +23,7 @@ namespace Schedule1ModdingTool.Utils
             return null;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is TriggerMetadata metadata)
             {

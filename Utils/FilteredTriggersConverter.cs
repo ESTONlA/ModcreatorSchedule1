@@ -13,7 +13,7 @@ namespace Schedule1ModdingTool.Utils
     /// </summary>
     public class FilteredTriggersConverter : IMultiValueConverter
     {
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             if (values == null || values.Length < 2)
                 return null;

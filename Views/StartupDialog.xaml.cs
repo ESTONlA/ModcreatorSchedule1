@@ -41,8 +41,6 @@ namespace Schedule1ModdingTool.Views
                 Owner = this
             };
 
-            bool wizardCompleted = false;
-
             wizardVm.ProjectCreated += (vm) =>
             {
                 try
@@ -78,7 +76,6 @@ namespace Schedule1ModdingTool.Views
                     // Load it back to ensure proper initialization
                     SelectedProject = QuestProject.LoadFromFile(projectFilePath) ?? newProject;
 
-                    wizardCompleted = true;
                     wizardWindow.DialogResult = true;
                     wizardWindow.Close();
 

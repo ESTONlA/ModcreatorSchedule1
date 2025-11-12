@@ -64,7 +64,7 @@ namespace Schedule1ModdingTool.Utils
             editor.TextChanged += OnEditorTextChanged;
         }
 
-        private static void OnEditorTextChanged(object sender, EventArgs e)
+        private static void OnEditorTextChanged(object? sender, EventArgs e)
         {
             if (sender is not TextEditor editor)
             {

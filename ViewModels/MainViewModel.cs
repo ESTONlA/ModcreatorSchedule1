@@ -71,12 +71,17 @@ namespace Schedule1ModdingTool.ViewModels
                 if (ReferenceEquals(_currentProject, value))
                     return;
 
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                var newProject = value; // Store non-null value for compiler
+
                 if (_currentProject != null)
                 {
                     _currentProject.PropertyChanged -= CurrentProjectOnPropertyChanged;
                 }
 
-                if (SetProperty(ref _currentProject, value))
+                if (SetProperty(ref _currentProject, newProject!))
                 {
                     if (_currentProject != null)
                     {

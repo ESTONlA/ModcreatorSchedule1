@@ -74,7 +74,7 @@ namespace Schedule1ModdingTool.Services
                 GenerateCoreFile(modPath, modName, rootNamespace, project, result);
 
                 // Generate quest files
-                foreach (var quest in project.Quests)
+                foreach (var quest in project.Quests ?? Enumerable.Empty<QuestBlueprint>())
                 {
                     GenerateQuestFile(modPath, quest, result);
                 }
@@ -416,7 +416,7 @@ namespace Schedule1ModdingTool.Services
                 sb.AppendLine();
 
                 // Register all quests
-                foreach (var quest in project.Quests)
+                foreach (var quest in project.Quests ?? Enumerable.Empty<QuestBlueprint>())
                 {
                     var className = MakeSafeIdentifier(quest.ClassName, "GeneratedQuest");
                     var questId = string.IsNullOrWhiteSpace(quest.QuestId) ? className : EscapeString(quest.QuestId.Trim());
@@ -478,8 +478,8 @@ namespace Schedule1ModdingTool.Services
                 sb.AppendLine("            // We don't need to manually call Begin() here - the AutoBegin property handles it internally in S1API.");
 
                 // Start scene-init quests
-                var sceneInitQuests = project.Quests.Where(q => q.StartCondition?.TriggerType == QuestStartTrigger.SceneInit).ToList();
-                var autoStartQuests = project.Quests.Where(q => q.StartCondition?.TriggerType == QuestStartTrigger.AutoStart).ToList();
+                var sceneInitQuests = (project.Quests ?? Enumerable.Empty<QuestBlueprint>()).Where(q => q.StartCondition?.TriggerType == QuestStartTrigger.SceneInit).ToList();
+                var autoStartQuests = (project.Quests ?? Enumerable.Empty<QuestBlueprint>()).Where(q => q.StartCondition?.TriggerType == QuestStartTrigger.AutoStart).ToList();
 
                 if (sceneInitQuests.Any() || autoStartQuests.Any())
                 {

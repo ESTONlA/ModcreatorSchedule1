@@ -88,7 +88,7 @@ namespace Schedule1ModdingTool.Views
             }
         }
 
-        private void BuildingComboBox_DropDownClosed(object sender, EventArgs e)
+        private void BuildingComboBox_DropDownClosed(object? sender, EventArgs e)
         {
             // When dropdown closes, ensure the selection is preserved
             if (BuildingComboBox.SelectedItem is BuildingInfo selectedBuilding)

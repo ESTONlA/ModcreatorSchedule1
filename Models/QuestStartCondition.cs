@@ -11,7 +11,7 @@ namespace Schedule1ModdingTool.Models
         private QuestStartTrigger _triggerType = QuestStartTrigger.AutoStart;
         private string _npcId = "";
         private string _sceneName = "Main";
-        private QuestTrigger _questTrigger = null;
+        private QuestTrigger? _questTrigger = null;
 
         [JsonProperty("triggerType")]
         public QuestStartTrigger TriggerType
@@ -45,7 +45,7 @@ namespace Schedule1ModdingTool.Models
         /// When set, takes precedence over legacy TriggerType enum
         /// </summary>
         [JsonProperty("questTrigger")]
-        public QuestTrigger QuestTrigger
+        public QuestTrigger? QuestTrigger
         {
             get => _questTrigger;
             set => SetProperty(ref _questTrigger, value);

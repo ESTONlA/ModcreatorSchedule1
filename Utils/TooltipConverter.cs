@@ -11,15 +11,15 @@ namespace Schedule1ModdingTool.Utils
     /// </summary>
     public class TooltipConverter : MarkupExtension, IValueConverter
     {
-        public Type PropertyType { get; set; }
-        public Type ParentType { get; set; }
+        public Type? PropertyType { get; set; }
+        public Type? ParentType { get; set; }
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return this;
         }
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var propertyName = parameter as string;
             if (string.IsNullOrWhiteSpace(propertyName))
@@ -60,15 +60,15 @@ namespace Schedule1ModdingTool.Utils
     /// </summary>
     public class DocumentationUrlConverter : MarkupExtension, IValueConverter
     {
-        public Type PropertyType { get; set; }
-        public Type ParentType { get; set; }
+        public Type? PropertyType { get; set; }
+        public Type? ParentType { get; set; }
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return this;
         }
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var propertyName = parameter as string;
             if (string.IsNullOrWhiteSpace(propertyName))

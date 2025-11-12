@@ -20,7 +20,7 @@ namespace Schedule1ModdingTool.Utils
         /// </summary>
         /// <param name="fullTypeName">The full type name (e.g., "S1API.Entities.NPC")</param>
         /// <returns>The full URL to the documentation page</returns>
-        public static string GetDocumentationUrl(string fullTypeName)
+        public static string? GetDocumentationUrl(string fullTypeName)
         {
             if (string.IsNullOrWhiteSpace(fullTypeName))
                 return null;
@@ -37,19 +37,19 @@ namespace Schedule1ModdingTool.Utils
         /// <summary>
         /// The tooltip text to display. Can be null or empty if no tooltip should be shown.
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Optional URL to S1API documentation page. If provided, a "Learn More" link will be included in the tooltip.
         /// </summary>
-        public string DocumentationUrl { get; set; }
+        public string? DocumentationUrl { get; set; }
 
         /// <summary>
         /// Whether this tooltip has any content to display.
         /// </summary>
         public bool HasContent => !string.IsNullOrWhiteSpace(Text) || !string.IsNullOrWhiteSpace(DocumentationUrl);
 
-        public TooltipInfo(string text = null, string documentationUrl = null)
+        public TooltipInfo(string? text = null, string? documentationUrl = null)
         {
             Text = text;
             DocumentationUrl = documentationUrl;
@@ -69,13 +69,13 @@ namespace Schedule1ModdingTool.Utils
         /// <param name="parentType">The type of the parent object (optional, for context)</param>
         /// <param name="experienceLevel">The user's coding experience level (optional, for adaptive tooltips)</param>
         /// <returns>TooltipInfo containing text and optional documentation URL</returns>
-        public static TooltipInfo GetTooltipInfo(string propertyName, Type propertyType = null, Type parentType = null, ExperienceLevel? experienceLevel = null)
+        public static TooltipInfo GetTooltipInfo(string propertyName, Type? propertyType = null, Type? parentType = null, ExperienceLevel? experienceLevel = null)
         {
             // Get description text from property name mapping
             var tooltipText = GetPropertyDescription(propertyName, parentType, experienceLevel);
 
             // Map property type to S1API documentation URL
-            string documentationUrl = null;
+            string? documentationUrl = null;
             if (propertyType != null)
             {
                 documentationUrl = GetDocumentationUrlForType(propertyType);
@@ -87,7 +87,7 @@ namespace Schedule1ModdingTool.Utils
         /// <summary>
         /// Gets a description for a property based on common S1API property names.
         /// </summary>
-        private static string GetPropertyDescription(string propertyName, Type parentType = null, ExperienceLevel? experienceLevel = null)
+        private static string? GetPropertyDescription(string propertyName, Type? parentType = null, ExperienceLevel? experienceLevel = null)
         {
             if (string.IsNullOrWhiteSpace(propertyName))
                 return null;
@@ -165,7 +165,7 @@ namespace Schedule1ModdingTool.Utils
         /// <summary>
         /// Gets an experience-level-aware description for properties that need adaptive tooltips.
         /// </summary>
-        private static string GetAdaptivePropertyDescription(string propertyName, ExperienceLevel experienceLevel)
+        private static string? GetAdaptivePropertyDescription(string propertyName, ExperienceLevel experienceLevel)
         {
             // Data class field properties with experience-level-aware tooltips
             var dataClassDescriptions = new Dictionary<string, Dictionary<ExperienceLevel, string>>(StringComparer.OrdinalIgnoreCase)
@@ -265,7 +265,7 @@ namespace Schedule1ModdingTool.Utils
         /// </summary>
         /// <param name="type">The type to get documentation for</param>
         /// <returns>The documentation URL, or null if the type is not from S1API namespace</returns>
-        private static string GetDocumentationUrlForType(Type type)
+        private static string? GetDocumentationUrlForType(Type? type)
         {
             if (type == null)
                 return null;
@@ -280,6 +280,9 @@ namespace Schedule1ModdingTool.Utils
             {
                 var genericTypeDefinition = type.GetGenericTypeDefinition();
                 fullTypeName = genericTypeDefinition.FullName;
+                
+                if (string.IsNullOrWhiteSpace(fullTypeName))
+                    return null;
                 
                 // Remove the backtick and number suffix (e.g., "List`1" -> "List")
                 var backtickIndex = fullTypeName.IndexOf('`');

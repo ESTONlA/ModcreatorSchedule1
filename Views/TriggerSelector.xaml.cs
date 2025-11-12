@@ -13,7 +13,7 @@ namespace Schedule1ModdingTool.Views
     {
         public static readonly DependencyProperty SelectedTriggerMetadataProperty =
             DependencyProperty.Register(nameof(SelectedTriggerMetadata), typeof(TriggerMetadata), typeof(TriggerSelector),
-                new PropertyMetadata(null, OnSelectedTriggerMetadataChanged));
+                new PropertyMetadata((TriggerMetadata?)null, OnSelectedTriggerMetadataChanged));
 
         public static readonly DependencyProperty TriggerTypeFilterProperty =
             DependencyProperty.Register(nameof(TriggerTypeFilter), typeof(QuestTriggerType?), typeof(TriggerSelector),
@@ -23,9 +23,9 @@ namespace Schedule1ModdingTool.Views
             DependencyProperty.Register(nameof(AvailableTriggers), typeof(System.Collections.ObjectModel.ObservableCollection<TriggerMetadata>), typeof(TriggerSelector),
                 new PropertyMetadata(null, OnAvailableTriggersChanged));
 
-        public TriggerMetadata SelectedTriggerMetadata
+        public TriggerMetadata? SelectedTriggerMetadata
         {
-            get => (TriggerMetadata)GetValue(SelectedTriggerMetadataProperty);
+            get => (TriggerMetadata?)GetValue(SelectedTriggerMetadataProperty);
             set => SetValue(SelectedTriggerMetadataProperty, value);
         }
 

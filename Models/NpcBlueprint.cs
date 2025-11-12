@@ -177,11 +177,11 @@ namespace Schedule1ModdingTool.Models
                 if (_appearance != null)
                     _appearance.PropertyChanged -= AppearanceOnPropertyChanged;
 
-                if (SetProperty(ref _appearance, value))
-                {
-                    if (_appearance != null)
-                        _appearance.PropertyChanged += AppearanceOnPropertyChanged;
-                }
+                var newValue = value ?? new NpcAppearanceSettings();
+                _appearance = newValue;
+                OnPropertyChanged(nameof(Appearance));
+                if (_appearance != null)
+                    _appearance.PropertyChanged += AppearanceOnPropertyChanged;
             }
         }
 

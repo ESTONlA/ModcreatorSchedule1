@@ -17,11 +17,11 @@ namespace Schedule1ModdingTool.Views.Controls
     public partial class ScheduleTimelineView : UserControl, INotifyPropertyChanged
     {
         private ObservableCollection<NpcScheduleAction> _scheduleActions = new ObservableCollection<NpcScheduleAction>();
-        private NpcScheduleAction _selectedAction;
+        private NpcScheduleAction? _selectedAction;
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler<NpcScheduleAction> ActionSelected;
-        public event EventHandler AddActionRequested;
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public event EventHandler<NpcScheduleAction>? ActionSelected;
+        public event EventHandler? AddActionRequested;
 
         public ObservableCollection<NpcScheduleAction> ScheduleActions
         {
@@ -42,7 +42,7 @@ namespace Schedule1ModdingTool.Views.Controls
             }
         }
 
-        public NpcScheduleAction SelectedAction
+        public NpcScheduleAction? SelectedAction
         {
             get => _selectedAction;
             set
@@ -144,7 +144,7 @@ namespace Schedule1ModdingTool.Views.Controls
             }
         }
 
-        private void ScheduleActions_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void ScheduleActions_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             UpdateTimeline();
         }
@@ -186,7 +186,7 @@ namespace Schedule1ModdingTool.Views.Controls
     public class HourLabel
     {
         public double X { get; set; }
-        public string Label { get; set; }
+        public string Label { get; set; } = "";
     }
 }
 

@@ -17,7 +17,7 @@ namespace Schedule1ModdingTool.Models
         private int? _targetQuestEntryIndex = null;
         private QuestTriggerTarget _triggerTarget = QuestTriggerTarget.QuestStart;
         private int? _objectiveIndex = null;
-        private TriggerMetadata _selectedTriggerMetadata;
+        private TriggerMetadata? _selectedTriggerMetadata;
 
         /// <summary>
         /// The type of trigger (Action, NPC Event, or Custom)
@@ -97,7 +97,7 @@ namespace Schedule1ModdingTool.Models
         /// The selected trigger metadata (for UI binding, not serialized)
         /// </summary>
         [JsonIgnore]
-        public TriggerMetadata SelectedTriggerMetadata
+        public TriggerMetadata? SelectedTriggerMetadata
         {
             get => _selectedTriggerMetadata;
             set

@@ -11,7 +11,7 @@ namespace Schedule1ModdingTool.Services
     /// </summary>
     public static class BuildingRegistryService
     {
-        private static List<BuildingInfo> _cachedBuildings;
+        private static List<BuildingInfo>? _cachedBuildings;
 
         /// <summary>
         /// Gets all available building identifier types.
@@ -121,7 +121,7 @@ namespace Schedule1ModdingTool.Services
         /// <summary>
         /// Gets a building info by type name.
         /// </summary>
-        public static BuildingInfo GetBuildingByTypeName(string typeName)
+        public static BuildingInfo? GetBuildingByTypeName(string typeName)
         {
             if (string.IsNullOrWhiteSpace(typeName))
                 return null;
@@ -134,7 +134,7 @@ namespace Schedule1ModdingTool.Services
         /// <summary>
         /// Gets a building info by display name.
         /// </summary>
-        public static BuildingInfo GetBuildingByDisplayName(string displayName)
+        public static BuildingInfo? GetBuildingByDisplayName(string displayName)
         {
             if (string.IsNullOrWhiteSpace(displayName))
                 return null;

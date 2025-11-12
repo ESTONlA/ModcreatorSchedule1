@@ -14,12 +14,12 @@ namespace Schedule1ModdingTool.ViewModels
     public class QuestEditViewModel : ObservableObject
     {
         private readonly MainViewModel _parentViewModel;
-        private QuestBlueprint _originalQuest;
-        private QuestBlueprint _quest;
-        private string _generatedCode;
-        private string _windowTitle;
+        private QuestBlueprint _originalQuest = null!;
+        private QuestBlueprint _quest = null!;
+        private string _generatedCode = "";
+        private string _windowTitle = "";
 
-        public event EventHandler<bool> CloseRequested;
+        public event EventHandler<bool>? CloseRequested;
 
         public QuestEditViewModel(QuestBlueprint quest, MainViewModel parentViewModel)
         {
@@ -85,14 +85,14 @@ namespace Schedule1ModdingTool.ViewModels
         public ObservableCollection<QuestTrigger> QuestStartTriggers => _quest.QuestTriggers;
         public ObservableCollection<QuestFinishTrigger> QuestFinishTriggers => _quest.QuestFinishTriggers;
 
-        private ObservableCollection<TriggerMetadata> _availableTriggers;
+        private ObservableCollection<TriggerMetadata> _availableTriggers = null!;
         public ObservableCollection<TriggerMetadata> AvailableTriggers
         {
             get => _availableTriggers;
             private set => SetProperty(ref _availableTriggers, value);
         }
 
-        private ObservableCollection<NpcInfo> _availableNpcs;
+        private ObservableCollection<NpcInfo> _availableNpcs = null!;
         public ObservableCollection<NpcInfo> AvailableNpcs
         {
             get => _availableNpcs;
@@ -123,7 +123,7 @@ namespace Schedule1ModdingTool.ViewModels
             }
         }
 
-        private void RemoveObjective(QuestObjective objective)
+        private void RemoveObjective(QuestObjective? objective)
         {
             if (objective == null) return;
 
@@ -235,7 +235,7 @@ namespace Schedule1ModdingTool.ViewModels
             }
         }
 
-        private void RemoveQuestStartTrigger(QuestTrigger trigger)
+        private void RemoveQuestStartTrigger(QuestTrigger? trigger)
         {
             if (trigger == null) return;
 
@@ -272,7 +272,7 @@ namespace Schedule1ModdingTool.ViewModels
             }
         }
 
-        private void RemoveQuestFinishTrigger(QuestFinishTrigger trigger)
+        private void RemoveQuestFinishTrigger(QuestFinishTrigger? trigger)
         {
             if (trigger == null) return;
 

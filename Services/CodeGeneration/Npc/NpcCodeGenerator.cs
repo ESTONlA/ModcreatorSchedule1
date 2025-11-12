@@ -342,7 +342,7 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Npc
             bool hasCash = inv.EnableRandomCash;
             bool hasClearNight = !inv.ClearInventoryEachNight;
 
-            if (hasStartupItems)
+            if (hasStartupItems && inv.StartupItems != null)
             {
                 builder.AppendComment("🔧 From: InventoryDefaults.StartupItems[]");
                 var items = string.Join(", ", inv.StartupItems.Select(i => $"\"{CodeFormatter.EscapeString(i)}\""));

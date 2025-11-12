@@ -18,9 +18,9 @@ namespace Schedule1ModdingTool.Views
     /// </summary>
     public partial class PropertiesControl : UserControl
     {
-        private ObservableCollection<TriggerMetadata> _availableTriggers;
-        private ObservableCollection<NpcInfo> _availableNpcs;
-        private ObservableCollection<QuestInfo> _availableQuests;
+        private ObservableCollection<TriggerMetadata> _availableTriggers = null!;
+        private ObservableCollection<NpcInfo> _availableNpcs = null!;
+        private ObservableCollection<QuestInfo> _availableQuests = null!;
         private Dictionary<string, ObservableCollection<QuestEntryInfo>> _questEntriesCache = new Dictionary<string, ObservableCollection<QuestEntryInfo>>();
 
         /// <summary>
@@ -684,7 +684,7 @@ namespace Schedule1ModdingTool.Views
             }
         }
 
-        private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        private T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
         {
             var parentObject = VisualTreeHelper.GetParent(child);
             if (parentObject == null) return null;
@@ -692,7 +692,7 @@ namespace Schedule1ModdingTool.Views
             return FindVisualParent<T>(parentObject);
         }
 
-        private T FindVisualChild<T>(DependencyObject parent, Func<T, bool> predicate = null) where T : DependencyObject
+        private T? FindVisualChild<T>(DependencyObject parent, Func<T, bool>? predicate = null) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
@@ -707,7 +707,7 @@ namespace Schedule1ModdingTool.Views
             return null;
         }
 
-        private IEnumerable<T> FindVisualChildren<T>(DependencyObject parent, Func<T, bool> predicate = null) where T : DependencyObject
+        private IEnumerable<T> FindVisualChildren<T>(DependencyObject parent, Func<T, bool>? predicate = null) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {

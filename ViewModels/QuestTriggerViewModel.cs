@@ -15,9 +15,9 @@ namespace Schedule1ModdingTool.ViewModels
     {
         private QuestTrigger _trigger;
         private readonly QuestBlueprint _questBlueprint;
-        private readonly QuestObjective _objective; // null if this is a quest-level trigger
+        private readonly QuestObjective? _objective; // null if this is a quest-level trigger
 
-        public QuestTriggerViewModel(QuestTrigger trigger, QuestBlueprint questBlueprint, QuestObjective objective = null)
+        public QuestTriggerViewModel(QuestTrigger trigger, QuestBlueprint questBlueprint, QuestObjective? objective = null)
         {
             _trigger = trigger ?? throw new ArgumentNullException(nameof(trigger));
             _questBlueprint = questBlueprint ?? throw new ArgumentNullException(nameof(questBlueprint));
@@ -46,7 +46,7 @@ namespace Schedule1ModdingTool.ViewModels
         public bool RequiresObjectiveIndex => Trigger.TriggerTarget == QuestTriggerTarget.ObjectiveStart || 
                                              Trigger.TriggerTarget == QuestTriggerTarget.ObjectiveFinish;
 
-        public event Action<QuestTriggerViewModel> RemoveRequested;
+        public event Action<QuestTriggerViewModel>? RemoveRequested;
 
         public ICommand RemoveCommand { get; }
 

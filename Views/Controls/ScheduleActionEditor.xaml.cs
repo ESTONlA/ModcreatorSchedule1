@@ -14,7 +14,7 @@ namespace Schedule1ModdingTool.Views.Controls
     /// </summary>
     public partial class ScheduleActionEditor : UserControl
     {
-        private ObservableCollection<BuildingInfo> _availableBuildings;
+        private ObservableCollection<BuildingInfo>? _availableBuildings;
 
         public ObservableCollection<BuildingInfo> AvailableBuildings
         {

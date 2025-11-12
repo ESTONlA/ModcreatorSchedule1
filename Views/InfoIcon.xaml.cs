@@ -95,7 +95,7 @@ namespace Schedule1ModdingTool.Views
                 }
 
                 TooltipText = tooltipText;
-                DocumentationUrl = tooltipInfo.DocumentationUrl;
+                DocumentationUrl = tooltipInfo.DocumentationUrl ?? "";
                 
                 // Show the icon
                 Visibility = Visibility.Visible;
