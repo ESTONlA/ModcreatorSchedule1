@@ -362,6 +362,12 @@
                                                                   Loaded="TriggerTypeComboBox_Loaded"
                                                                   SelectionChanged="TriggerTypeComboBox_SelectionChanged" />
 
+                                                        <!-- Debug: Show current TriggerType -->
+                                                        <TextBlock Text="{Binding TriggerType, StringFormat='DEBUG: TriggerType = {0}'}"
+                                                                   Foreground="Yellow"
+                                                                   FontSize="10"
+                                                                   Margin="0,4,0,4" />
+
                                                         <Label Content="Target Action" Style="{StaticResource LabelStyle}"/>
                                                         <ComboBox SelectedItem="{Binding SelectedTriggerMetadata, Mode=TwoWay}"
                                                                   Style="{StaticResource ComboBoxStyle}"
@@ -880,6 +886,71 @@
                                                                                 </DataTemplate>
                                                                             </ComboBox.ItemTemplate>
                                                                         </ComboBox>
+
+                                                                        <Label Content="Quest ID (if Quest trigger)"
+                                                                               Style="{StaticResource LabelStyle}"
+                                                                               Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=QuestEventTrigger}" />
+                                                                        <ComboBox SelectedValue="{Binding TargetQuestId, UpdateSourceTrigger=PropertyChanged}"
+                                                                                  SelectedValuePath="Id"
+                                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                                  IsEditable="True"
+                                                                                  Loaded="QuestComboBox_Loaded"
+                                                                                  LostFocus="QuestComboBox_LostFocus"
+                                                                                  SelectionChanged="QuestComboBox_SelectionChanged"
+                                                                                  Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=QuestEventTrigger}">
+                                                                            <ComboBox.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <StackPanel Orientation="Horizontal">
+                                                                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                                                                        <TextBlock Text="(" Foreground="{StaticResource MediumTextBrush}" />
+                                                                                        <TextBlock Text="{Binding Id}" Foreground="{StaticResource MediumTextBrush}" />
+                                                                                        <TextBlock Text=")" Foreground="{StaticResource MediumTextBrush}" />
+                                                                                        <TextBlock Text=" - " Foreground="{StaticResource MediumTextBrush}" Margin="4,0,4,0" />
+                                                                                        <TextBlock Foreground="{StaticResource MediumTextBrush}" FontSize="10">
+                                                                                            <TextBlock.Style>
+                                                                                                <Style TargetType="TextBlock">
+                                                                                                    <Setter Property="Text" Value="Base Game" />
+                                                                                                    <Style.Triggers>
+                                                                                                        <DataTrigger Binding="{Binding IsModQuest}" Value="True">
+                                                                                                            <Setter Property="Text" Value="Mod" />
+                                                                                                        </DataTrigger>
+                                                                                                    </Style.Triggers>
+                                                                                                </Style>
+                                                                                            </TextBlock.Style>
+                                                                                        </TextBlock>
+                                                                                    </StackPanel>
+                                                                                </DataTemplate>
+                                                                            </ComboBox.ItemTemplate>
+                                                                        </ComboBox>
+
+                                                                        <Label Content="Quest Entry (if QuestEntry trigger)"
+                                                                               Style="{StaticResource LabelStyle}">
+                                                                            <Label.Visibility>
+                                                                                <MultiBinding Converter="{StaticResource QuestEntryVisibilityConverter}">
+                                                                                    <Binding Path="TriggerType" />
+                                                                                    <Binding Path="TargetAction" />
+                                                                                </MultiBinding>
+                                                                            </Label.Visibility>
+                                                                        </Label>
+                                                                        <ComboBox SelectedValue="{Binding TargetQuestEntryIndex, UpdateSourceTrigger=PropertyChanged}"
+                                                                                  SelectedValuePath="Index"
+                                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                                  IsEditable="True"
+                                                                                  Loaded="QuestEntryComboBox_Loaded"
+                                                                                  LostFocus="QuestEntryComboBox_LostFocus"
+                                                                                  SelectionChanged="QuestEntryComboBox_SelectionChanged">
+                                                                            <ComboBox.Visibility>
+                                                                                <MultiBinding Converter="{StaticResource QuestEntryVisibilityConverter}">
+                                                                                    <Binding Path="TriggerType" />
+                                                                                    <Binding Path="TargetAction" />
+                                                                                </MultiBinding>
+                                                                            </ComboBox.Visibility>
+                                                                            <ComboBox.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <TextBlock Text="{Binding DisplayName}" />
+                                                                                </DataTemplate>
+                                                                            </ComboBox.ItemTemplate>
+                                                                        </ComboBox>
                                                                     </StackPanel>
                                                                 </Border>
                                                             </DataTemplate>
@@ -958,6 +1029,71 @@
                                                                                         <TextBlock Text="{Binding Id}" Foreground="{StaticResource MediumTextBrush}" />
                                                                                         <TextBlock Text=")" Foreground="{StaticResource MediumTextBrush}" />
                                                                                     </StackPanel>
+                                                                                </DataTemplate>
+                                                                            </ComboBox.ItemTemplate>
+                                                                        </ComboBox>
+
+                                                                        <Label Content="Quest ID (if Quest trigger)"
+                                                                               Style="{StaticResource LabelStyle}"
+                                                                               Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=QuestEventTrigger}" />
+                                                                        <ComboBox SelectedValue="{Binding TargetQuestId, UpdateSourceTrigger=PropertyChanged}"
+                                                                                  SelectedValuePath="Id"
+                                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                                  IsEditable="True"
+                                                                                  Loaded="QuestComboBox_Loaded"
+                                                                                  LostFocus="QuestComboBox_LostFocus"
+                                                                                  SelectionChanged="QuestComboBox_SelectionChanged"
+                                                                                  Visibility="{Binding TriggerType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=QuestEventTrigger}">
+                                                                            <ComboBox.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <StackPanel Orientation="Horizontal">
+                                                                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                                                                        <TextBlock Text="(" Foreground="{StaticResource MediumTextBrush}" />
+                                                                                        <TextBlock Text="{Binding Id}" Foreground="{StaticResource MediumTextBrush}" />
+                                                                                        <TextBlock Text=")" Foreground="{StaticResource MediumTextBrush}" />
+                                                                                        <TextBlock Text=" - " Foreground="{StaticResource MediumTextBrush}" Margin="4,0,4,0" />
+                                                                                        <TextBlock Foreground="{StaticResource MediumTextBrush}" FontSize="10">
+                                                                                            <TextBlock.Style>
+                                                                                                <Style TargetType="TextBlock">
+                                                                                                    <Setter Property="Text" Value="Base Game" />
+                                                                                                    <Style.Triggers>
+                                                                                                        <DataTrigger Binding="{Binding IsModQuest}" Value="True">
+                                                                                                            <Setter Property="Text" Value="Mod" />
+                                                                                                        </DataTrigger>
+                                                                                                    </Style.Triggers>
+                                                                                                </Style>
+                                                                                            </TextBlock.Style>
+                                                                                        </TextBlock>
+                                                                                    </StackPanel>
+                                                                                </DataTemplate>
+                                                                            </ComboBox.ItemTemplate>
+                                                                        </ComboBox>
+
+                                                                        <Label Content="Quest Entry (if QuestEntry trigger)"
+                                                                               Style="{StaticResource LabelStyle}">
+                                                                            <Label.Visibility>
+                                                                                <MultiBinding Converter="{StaticResource QuestEntryVisibilityConverter}">
+                                                                                    <Binding Path="TriggerType" />
+                                                                                    <Binding Path="TargetAction" />
+                                                                                </MultiBinding>
+                                                                            </Label.Visibility>
+                                                                        </Label>
+                                                                        <ComboBox SelectedValue="{Binding TargetQuestEntryIndex, UpdateSourceTrigger=PropertyChanged}"
+                                                                                  SelectedValuePath="Index"
+                                                                                  Style="{StaticResource ComboBoxStyle}"
+                                                                                  IsEditable="True"
+                                                                                  Loaded="QuestEntryComboBox_Loaded"
+                                                                                  LostFocus="QuestEntryComboBox_LostFocus"
+                                                                                  SelectionChanged="QuestEntryComboBox_SelectionChanged">
+                                                                            <ComboBox.Visibility>
+                                                                                <MultiBinding Converter="{StaticResource QuestEntryVisibilityConverter}">
+                                                                                    <Binding Path="TriggerType" />
+                                                                                    <Binding Path="TargetAction" />
+                                                                                </MultiBinding>
+                                                                            </ComboBox.Visibility>
+                                                                            <ComboBox.ItemTemplate>
+                                                                                <DataTemplate>
+                                                                                    <TextBlock Text="{Binding DisplayName}" />
                                                                                 </DataTemplate>
                                                                             </ComboBox.ItemTemplate>
                                                                         </ComboBox>
