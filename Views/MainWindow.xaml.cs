@@ -1,7 +1,13 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Rendering;
 using Schedule1ModdingTool.ViewModels;
 
 namespace Schedule1ModdingTool.Views
@@ -29,11 +35,7 @@ namespace Schedule1ModdingTool.Views
                 // Set up key bindings
                 SetupKeyBindings();
 
-                // Set up code editor syntax highlighting
-                if (CodeEditor != null)
-                {
-                    CodeEditor.SyntaxHighlighting = ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinition("C#");
-                }
+                ConfigureCodeEditorTheme();
 
                 // Subscribe to IsCodeVisible changes to fix grid divider issue
                 if (DataContext is MainViewModel viewModel)
@@ -202,6 +204,110 @@ namespace Schedule1ModdingTool.Views
             {
                 StoreCurrentHeightRatio();
             }
+        }
+
+        private void ConfigureCodeEditorTheme()
+        {
+            if (CodeEditor == null)
+            {
+                return;
+            }
+
+            var defaultForeground = CreateFrozenBrush("#FFDADADA");
+            CodeEditor.Foreground = defaultForeground;
+            CodeEditor.Background = (System.Windows.Media.Brush)FindResource("DarkBackgroundBrush");
+            CodeEditor.BorderBrush = (System.Windows.Media.Brush)FindResource("DarkBorderBrush");
+            CodeEditor.LineNumbersForeground = CreateFrozenBrush("#FF5F6672");
+
+            var selectionColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#FF264F78");
+            var selectionBrush = new SolidColorBrush(selectionColor) { Opacity = 0.8 };
+            if (selectionBrush.CanFreeze)
+            {
+                selectionBrush.Freeze();
+            }
+            CodeEditor.TextArea.SelectionBrush = selectionBrush;
+
+            CodeEditor.TextArea.SelectionForeground = CreateFrozenBrush("#FFF7F7F7");
+            CodeEditor.TextArea.TextView.LinkTextForegroundBrush = CreateFrozenBrush("#FF569CD6");
+
+            var highlighting = HighlightingManager.Instance.GetDefinition("C#");
+            if (highlighting == null)
+            {
+                return;
+            }
+
+            ApplyHighlightColors(highlighting);
+            CodeEditor.SyntaxHighlighting = highlighting;
+        }
+
+        private static void ApplyHighlightColors(IHighlightingDefinition highlighting)
+        {
+            foreach (var (name, color) in s_highlightColorMap)
+            {
+                TrySetHighlightColor(highlighting, name, color);
+            }
+        }
+
+        private static readonly IReadOnlyList<(string name, string hex)> s_highlightColorMap = new List<(string name, string hex)>
+        {
+            ("Default", "#FFDADADA"),
+            ("Comment", "#FF6A9955"),
+            ("DocumentationComment", "#FF6A9955"),
+            ("DocumentationTag", "#FF4EC9B0"),
+            ("DocumentationAttribute", "#FF4EC9B0"),
+            ("String", "#FFCE9178"),
+            ("InterpolatedStringText", "#FFCE9178"),
+            ("InterpolatedStringExpression", "#FFDCDCAA"),
+            ("VerbatimString", "#FFCE9178"),
+            ("Char", "#FFCE9178"),
+            ("StringEscape", "#FFD7BA7D"),
+            ("Number", "#FFB5CEA8"),
+            ("Keyword", "#FF569CD6"),
+            ("C# Keyword", "#FF569CD6"),
+            ("TypeKeyword", "#FF4EC9B0"),
+            ("C# Type Keyword", "#FF4EC9B0"),
+            ("Preprocessor", "#FFC586C0"),
+            ("PreprocessorText", "#FF9CDCFE"),
+            ("Type", "#FF4EC9B0"),
+            ("TypeName", "#FF4EC9B0"),
+            ("NamespaceName", "#FF4EC9B0"),
+            ("Interface", "#FFB8D7A3"),
+            ("Enum", "#FFB8D7A3"),
+            ("ValueType", "#FF569CD6"),
+            ("MethodCall", "#FFDCDCAA"),
+            ("MethodName", "#FFDCDCAA"),
+            ("FieldName", "#FF9CDCFE"),
+            ("PropertyName", "#FF9CDCFE"),
+            ("EventName", "#FFB8D7A3"),
+            ("XmlDocTag", "#FF4EC9B0"),
+            ("XmlDocAttribute", "#FF9CDCFE")
+        };
+
+        private static void TrySetHighlightColor(IHighlightingDefinition highlighting, string name, string hexColor)
+        {
+            if (highlighting == null || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(hexColor))
+            {
+                return;
+            }
+
+            var color = highlighting.NamedHighlightingColors
+                .FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase))
+                       ?? highlighting.NamedHighlightingColors
+                .FirstOrDefault(c => string.Equals(c.Name?.Replace(" ", string.Empty), name.Replace(" ", string.Empty), StringComparison.OrdinalIgnoreCase));
+
+            if (color != null)
+            {
+                var convertedColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hexColor);
+                color.Foreground = new SimpleHighlightingBrush(convertedColor);
+            }
+        }
+
+        private static SolidColorBrush CreateFrozenBrush(string hexColor)
+        {
+            var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hexColor);
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+            return brush;
         }
 
 
