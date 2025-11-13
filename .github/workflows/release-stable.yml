@@ -91,10 +91,10 @@ jobs:
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
     - name: Build Release
-      run: dotnet build Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION
+      run: dotnet build Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION -p:CI=true
 
     - name: Publish Release
-      run: dotnet publish Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION -o ./publish --self-contained false
+      run: dotnet publish Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION -p:CI=true -o ./publish --self-contained false
 
     - name: Create release archive
       run: |

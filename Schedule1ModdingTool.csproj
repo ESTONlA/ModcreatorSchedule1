@@ -26,7 +26,8 @@
 
   <!-- Only reference ModCreatorConnector project, don't build it automatically -->
   <!-- It will be built explicitly via GameLaunchService when needed -->
-  <ItemGroup>
+  <!-- In CI builds, exclude this reference since ModCreatorConnector is built separately with CI config -->
+  <ItemGroup Condition="'$(CI)' != 'true'">
     <ProjectReference Include="ModCreatorConnector\ModCreatorConnector.csproj" ReferenceOutputAssembly="False" />
   </ItemGroup>
 
