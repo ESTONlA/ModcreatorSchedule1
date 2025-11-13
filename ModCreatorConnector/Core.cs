@@ -1,4 +1,5 @@
-﻿using MelonLoader;
+﻿using System;
+using MelonLoader;
 using ModCreatorConnector.Services;
 using ModCreatorConnector.Utils;
 using S1API;
@@ -15,22 +16,26 @@ namespace ModCreatorConnector
 
         private PreviewAvatarManager? _avatarManager;
         private AppearancePreviewClient? _previewClient;
+        private PositionRequestServer? _positionServer;
 
         public override void OnLateInitializeMelon()
         {
             Instance = this;
+
+            // Always start position request server (independent of preview mode)
+            _positionServer = new PositionRequestServer();
+            _positionServer.Start();
 
             // Check if preview is enabled via config file
             var previewEnabled = PreviewConfig.IsPreviewEnabled();
 
             if (previewEnabled)
             {
-                // Initialize appearance preview system
+                // Initialize appearance preview system components (but don't start client yet)
                 _avatarManager = new PreviewAvatarManager();
                 _previewClient = new AppearancePreviewClient(_avatarManager);
-                _previewClient.Start();
 
-                MelonLogger.Msg("ModCreatorConnector: Appearance preview system initialized");
+                MelonLogger.Msg("ModCreatorConnector: Appearance preview system components initialized (will start when Menu scene loads)");
             }
             else
             {
@@ -38,25 +43,45 @@ namespace ModCreatorConnector
             }
         }
 
-        public override void OnSceneWasLoaded(int buildIndex, string sceneName)
+        public override void OnSceneWasInitialized(int buildIndex, string sceneName)
         {
             if (sceneName == "Menu")
             {
                 // Reset avatar manager when Menu scene loads
                 _avatarManager?.Reset();
-                MelonLogger.Msg("ModCreatorConnector: Menu scene loaded, ready for appearance preview");
+
+                // Start preview client when Menu scene is initialized
+                // Stop first if already running to ensure clean restart
+                if (_previewClient != null)
+                {
+                    try
+                    {
+                        _previewClient.Stop(); // Stop if already running
+                        _previewClient.Start();
+                        MelonLogger.Msg("ModCreatorConnector: Appearance preview client started (Menu scene initialized)");
+                    }
+                    catch (Exception ex)
+                    {
+                        MelonLogger.Error($"ModCreatorConnector: Failed to start preview client: {ex.Message}");
+                    }
+                }
             }
         }
 
         public override void OnUpdate()
         {
             // Process queued appearance updates on the main thread (only if preview is enabled)
-            _previewClient?.ProcessQueuedUpdates();
+            if (_previewClient != null)
+            {
+                _previewClient.ProcessQueuedUpdates();
+            }
         }
 
         public override void OnApplicationQuit()
         {
+            // Dispose in reverse order of initialization
             _previewClient?.Dispose();
+            _positionServer?.Dispose();
             Instance = null;
         }
     }

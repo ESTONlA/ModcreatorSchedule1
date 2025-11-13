@@ -1,0 +1,72 @@
+<Window x:Class="Schedule1ModdingTool.Views.ModExceptionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Mod Exception" Height="600" Width="900"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" 
+                   Text="{Binding ExceptionType, StringFormat='Exception Type: {0}'}"
+                   FontSize="16" 
+                   FontWeight="Bold"
+                   Margin="0,0,0,8" />
+
+        <!-- Info Panel -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,12">
+            <TextBlock Text="{Binding ModName, StringFormat='Mod: {0}'}" 
+                       Visibility="{Binding ModName, Converter={StaticResource NullToVisibilityConverter}}" />
+            <TextBlock Text="{Binding SourceAssembly, StringFormat='Assembly: {0}'}" 
+                       Visibility="{Binding SourceAssembly, Converter={StaticResource NullToVisibilityConverter}}" />
+            <TextBlock Text="{Binding Timestamp, StringFormat='Time: {0:yyyy-MM-dd HH:mm:ss}'}" />
+            <TextBlock Text="Severity: Unhandled Exception" 
+                       Foreground="Red"
+                       FontWeight="Bold"
+                       Visibility="{Binding IsUnhandled, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBlock Text="Severity: First-Chance Exception" 
+                       Foreground="Orange"
+                       Visibility="{Binding IsUnhandled, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+        </StackPanel>
+
+        <!-- Exception Details -->
+        <TextBox Grid.Row="2"
+                 Text="{Binding FormattedString, Mode=OneWay}"
+                 IsReadOnly="True"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto"
+                 FontFamily="Consolas"
+                 FontSize="11"
+                 Padding="8"
+                 Background="#1E1E1E"
+                 Foreground="#D4D4D4"
+                 BorderThickness="1"
+                 BorderBrush="#3F3F46" />
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="3" 
+                   Orientation="Horizontal" 
+                   HorizontalAlignment="Right" 
+                   Margin="0,12,0,0">
+            <Button Content="Copy to Clipboard" 
+                    Click="CopyToClipboard_Click"
+                    Padding="12,6"
+                    Margin="0,0,8,0" />
+            <Button Content="Close" 
+                    Click="Close_Click"
+                    Padding="12,6"
+                    IsDefault="True" />
+        </StackPanel>
+    </Grid>
+</Window>
+

@@ -30,13 +30,17 @@ namespace Schedule1ModdingTool.Services
             if (template == null) return null;
 
             var settings = ModSettings.Load();
+            // Use project namespace if set, otherwise fall back to settings
+            var projectNamespace = !string.IsNullOrWhiteSpace(project.ProjectNamespace)
+                ? project.ProjectNamespace
+                : settings.DefaultModNamespace;
             var quest = new QuestBlueprint(template.BlueprintType)
             {
                 ClassName = $"Quest{project.Quests.Count + 1}",
                 QuestTitle = $"New Quest {project.Quests.Count + 1}",
                 QuestDescription = "A new quest for Schedule 1",
                 BlueprintType = template.BlueprintType,
-                Namespace = $"{settings.DefaultModNamespace}.Quests",
+                Namespace = $"{projectNamespace}.Quests",
                 ModName = project.ProjectName,
                 ModAuthor = settings.DefaultModAuthor,
                 ModVersion = settings.DefaultModVersion,
@@ -104,12 +108,16 @@ namespace Schedule1ModdingTool.Services
         public NpcBlueprint AddNpc(QuestProject project, NpcBlueprint? template)
         {
             var settings = ModSettings.Load();
+            // Use project namespace if set, otherwise fall back to settings
+            var projectNamespace = !string.IsNullOrWhiteSpace(project.ProjectNamespace)
+                ? project.ProjectNamespace
+                : settings.DefaultModNamespace;
             var npc = template?.DeepCopy() ?? new NpcBlueprint();
             npc.ClassName = $"Npc{project.Npcs.Count + 1}";
             npc.NpcId = $"npc_{project.Npcs.Count + 1}";
             npc.FirstName = string.IsNullOrWhiteSpace(npc.FirstName) ? "New" : npc.FirstName;
             npc.LastName = string.IsNullOrWhiteSpace(npc.LastName) ? "NPC" : npc.LastName;
-            npc.Namespace = $"{settings.DefaultModNamespace}.NPCs";
+            npc.Namespace = $"{projectNamespace}.NPCs";
             npc.ModName = string.IsNullOrWhiteSpace(project.ProjectName) ? npc.ModName : project.ProjectName;
             npc.ModAuthor = settings.DefaultModAuthor;
             npc.ModVersion = settings.DefaultModVersion;

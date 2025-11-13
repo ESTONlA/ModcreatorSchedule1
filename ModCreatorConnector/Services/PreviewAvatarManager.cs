@@ -58,7 +58,6 @@ namespace ModCreatorConnector.Services
                 if (mainMenuRig != null && mainMenuRig.Avatar != null)
                 {
                     _previewAvatar = mainMenuRig.Avatar;
-                    MelonLogger.Msg("PreviewAvatarManager: Found MainMenuRig.Avatar for preview");
                     return;
                 }
             }
@@ -70,12 +69,11 @@ namespace ModCreatorConnector.Services
                 _previewAvatar = avatars.FirstOrDefault();
                 if (_previewAvatar != null)
                 {
-                    MelonLogger.Msg($"PreviewAvatarManager: Using first Avatar in scene: {_previewAvatar.GameObject?.name ?? "Unknown"}");
                     return;
                 }
             }
 
-            MelonLogger.Warning("PreviewAvatarManager: No Avatar found in Main scene for preview");
+            MelonLogger.Warning("PreviewAvatarManager: No Avatar found in Menu scene for preview");
         }
 
         /// <summary>

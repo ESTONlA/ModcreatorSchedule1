@@ -40,7 +40,21 @@ namespace ModCreatorConnector.Services
                 return; // Already started
 
             _cancellationTokenSource = new CancellationTokenSource();
-            _connectionTask = Task.Run(() => ConnectionLoop(_cancellationTokenSource.Token));
+            _connectionTask = Task.Run(() =>
+            {
+                try
+                {
+                    ConnectionLoop(_cancellationTokenSource.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected when cancelled, ignore
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Error($"AppearancePreviewClient: ConnectionLoop exception: {ex.Message}");
+                }
+            });
         }
 
         /// <summary>
@@ -49,7 +63,20 @@ namespace ModCreatorConnector.Services
         public void Stop()
         {
             _cancellationTokenSource?.Cancel();
-            _connectionTask?.Wait(TimeSpan.FromSeconds(2));
+            
+            try
+            {
+                _connectionTask?.Wait(TimeSpan.FromSeconds(5));
+            }
+            catch (AggregateException)
+            {
+                // Task may have been cancelled, ignore
+            }
+            catch (Exception)
+            {
+                // Ignore other exceptions during shutdown
+            }
+            
             _connectionTask = null;
 
             try
@@ -63,8 +90,6 @@ namespace ModCreatorConnector.Services
 
         private void ConnectionLoop(CancellationToken cancellationToken)
         {
-            MelonLogger.Msg("AppearancePreviewClient: Connection loop started");
-            
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
@@ -73,17 +98,12 @@ namespace ModCreatorConnector.Services
                     var currentScene = SceneManager.GetActiveScene();
                     var sceneName = currentScene != null ? currentScene.name : "Unknown";
                     
-                    MelonLogger.Msg($"AppearancePreviewClient: Current scene: {sceneName}");
-                    
-                    // Wait for Main scene before connecting
+                    // Wait for Menu scene before connecting
                     if (sceneName != "Menu")
                     {
-                        MelonLogger.Msg($"AppearancePreviewClient: Waiting for Menu scene (currently: {sceneName})...");
                         Thread.Sleep(1000);
                         continue;
                     }
-
-                    MelonLogger.Msg("AppearancePreviewClient: Menu scene detected, initializing avatar manager...");
 
                     // Initialize avatar manager if not already done
                     _avatarManager.Initialize();
@@ -95,24 +115,34 @@ namespace ModCreatorConnector.Services
                         continue;
                     }
 
-                    MelonLogger.Msg("AppearancePreviewClient: Avatar found, attempting to connect to mod creator...");
-
-                    // Create pipe client
+                    // Create pipe client (bidirectional for sending requests)
                     _pipeClient = new NamedPipeClientStream(
                         ".",
                         PipeName,
-                        PipeDirection.In,
+                        PipeDirection.InOut,
                         PipeOptions.Asynchronous);
 
                     // Try to connect
-                    MelonLogger.Msg("AppearancePreviewClient: Connecting to named pipe...");
                     _pipeClient.Connect(5000); // 5 second timeout
 
                     if (_pipeClient.IsConnected)
                     {
-                        MelonLogger.Msg("AppearancePreviewClient: Connected to mod creator! Listening for updates...");
+                        MelonLogger.Msg("AppearancePreviewClient: Connected to mod creator, requesting current appearance...");
                         
-                        // Listen for messages
+                        // Start reading messages first (server may send appearance immediately, or will respond to REQUEST_APPEARANCE)
+                        // We'll send REQUEST_APPEARANCE in a background task to avoid blocking the read loop
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                Thread.Sleep(200); // Small delay to let connection stabilize
+                                SendRequestAppearance();
+                            }
+                            catch (Exception ex)
+                            {
+                                MelonLogger.Warning($"AppearancePreviewClient: Failed to send REQUEST_APPEARANCE: {ex.Message}");
+                            }
+                        });
                         while (_pipeClient.IsConnected && !cancellationToken.IsCancellationRequested)
                         {
                             try
@@ -120,7 +150,6 @@ namespace ModCreatorConnector.Services
                                 var message = ReadMessage();
                                 if (!string.IsNullOrEmpty(message))
                                 {
-                                    MelonLogger.Msg($"AppearancePreviewClient: Received message ({message.Length} chars), queuing for main thread");
                                     _updateQueue.Enqueue(message);
                                 }
                                 else if (_pipeClient.IsConnected)
@@ -150,7 +179,6 @@ namespace ModCreatorConnector.Services
                 }
                 catch (OperationCanceledException)
                 {
-                    MelonLogger.Msg("AppearancePreviewClient: Connection loop cancelled");
                     break;
                 }
                 catch (Exception ex)
@@ -171,19 +199,42 @@ namespace ModCreatorConnector.Services
                 // Wait before reconnecting
                 if (!cancellationToken.IsCancellationRequested)
                 {
-                    MelonLogger.Msg($"AppearancePreviewClient: Waiting {ReconnectDelayMs}ms before reconnecting...");
                     Thread.Sleep(ReconnectDelayMs);
                 }
             }
-            
-            MelonLogger.Msg("AppearancePreviewClient: Connection loop ended");
+        }
+
+        private void SendRequestAppearance()
+        {
+            if (_pipeClient == null || !_pipeClient.IsConnected || !_pipeClient.CanWrite)
+            {
+                MelonLogger.Warning("AppearancePreviewClient: Cannot send request - pipe not connected or not writable");
+                return;
+            }
+
+            try
+            {
+                var request = "REQUEST_APPEARANCE";
+                var bytes = System.Text.Encoding.UTF8.GetBytes(request);
+                var lengthBytes = BitConverter.GetBytes(bytes.Length);
+
+                // Send length prefix, then data
+                _pipeClient.Write(lengthBytes, 0, lengthBytes.Length);
+                _pipeClient.Write(bytes, 0, bytes.Length);
+                _pipeClient.Flush();
+                
+                MelonLogger.Msg("AppearancePreviewClient: Appearance request sent");
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"AppearancePreviewClient: Failed to send appearance request: {ex.Message}");
+            }
         }
 
         private string? ReadMessage()
         {
             if (_pipeClient == null || !_pipeClient.IsConnected)
             {
-                MelonLogger.Warning("AppearancePreviewClient: ReadMessage called but pipe is not connected");
                 return null;
             }
 
@@ -195,18 +246,24 @@ namespace ModCreatorConnector.Services
                     return null;
                 }
 
-                // Read length prefix (4 bytes)
+                // Read length prefix (4 bytes) - this will block until data is available or pipe closes
                 var lengthBytes = new byte[4];
-                var bytesRead = _pipeClient.Read(lengthBytes, 0, 4);
+                int bytesRead;
+                try
+                {
+                    bytesRead = _pipeClient.Read(lengthBytes, 0, 4);
+                }
+                catch (System.IO.IOException)
+                {
+                    return null;
+                }
                 if (bytesRead == 0)
                 {
-                    MelonLogger.Warning("AppearancePreviewClient: Pipe closed while reading length");
                     return null;
                 }
                 
                 if (bytesRead != 4)
                 {
-                    MelonLogger.Warning($"AppearancePreviewClient: Incomplete length read: {bytesRead}/4 bytes");
                     return null;
                 }
 
@@ -217,8 +274,6 @@ namespace ModCreatorConnector.Services
                     return null;
                 }
 
-                MelonLogger.Msg($"AppearancePreviewClient: Reading message of length {messageLength} bytes");
-
                 // Read message data
                 var messageBytes = new byte[messageLength];
                 var totalRead = 0;
@@ -226,21 +281,26 @@ namespace ModCreatorConnector.Services
                 {
                     if (!_pipeClient.IsConnected)
                     {
-                        MelonLogger.Warning("AppearancePreviewClient: Pipe disconnected while reading message");
                         return null;
                     }
                     
-                    var read = _pipeClient.Read(messageBytes, totalRead, messageLength - totalRead);
+                    int read;
+                    try
+                    {
+                        read = _pipeClient.Read(messageBytes, totalRead, messageLength - totalRead);
+                    }
+                    catch (System.IO.IOException)
+                    {
+                        return null;
+                    }
                     if (read == 0)
                     {
-                        MelonLogger.Warning("AppearancePreviewClient: Pipe closed while reading message data");
                         return null; // Connection closed
                     }
                     totalRead += read;
                 }
 
                 var message = System.Text.Encoding.UTF8.GetString(messageBytes);
-                MelonLogger.Msg($"AppearancePreviewClient: Successfully read message");
                 return message;
             }
             catch (Exception ex)
@@ -280,17 +340,11 @@ namespace ModCreatorConnector.Services
 
                 // Create fresh avatar settings (null baseSettings) to wipe any default appearance
                 var avatarSettings = AppearanceConverter.ConvertJsonToAvatarSettings(json, null);
-                
-                // Log layer counts for debugging
-                MelonLogger.Msg($"AppearancePreviewClient: Applying settings - FaceLayers: {avatarSettings.FaceLayerCount}, BodyLayers: {avatarSettings.BodyLayerCount}, Accessories: {avatarSettings.AccessoryCount}");
-                
                 avatar.LoadAvatarSettings(avatarSettings);
-                MelonLogger.Msg("AppearancePreviewClient: Applied appearance update to preview Avatar");
             }
             catch (Exception ex)
             {
                 MelonLogger.Error($"AppearancePreviewClient: Failed to process appearance update: {ex.Message}");
-                MelonLogger.Error($"AppearancePreviewClient: Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -301,7 +355,16 @@ namespace ModCreatorConnector.Services
 
             _isDisposed = true;
             Stop();
+            
+            // Ensure task completes before disposing cancellation token
+            try
+            {
+                _connectionTask?.Wait(TimeSpan.FromSeconds(1));
+            }
+            catch { }
+            
             _cancellationTokenSource?.Dispose();
+            _connectionTask = null;
         }
     }
 }

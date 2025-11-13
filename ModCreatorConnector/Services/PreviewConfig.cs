@@ -26,7 +26,6 @@ namespace ModCreatorConnector.Services
 
                 if (!File.Exists(configPath))
                 {
-                    MelonLogger.Msg($"PreviewConfig: Config file not found at {configPath}, preview disabled");
                     return false;
                 }
 
@@ -39,7 +38,6 @@ namespace ModCreatorConnector.Services
                     return false;
                 }
 
-                MelonLogger.Msg($"PreviewConfig: Preview enabled = {config.PreviewEnabled}");
                 return config.PreviewEnabled;
             }
             catch (Exception ex)

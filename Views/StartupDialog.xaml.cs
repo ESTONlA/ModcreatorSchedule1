@@ -54,7 +54,8 @@ namespace Schedule1ModdingTool.Views
                     var newProject = new QuestProject
                     {
                         ProjectName = vm.ModName,
-                        ProjectDescription = $"Mod project for {vm.ModName}"
+                        ProjectDescription = $"Mod project for {vm.ModName}",
+                        ProjectNamespace = vm.ModNamespace
                     };
 
                     // Set default values for all quests from wizard

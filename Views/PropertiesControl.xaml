@@ -362,12 +362,6 @@
                                                                   Loaded="TriggerTypeComboBox_Loaded"
                                                                   SelectionChanged="TriggerTypeComboBox_SelectionChanged" />
 
-                                                        <!-- Debug: Show current TriggerType -->
-                                                        <TextBlock Text="{Binding TriggerType, StringFormat='DEBUG: TriggerType = {0}'}"
-                                                                   Foreground="Yellow"
-                                                                   FontSize="10"
-                                                                   Margin="0,4,0,4" />
-
                                                         <Label Content="Target Action" Style="{StaticResource LabelStyle}"/>
                                                         <ComboBox SelectedItem="{Binding SelectedTriggerMetadata, Mode=TwoWay}"
                                                                   Style="{StaticResource ComboBoxStyle}"

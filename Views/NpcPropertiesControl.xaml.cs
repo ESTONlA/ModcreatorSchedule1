@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Schedule1ModdingTool.Data;
 using Schedule1ModdingTool.Models;
+using Schedule1ModdingTool.Services;
 using Schedule1ModdingTool.Utils;
 using Schedule1ModdingTool.ViewModels;
 
@@ -488,50 +489,56 @@ namespace Schedule1ModdingTool.Views
             if (sender is not System.Windows.Controls.TabControl tabControl)
                 return;
 
-            if (tabControl.SelectedItem == PreviewNpcTab)
+            // Store current selection as previous (unless it's PreviewNpcTab)
+            // PreviewNpcTab can now be selected normally - the button handles launching
+            if (tabControl.SelectedItem != PreviewNpcTab && tabControl.SelectedItem is TabItem currentTab)
             {
-                // Execute preview command
-                if (ViewModel?.PreviewNpcCommand != null && ViewModel.PreviewNpcCommand.CanExecute(null))
+                _previousSelectedTab = currentTab;
+            }
+        }
+
+        private void SetSpawnPositionFromPlayer_Click(object sender, RoutedEventArgs e)
+        {
+            if (CurrentNpc == null)
+            {
+                AppUtils.ShowWarning("No NPC selected.");
+                return;
+            }
+
+            try
+            {
+                using var positionService = new PlayerPositionService();
+                var response = positionService.RequestPlayerPosition();
+
+                if (response == null)
                 {
-                    ViewModel.PreviewNpcCommand.Execute(null);
+                    AppUtils.ShowError("Failed to connect to connector mod. Make sure the game is running with the connector mod loaded and you are in the Main scene.");
+                    return;
                 }
 
-                // Reset selection to previous tab or Inventory tab
-                if (_previousSelectedTab != null && _previousSelectedTab != PreviewNpcTab && tabControl.Items.Contains(_previousSelectedTab))
+                if (!response.Success)
                 {
-                    tabControl.SelectedItem = _previousSelectedTab;
+                    AppUtils.ShowError($"Failed to get player position: {response.Error ?? "Unknown error"}");
+                    return;
                 }
-                else
+
+                if (response.Position == null)
                 {
-                    // Find Inventory tab by searching for it
-                    TabItem? inventoryTab = null;
-                    foreach (TabItem item in tabControl.Items)
-                    {
-                        if (item.Header?.ToString() == "Inventory")
-                        {
-                            inventoryTab = item;
-                            break;
-                        }
-                    }
-                    
-                    if (inventoryTab != null)
-                    {
-                        tabControl.SelectedItem = inventoryTab;
-                    }
-                    else if (tabControl.Items.Count > 0)
-                    {
-                        // Fallback to first tab
-                        tabControl.SelectedItem = tabControl.Items[0];
-                    }
+                    AppUtils.ShowError("Received invalid position data from connector mod.");
+                    return;
                 }
+
+                // Update spawn position
+                CurrentNpc.HasSpawnPosition = true;
+                CurrentNpc.SpawnX = response.Position.X;
+                CurrentNpc.SpawnY = response.Position.Y;
+                CurrentNpc.SpawnZ = response.Position.Z;
+
+                AppUtils.ShowInfo($"Spawn position set to: ({response.Position.X:F2}, {response.Position.Y:F2}, {response.Position.Z:F2})");
             }
-            else
+            catch (Exception ex)
             {
-                // Store current selection as previous (unless it's PreviewNpcTab)
-                if (tabControl.SelectedItem != PreviewNpcTab && tabControl.SelectedItem is TabItem currentTab)
-                {
-                    _previousSelectedTab = currentTab;
-                }
+                AppUtils.ShowError($"Error requesting player position: {ex.Message}");
             }
         }
     }

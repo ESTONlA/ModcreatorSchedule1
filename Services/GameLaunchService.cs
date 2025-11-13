@@ -12,6 +12,7 @@ namespace Schedule1ModdingTool.Services
     {
         private Process? _gameProcess;
         private bool _isMonitoring;
+        private string? _deployedDllPath;
 
         /// <summary>
         /// Builds ModCreatorConnector and launches the game
@@ -104,6 +105,7 @@ namespace Schedule1ModdingTool.Services
                 }
 
                 result.DeployedDllPath = targetDllPath;
+                _deployedDllPath = targetDllPath; // Store for cleanup
 
                 // Write preview config file
                 WritePreviewConfig(modsPath, previewEnabled);
@@ -272,8 +274,24 @@ namespace Schedule1ModdingTool.Services
             try
             {
                 process.WaitForExit();
-                // Game has exited - cleanup could happen here if needed
-                // For example, you could remove the DLL from Mods folder
+                
+                // Cleanup: Remove connector mod DLL after game exits
+                if (!string.IsNullOrEmpty(_deployedDllPath) && File.Exists(_deployedDllPath))
+                {
+                    try
+                    {
+                        // Wait a bit to ensure file handles are released
+                        System.Threading.Thread.Sleep(500);
+                        
+                        File.Delete(_deployedDllPath);
+                        System.Diagnostics.Debug.WriteLine($"GameLaunchService: Removed connector mod DLL: {_deployedDllPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // DLL may be locked or already deleted - log but don't fail
+                        System.Diagnostics.Debug.WriteLine($"GameLaunchService: Could not delete connector mod DLL: {ex.Message}");
+                    }
+                }
             }
             catch
             {
@@ -283,6 +301,7 @@ namespace Schedule1ModdingTool.Services
             {
                 _isMonitoring = false;
                 _gameProcess = null;
+                _deployedDllPath = null;
             }
         }
 

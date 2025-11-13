@@ -24,6 +24,7 @@ namespace Schedule1ModdingTool.Models
 
         private string _projectName = "";
         private string _projectDescription = "";
+        private string _projectNamespace = "";
         private string _filePath = "";
         private bool _isModified = false;
 
@@ -47,6 +48,19 @@ namespace Schedule1ModdingTool.Models
             set
             {
                 if (SetProperty(ref _projectDescription, value))
+                {
+                    MarkAsModified();
+                }
+            }
+        }
+
+        [JsonProperty("projectNamespace")]
+        public string ProjectNamespace
+        {
+            get => _projectNamespace;
+            set
+            {
+                if (SetProperty(ref _projectNamespace, value))
                 {
                     MarkAsModified();
                 }
@@ -184,6 +198,28 @@ namespace Schedule1ModdingTool.Models
             if (project != null)
             {
                 project.FilePath = filePath;
+                
+                // Backward compatibility: Initialize ProjectNamespace from first quest if not set
+                if (string.IsNullOrWhiteSpace(project.ProjectNamespace))
+                {
+                    var firstQuest = project.Quests.FirstOrDefault();
+                    if (firstQuest != null && !string.IsNullOrWhiteSpace(firstQuest.Namespace))
+                    {
+                        // Extract root namespace from quest namespace (e.g., "TestMod.Quests" -> "TestMod")
+                        var questNamespace = firstQuest.Namespace;
+                        project.ProjectNamespace = questNamespace.Contains('.') && questNamespace.EndsWith(".Quests")
+                            ? questNamespace.Substring(0, questNamespace.LastIndexOf('.'))
+                            : questNamespace;
+                    }
+                    else
+                    {
+                        // Fall back to project name if no quests exist
+                        project.ProjectNamespace = string.IsNullOrWhiteSpace(project.ProjectName)
+                            ? "GeneratedMod"
+                            : project.ProjectName;
+                    }
+                }
+                
                 project.AttachExistingQuestHandlers();
                 project.AttachExistingNpcHandlers();
                 project.AttachExistingFolderHandlers();

@@ -165,8 +165,6 @@ namespace ModCreatorConnector.Services
             avatarSettings.SetBodyLayers(bodyLayerList);
             avatarSettings.SetAccessories(accessoryList);
 
-            MelonLogger.Msg($"AppearanceConverter: Created settings with {faceLayerList.Count} face layers, {bodyLayerList.Count} body layers, {accessoryList.Count} accessories");
-
             return avatarSettings;
         }
 

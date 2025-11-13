@@ -44,14 +44,27 @@ namespace Schedule1ModdingTool.Services
                 // Get mod metadata from first quest or defaults
                 var firstQuest = project.Quests.FirstOrDefault();
                 var hasQuests = project.Quests != null && project.Quests.Any();
-                // Use the full namespace from quest (e.g., "MyMod.Quests") or construct from project name
-                var modNamespace = firstQuest?.Namespace ?? (hasQuests 
-                    ? $"{MakeSafeIdentifier(project.ProjectName, "GeneratedMod")}.Quests"
-                    : MakeSafeIdentifier(project.ProjectName, "GeneratedMod"));
-                // Extract root namespace for Core.cs (remove .Quests suffix if present)
-                var rootNamespace = modNamespace.Contains('.') && modNamespace.EndsWith(".Quests")
-                    ? modNamespace.Substring(0, modNamespace.LastIndexOf('.'))
-                    : modNamespace;
+                
+                // Use project namespace if set, otherwise derive from first quest or project name
+                string rootNamespace;
+                if (!string.IsNullOrWhiteSpace(project.ProjectNamespace))
+                {
+                    // Project namespace is stored (e.g., "TestMod" or "TestMod.Quests")
+                    rootNamespace = project.ProjectNamespace.Contains('.') && project.ProjectNamespace.EndsWith(".Quests")
+                        ? project.ProjectNamespace.Substring(0, project.ProjectNamespace.LastIndexOf('.'))
+                        : project.ProjectNamespace;
+                }
+                else
+                {
+                    // Backward compatibility: derive from first quest or project name
+                    var modNamespace = firstQuest?.Namespace ?? (hasQuests 
+                        ? $"{MakeSafeIdentifier(project.ProjectName, "GeneratedMod")}.Quests"
+                        : MakeSafeIdentifier(project.ProjectName, "GeneratedMod"));
+                    // Extract root namespace for Core.cs (remove .Quests suffix if present)
+                    rootNamespace = modNamespace.Contains('.') && modNamespace.EndsWith(".Quests")
+                        ? modNamespace.Substring(0, modNamespace.LastIndexOf('.'))
+                        : modNamespace;
+                }
                 var modAuthor = firstQuest?.ModAuthor ?? settings?.DefaultModAuthor ?? "Quest Creator";
                 var modVersion = firstQuest?.ModVersion ?? settings?.DefaultModVersion ?? "1.0.0";
                 var gameStudio = firstQuest?.GameDeveloper ?? "TVGS";
@@ -276,7 +289,10 @@ namespace Schedule1ModdingTool.Services
             sb.AppendLine("        /// </summary>");
             sb.AppendLine($"        public const string MOD_NAME = \"{EscapeString(modName)}\";");
             sb.AppendLine($"        public const string MOD_VERSION = \"{EscapeString(modVersion)}\";");
-            sb.AppendLine($"        public const string MOD_AUTHOR = \"{EscapeString(modAuthor)}\";");
+            var authorWithTool = string.IsNullOrWhiteSpace(modAuthor) 
+                ? "S1 Mod Creator" 
+                : $"{modAuthor} & S1 Mod Creator";
+            sb.AppendLine($"        public const string MOD_AUTHOR = \"{EscapeString(authorWithTool)}\";");
             sb.AppendLine("        public const string MOD_DESCRIPTION = \"Generated mod\";");
             sb.AppendLine();
             sb.AppendLine("        /// <summary>");

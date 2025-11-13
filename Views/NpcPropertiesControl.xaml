@@ -135,6 +135,11 @@
                                     <controls:Vector3Input X="{Binding SelectedNpc.SpawnX, Mode=TwoWay}"
                                                          Y="{Binding SelectedNpc.SpawnY, Mode=TwoWay}"
                                                          Z="{Binding SelectedNpc.SpawnZ, Mode=TwoWay}"/>
+                                    <Button Content="Use Current Player Position"
+                                            Style="{StaticResource IconButtonStyle}"
+                                            Click="SetSpawnPositionFromPlayer_Click"
+                                            Margin="0,8,0,0"
+                                            ToolTip="Sets the spawn position to the current player position in the Main scene (requires connector mod running)"/>
                                 </StackPanel>
                             </Border>
 
@@ -1033,14 +1038,15 @@
                         <Border Style="{StaticResource PanelStyle}">
                             <StackPanel Margin="12">
                                 <TextBlock Text="Preview NPC in Game" Style="{StaticResource PanelHeaderStyle}" Margin="0,0,0,12"/>
-                                <TextBlock Text="Click the Preview NPC tab to launch the game with appearance preview enabled. Changes to NPC appearance will be reflected in real-time in the game menu." 
+                                <TextBlock Text="Click the Launch Preview button to launch the game with appearance preview enabled. Changes to NPC appearance will be reflected in real-time in the game menu. Ensure the game is closed before launching the preview." 
                                            Foreground="{StaticResource DimTextBrush}"
                                            FontSize="11"
                                            TextWrapping="Wrap"
                                            Margin="0,0,0,12"/>
                                 <Button Content="Launch Preview" 
                                         Command="{Binding PreviewNpcCommand}"
-                                        Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Style="{StaticResource BaseButtonStyle}"
+                                        Foreground="{StaticResource AccentOrangeBrush}"
                                         HorizontalAlignment="Left"
                                         Padding="20,8"/>
                             </StackPanel>

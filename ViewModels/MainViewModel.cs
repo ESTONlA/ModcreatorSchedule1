@@ -40,6 +40,7 @@ namespace Schedule1ModdingTool.ViewModels
         private readonly ElementManagementService _elementManagementService;
         private readonly UndoRedoService _undoRedoService;
         private readonly AutoSaveService _autoSaveService;
+        private readonly ExceptionReceiverService _exceptionReceiverService = new ExceptionReceiverService();
         private ModSettings _modSettings;
         private bool _isRestoringFromUndoRedo = false;
         private DispatcherTimer? _debounceSnapshotTimer;
@@ -441,6 +442,11 @@ namespace Schedule1ModdingTool.ViewModels
             // Start appearance preview service
             _appearancePreviewService.Start();
 
+            // Exception forwarding disabled for now (kept in codebase for future use)
+            // Start exception receiver service and subscribe to exceptions
+            // _exceptionReceiverService.ExceptionReceived += OnModExceptionReceived;
+            // _exceptionReceiverService.Start();
+
             InitializeCommands();
             InitializeBlueprints();
             _navigationService.InitializeNavigation();
@@ -551,7 +557,8 @@ namespace Schedule1ModdingTool.ViewModels
                     var newProject = new QuestProject
                     {
                         ProjectName = vm.ModName,
-                        ProjectDescription = $"Mod project for {vm.ModName}"
+                        ProjectDescription = $"Mod project for {vm.ModName}",
+                        ProjectNamespace = vm.ModNamespace
                     };
 
                     var settings = ModSettings.Load();
@@ -1224,9 +1231,22 @@ namespace Schedule1ModdingTool.ViewModels
                 }
 
                 // Ensure appearance preview service is started
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] PreviewNpc: IsConnected={_appearancePreviewService.IsConnected}");
                 if (!_appearancePreviewService.IsConnected)
                 {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] PreviewNpc: Starting appearance preview service");
                     _appearancePreviewService.Start();
+                }
+
+                // Store current appearance so it can be sent when the mod connects
+                if (SelectedNpc?.Appearance != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] PreviewNpc: Setting current appearance (SelectedNpc={SelectedNpc?.FirstName} {SelectedNpc?.LastName})");
+                    _appearancePreviewService.SetCurrentAppearance(SelectedNpc.Appearance);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[DEBUG] PreviewNpc: WARNING - SelectedNpc or Appearance is null!");
                 }
 
                 ProcessState = "Building connector mod and launching game with preview enabled...";
@@ -1960,6 +1980,32 @@ namespace Schedule1ModdingTool.ViewModels
         }
 
         /// <summary>
+        /// Handles exceptions received from generated mods.
+        /// </summary>
+        private void OnModExceptionReceived(object? sender, ModExceptionEventArgs e)
+        {
+            // Dispatch to UI thread
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    var exceptionData = e.ExceptionData;
+                    var exceptionWindow = new Views.ModExceptionWindow(exceptionData)
+                    {
+                        Owner = Application.Current.MainWindow
+                    };
+                    exceptionWindow.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    // Fallback to simple message box if window creation fails
+                    AppUtils.ShowError($"Exception from mod:\n{e.ExceptionData.GetFormattedString()}\n\nError displaying exception: {ex.Message}", 
+                        "Mod Exception");
+                }
+            });
+        }
+
+        /// <summary>
         /// Cleanup method called when the application is closing normally.
         /// Clears the session marker to prevent crash recovery on next start.
         /// </summary>
@@ -1967,6 +2013,7 @@ namespace Schedule1ModdingTool.ViewModels
         {
             _autoSaveService.ClearSessionMarker();
             _autoSaveService.Dispose();
+            _exceptionReceiverService?.Dispose();
         }
 
         #endregion
