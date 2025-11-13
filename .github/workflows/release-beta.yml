@@ -1,0 +1,75 @@
+name: Release Beta
+
+on:
+  push:
+    branches:
+      - beta
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., 1.0.0-beta.1)'
+        required: false
+        type: string
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Extract version from project
+      id: get_version
+      run: |
+        $version = Select-String -Path "ModcreatorSchedule1\Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
+        if ([string]::IsNullOrWhiteSpace($version)) {
+          $version = "1.0.0-beta.1"
+        }
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+
+    - name: Build Release
+      working-directory: ModcreatorSchedule1
+      run: dotnet build Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION
+
+    - name: Publish Release
+      working-directory: ModcreatorSchedule1
+      run: dotnet publish Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION -o ./publish --self-contained false
+
+    - name: Create release archive
+      run: |
+        $archiveName = "Schedule1ModdingTool-$env:VERSION-beta.zip"
+        Compress-Archive -Path "ModcreatorSchedule1\publish\*" -DestinationPath $archiveName -Force
+        echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        $notes = "## Beta Release $env:VERSION`n`n"
+        $notes += "Automated beta release from beta branch.`n`n"
+        $notes += "### Changes`n"
+        $notes += "See commit history for details."
+        echo "notes<<EOF" >> $env:GITHUB_OUTPUT
+        echo "$notes" >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ env.VERSION }}
+        name: Beta Release ${{ env.VERSION }}
+        body: ${{ steps.release_notes.outputs.notes }}
+        prerelease: true
+        files: ${{ env.ARCHIVE_NAME }}
+        draft: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

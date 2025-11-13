@@ -324,6 +324,7 @@ namespace Schedule1ModdingTool.ViewModels
         private ICommand? _newQuestCommand;
         private ICommand? _newNpcCommand;
         private ICommand? _visitWikiCommand;
+        private ICommand? _checkForUpdatesCommand;
 
         public ICommand NewProjectCommand => _newProjectCommand!;
         public ICommand OpenProjectCommand => _openProjectCommand!;
@@ -368,6 +369,7 @@ namespace Schedule1ModdingTool.ViewModels
         public ICommand NewQuestCommand => _newQuestCommand!;
         public ICommand NewNpcCommand => _newNpcCommand!;
         public ICommand VisitWikiCommand => _visitWikiCommand!;
+        public ICommand CheckForUpdatesCommand => _checkForUpdatesCommand!;
 
         #endregion
 
@@ -511,6 +513,7 @@ namespace Schedule1ModdingTool.ViewModels
             _newQuestCommand = new RelayCommand(NewQuest);
             _newNpcCommand = new RelayCommand(NewNpc);
             _visitWikiCommand = new RelayCommand(VisitWiki);
+            _checkForUpdatesCommand = new RelayCommand(async () => await CheckForUpdates());
             
             // Subscribe to undo/redo state changes
             _undoRedoService.StateChanged += (s, e) => CommandManager.InvalidateRequerySuggested();
@@ -1057,6 +1060,23 @@ namespace Schedule1ModdingTool.ViewModels
             catch (Exception ex)
             {
                 AppUtils.ShowError($"Failed to open wiki: {ex.Message}");
+            }
+        }
+
+        private async Task CheckForUpdates()
+        {
+            try
+            {
+                ProcessState = "Checking for updates...";
+                await UpdateService.CheckForUpdatesManuallyAsync();
+            }
+            catch (Exception ex)
+            {
+                AppUtils.ShowError($"Failed to check for updates: {ex.Message}");
+            }
+            finally
+            {
+                UpdateProcessState();
             }
         }
 

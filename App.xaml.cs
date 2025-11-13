@@ -1,8 +1,10 @@
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using Schedule1ModdingTool.Models;
 using Schedule1ModdingTool.Services;
 using Schedule1ModdingTool.Views;
+using Schedule1ModdingTool.Utils;
 
 namespace Schedule1ModdingTool
 {
@@ -13,6 +15,14 @@ namespace Schedule1ModdingTool
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            // Check for updates in background (non-blocking)
+            _ = Task.Run(async () =>
+            {
+                // Wait a bit to not interfere with startup
+                await Task.Delay(3000);
+                await UpdateService.CheckForUpdatesAsync(silent: true);
+            });
+
             // Check if first start wizard needs to be shown
             var settings = ModSettings.Load();
             if (!settings.IsFirstStartComplete)

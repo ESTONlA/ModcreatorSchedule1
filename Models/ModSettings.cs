@@ -14,6 +14,15 @@ namespace Schedule1ModdingTool.Models
     }
 
     /// <summary>
+    /// Update channel preference for application updates
+    /// </summary>
+    public enum UpdateChannel
+    {
+        Stable,
+        Beta
+    }
+
+    /// <summary>
     /// Stores user configuration for mod generation and build settings
     /// </summary>
     public class ModSettings : ObservableObject
@@ -34,6 +43,7 @@ namespace Schedule1ModdingTool.Models
         private int _undoHistorySize = 5;
         private bool _autoSaveEnabled = true;
         private int _autoSaveIntervalSeconds = 60;
+        private UpdateChannel _updateChannel = UpdateChannel.Beta;
 
         [JsonProperty("gameInstallPath")]
         public string GameInstallPath
@@ -120,6 +130,13 @@ namespace Schedule1ModdingTool.Models
                 var clampedValue = System.Math.Max(10, System.Math.Min(600, value));
                 SetProperty(ref _autoSaveIntervalSeconds, clampedValue);
             }
+        }
+
+        [JsonProperty("updateChannel")]
+        public UpdateChannel UpdateChannel
+        {
+            get => _updateChannel;
+            set => SetProperty(ref _updateChannel, value);
         }
 
         public static ModSettings Load()

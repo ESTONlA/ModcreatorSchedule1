@@ -156,6 +156,14 @@
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
+				<Separator />
+				<MenuItem Header="Check for _Updates" Command="{Binding CheckForUpdatesCommand}" Style="{StaticResource DarkMenuItemStyle}">
+					<MenuItem.Icon>
+						<materialDesign:PackIcon Kind="Update"
+						                         Foreground="{StaticResource LightTextBrush}"
+						                         Width="16" Height="16" />
+					</MenuItem.Icon>
+				</MenuItem>
 			</MenuItem>
 		</Menu>
 
