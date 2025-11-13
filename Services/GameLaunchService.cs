@@ -42,39 +42,54 @@ namespace Schedule1ModdingTool.Services
 
             try
             {
-                // Get ModCreatorConnector project path
-                var solutionPath = GetSolutionPath();
-                if (string.IsNullOrEmpty(solutionPath))
+                string dllPath;
+                
+                // First, check for pre-built DLL in release package (relative to executable)
+                var executableDir = AppDomain.CurrentDomain.BaseDirectory;
+                var prebuiltDllPath = Path.Combine(executableDir, "ModCreatorConnector", "ModCreatorConnector.dll");
+                
+                if (File.Exists(prebuiltDllPath))
                 {
-                    result.Success = false;
-                    result.ErrorMessage = "Could not locate solution directory. ModCreatorConnector project not found.";
-                    return result;
+                    // Use pre-built DLL from release package
+                    dllPath = prebuiltDllPath;
+                    result.BuildOutput = "Using pre-built ModCreatorConnector DLL from release package.";
                 }
-
-                var connectorProjectPath = Path.Combine(solutionPath, "ModCreatorConnector");
-                var connectorCsproj = Path.Combine(connectorProjectPath, "ModCreatorConnector.csproj");
-
-                if (!File.Exists(connectorCsproj))
+                else
                 {
-                    result.Success = false;
-                    result.ErrorMessage = $"ModCreatorConnector project not found at: {connectorCsproj}";
-                    return result;
+                    // Fall back to building from source (development scenario)
+                    var solutionPath = GetSolutionPath();
+                    if (string.IsNullOrEmpty(solutionPath))
+                    {
+                        result.Success = false;
+                        result.ErrorMessage = "Could not locate solution directory. ModCreatorConnector project not found.";
+                        return result;
+                    }
+
+                    var connectorProjectPath = Path.Combine(solutionPath, "ModCreatorConnector");
+                    var connectorCsproj = Path.Combine(connectorProjectPath, "ModCreatorConnector.csproj");
+
+                    if (!File.Exists(connectorCsproj))
+                    {
+                        result.Success = false;
+                        result.ErrorMessage = $"ModCreatorConnector project not found at: {connectorCsproj}";
+                        return result;
+                    }
+
+                    // Build ModCreatorConnector
+                    var config = useLocalDll ? "ConnectorLocal" : "ConnectorNuGet";
+                    result.BuildOutput = BuildConnectorMod(connectorCsproj, config, out var buildSuccess, out var buildError);
+
+                    if (!buildSuccess)
+                    {
+                        result.Success = false;
+                        result.ErrorMessage = $"Failed to build ModCreatorConnector: {buildError}";
+                        return result;
+                    }
+
+                    // Find the built DLL
+                    var binPath = Path.Combine(connectorProjectPath, "bin", config, "netstandard2.1");
+                    dllPath = Path.Combine(binPath, "ModCreatorConnector.dll");
                 }
-
-                // Build ModCreatorConnector
-                var config = useLocalDll ? "ConnectorLocal" : "ConnectorNuGet";
-                result.BuildOutput = BuildConnectorMod(connectorCsproj, config, out var buildSuccess, out var buildError);
-
-                if (!buildSuccess)
-                {
-                    result.Success = false;
-                    result.ErrorMessage = $"Failed to build ModCreatorConnector: {buildError}";
-                    return result;
-                }
-
-                // Find the built DLL
-                var binPath = Path.Combine(connectorProjectPath, "bin", config, "netstandard2.1");
-                var dllPath = Path.Combine(binPath, "ModCreatorConnector.dll");
 
                 if (!File.Exists(dllPath))
                 {

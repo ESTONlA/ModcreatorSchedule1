@@ -121,6 +121,19 @@ jobs:
     - name: Publish Release
       run: dotnet publish Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION -p:CI=true -o ./publish --self-contained false
 
+    - name: Copy ModCreatorConnector DLL to publish directory
+      run: |
+        $connectorDll = "ModCreatorConnector\bin\CI\netstandard2.1\ModCreatorConnector.dll"
+        $connectorDir = "publish\ModCreatorConnector"
+        if (Test-Path $connectorDll) {
+          New-Item -ItemType Directory -Force -Path $connectorDir | Out-Null
+          Copy-Item -Path $connectorDll -Destination "$connectorDir\ModCreatorConnector.dll" -Force
+          Write-Host "✓ Copied ModCreatorConnector DLL to publish directory"
+        } else {
+          Write-Host "✗ ModCreatorConnector DLL not found at: $connectorDll"
+          exit 1
+        }
+
     - name: Create release archive
       run: |
         $archiveName = "Schedule1ModdingTool-$env:VERSION.zip"
