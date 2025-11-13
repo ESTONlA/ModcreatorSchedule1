@@ -36,20 +36,20 @@ jobs:
 
     - name: Create Assembly Directory Structure
       run: |
-        New-Item -ItemType Directory -Force -Path "ModcreatorSchedule1\ModCreatorConnector\ScheduleOneAssemblies\Managed" | Out-Null
-        New-Item -ItemType Directory -Force -Path "ModcreatorSchedule1\ModCreatorConnector\ScheduleOneAssemblies\MelonLoader" | Out-Null
+        New-Item -ItemType Directory -Force -Path "ModCreatorConnector\ScheduleOneAssemblies\Managed" | Out-Null
+        New-Item -ItemType Directory -Force -Path "ModCreatorConnector\ScheduleOneAssemblies\MelonLoader" | Out-Null
 
     - name: Copy Game Assemblies
       run: |
         Write-Host "=== Copying Game Assemblies ==="
         if (Test-Path "game-assemblies\Managed") {
-          Copy-Item -Path "game-assemblies\Managed\*" -Destination "ModcreatorSchedule1\ModCreatorConnector\ScheduleOneAssemblies\Managed\" -Recurse -Force
+          Copy-Item -Path "game-assemblies\Managed\*" -Destination "ModCreatorConnector\ScheduleOneAssemblies\Managed\" -Recurse -Force
           Write-Host "✓ Copied Mono assemblies"
         } else {
           Write-Host "✗ No game-assemblies\Managed directory found"
         }
         if (Test-Path "game-assemblies\MelonLoader") {
-          Copy-Item -Path "game-assemblies\MelonLoader\*" -Destination "ModcreatorSchedule1\ModCreatorConnector\ScheduleOneAssemblies\MelonLoader\" -Recurse -Force
+          Copy-Item -Path "game-assemblies\MelonLoader\*" -Destination "ModCreatorConnector\ScheduleOneAssemblies\MelonLoader\" -Recurse -Force
           Write-Host "✓ Copied MelonLoader assemblies"
         } else {
           Write-Host "✗ No game-assemblies\MelonLoader directory found"
@@ -66,15 +66,14 @@ jobs:
             </PropertyGroup>
         </Project>
         "@
-        $propsContent | Out-File -FilePath "ModcreatorSchedule1\ModCreatorConnector\ci.build.props" -Encoding UTF8
+        $propsContent | Out-File -FilePath "ModCreatorConnector\ci.build.props" -Encoding UTF8
 
     - name: Build ModCreatorConnector (CI Configuration)
-      working-directory: ModcreatorSchedule1/ModCreatorConnector
+      working-directory: ModCreatorConnector
       run: dotnet build ModCreatorConnector.csproj -c CI
 
     - name: Extract version from project
       id: get_version
-      working-directory: ModcreatorSchedule1
       run: |
         $version = Select-String -Path "Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
         if ([string]::IsNullOrWhiteSpace($version)) {
