@@ -21,15 +21,62 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Checkout Game Assemblies
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ secrets.GAME_ASSEMBLIES_REPO }}
+        token: ${{ secrets.GAME_ASSEMBLIES_TOKEN }}
+        path: game-assemblies
+        fetch-depth: 1
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
+    - name: Create Assembly Directory Structure
+      run: |
+        New-Item -ItemType Directory -Force -Path "ModcreatorSchedule1\ModCreatorConnector\ScheduleOneAssemblies\Managed" | Out-Null
+        New-Item -ItemType Directory -Force -Path "ModcreatorSchedule1\ModCreatorConnector\ScheduleOneAssemblies\MelonLoader" | Out-Null
+
+    - name: Copy Game Assemblies
+      run: |
+        Write-Host "=== Copying Game Assemblies ==="
+        if (Test-Path "game-assemblies\Managed") {
+          Copy-Item -Path "game-assemblies\Managed\*" -Destination "ModcreatorSchedule1\ModCreatorConnector\ScheduleOneAssemblies\Managed\" -Recurse -Force
+          Write-Host "✓ Copied Mono assemblies"
+        } else {
+          Write-Host "✗ No game-assemblies\Managed directory found"
+        }
+        if (Test-Path "game-assemblies\MelonLoader") {
+          Copy-Item -Path "game-assemblies\MelonLoader\*" -Destination "ModcreatorSchedule1\ModCreatorConnector\ScheduleOneAssemblies\MelonLoader\" -Recurse -Force
+          Write-Host "✓ Copied MelonLoader assemblies"
+        } else {
+          Write-Host "✗ No game-assemblies\MelonLoader directory found"
+        }
+
+    - name: Create CI Build Properties
+      run: |
+        $propsContent = @"
+        <Project>
+            <PropertyGroup>
+                <!-- CI Assembly Paths (relative to ModCreatorConnector.csproj) -->
+                <MelonLoaderAssembliesPath>./ScheduleOneAssemblies/MelonLoader</MelonLoaderAssembliesPath>
+                <MonoAssembliesPath>./ScheduleOneAssemblies/Managed</MonoAssembliesPath>
+            </PropertyGroup>
+        </Project>
+        "@
+        $propsContent | Out-File -FilePath "ModcreatorSchedule1\ModCreatorConnector\ci.build.props" -Encoding UTF8
+
+    - name: Build ModCreatorConnector (CI Configuration)
+      working-directory: ModcreatorSchedule1/ModCreatorConnector
+      run: dotnet build ModCreatorConnector.csproj -c CI
+
     - name: Extract version from project
       id: get_version
+      working-directory: ModcreatorSchedule1
       run: |
-        $version = Select-String -Path "ModcreatorSchedule1\Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
+        $version = Select-String -Path "Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
         if ([string]::IsNullOrWhiteSpace($version)) {
           $version = "1.0.0-beta.1"
         }

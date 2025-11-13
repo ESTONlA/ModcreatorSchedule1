@@ -6,7 +6,7 @@
 		<RootNamespace>ModCreatorConnector</RootNamespace>
 		<LangVersion>default</LangVersion>
 		<NeutralLanguage>en-US</NeutralLanguage>
-		<Configurations>ConnectorNuGet;ConnectorLocal</Configurations>
+		<Configurations>ConnectorNuGet;ConnectorLocal;CI</Configurations>
 	</PropertyGroup>
 
 	<!-- Define paths for different configurations -->
@@ -42,6 +42,17 @@
 		<ManagedPath>$(GamePath)\Schedule I_Data\Managed</ManagedPath>
 		<MelonLoaderPath>$(GamePath)\MelonLoader\net35</MelonLoaderPath>
 		<ModsPath>$(GamePath)\Mods</ModsPath>
+		<DefineConstants>CROSS_COMPAT</DefineConstants>
+		<AssemblyName>ModCreatorConnector</AssemblyName>
+	</PropertyGroup>
+
+	<!-- CI Configuration: Uses NuGet packages and relative paths for CI builds -->
+	<PropertyGroup Condition="'$(Configuration)'=='CI'">
+		<!-- Default paths (can be overridden by ci.build.props) -->
+		<ManagedPath Condition="'$(MonoAssembliesPath)' == ''">./ScheduleOneAssemblies/Managed</ManagedPath>
+		<ManagedPath Condition="'$(MonoAssembliesPath)' != ''">$(MonoAssembliesPath)</ManagedPath>
+		<MelonLoaderPath Condition="'$(MelonLoaderAssembliesPath)' == ''">./ScheduleOneAssemblies/MelonLoader</MelonLoaderPath>
+		<MelonLoaderPath Condition="'$(MelonLoaderAssembliesPath)' != ''">$(MelonLoaderAssembliesPath)</MelonLoaderPath>
 		<DefineConstants>CROSS_COMPAT</DefineConstants>
 		<AssemblyName>ModCreatorConnector</AssemblyName>
 	</PropertyGroup>
@@ -259,6 +270,49 @@
 		<Reference Include="S1API">
 			<HintPath>..\..\S1API\S1API\bin\MonoMelon\netstandard2.1\S1API.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<!-- CI Configuration: Uses NuGet packages and relative paths for Unity assemblies -->
+	<ItemGroup Condition="'$(Configuration)'=='CI'">
+		<Reference Include="com.rlabrecque.steamworks.net">
+			<HintPath>$(ManagedPath)\com.rlabrecque.steamworks.net.dll</HintPath>
+		</Reference>
+		<Reference Include="FishNet.Runtime">
+			<HintPath>$(ManagedPath)\FishNet.Runtime.dll</HintPath>
+		</Reference>
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>$(ManagedPath)\Newtonsoft.Json.dll</HintPath>
+		</Reference>
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>$(ManagedPath)\Unity.TextMeshPro.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.AssetBundleModule">
+			<HintPath>$(ManagedPath)\UnityEngine.AssetBundleModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>$(ManagedPath)\UnityEngine.CoreModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.JSONSerializeModule">
+			<HintPath>$(ManagedPath)\UnityEngine.JSONSerializeModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.TextRenderingModule">
+			<HintPath>$(ManagedPath)\UnityEngine.TextRenderingModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.UI">
+			<HintPath>$(ManagedPath)\UnityEngine.UI.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.UIElementsModule">
+			<HintPath>$(ManagedPath)\UnityEngine.UIElementsModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.UIModule">
+			<HintPath>$(ManagedPath)\UnityEngine.UIModule.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<!-- CI Configuration: Use NuGet packages for MelonLoader and S1API -->
+	<ItemGroup Condition="'$(Configuration)'=='CI'">
+		<PackageReference Include="LavaGang.MelonLoader" Version="0.7.0" />
+		<PackageReference Include="S1API.Forked" Version="*" />
 	</ItemGroup>
 
 	<PropertyGroup>
