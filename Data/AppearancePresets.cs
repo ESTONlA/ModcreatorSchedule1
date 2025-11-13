@@ -37,12 +37,14 @@ namespace Schedule1ModdingTool.Data
             Option("Receding", "Avatar/Hair/receding/Receding"),
             Option("Shoulder Length", "Avatar/Hair/shoulderlength/ShoulderLength"),
             Option("Side Part Bob", "Avatar/Hair/sidepartbob/SidePartBob"),
-            Option("Spiky", "Avatar/Hair/spiky/Spiky")
+            Option("Spiky", "Avatar/Hair/spiky/Spiky"),
+            Option("Close Buzz Cut", "Avatar/Hair/closebuzzcut/CloseBuzzCut"),
+            Option("Tony", "Avatar/Hair/tony/Tony")
         );
 
         public static IReadOnlyList<AppearancePresetOption> FaceLayers { get; } = Create(
             Option("Face", "Agape", "Avatar/Layers/Face/Face_Agape"),
-            Option("Face", "Agited", "Avatar/Layers/Face/Face_Agited"),
+            Option("Face", "Agitated", "Avatar/Layers/Face/Face_Agitated"),
             Option("Face", "Frown Pout", "Avatar/Layers/Face/Face_FrownPout"),
             Option("Face", "Neutral", "Avatar/Layers/Face/Face_Neutral"),
             Option("Face", "Neutral Pout", "Avatar/Layers/Face/Face_NeutralPout"),
@@ -53,13 +55,18 @@ namespace Schedule1ModdingTool.Data
             Option("Face", "Smile", "Avatar/Layers/Face/Face_Smile"),
             Option("Face", "Smug Pout", "Avatar/Layers/Face/Face_SmugPout"),
             Option("Face", "Surprised", "Avatar/Layers/Face/Face_Surprised"),
+            Option("Face", "Face Tattoos 1", "Avatar/Layers/Face/FaceTattoos1"),
             Option("Eyes", "Eye Shadow", "Avatar/Layers/Face/EyeShadow"),
             Option("Eyes", "Freckles", "Avatar/Layers/Face/Freckles"),
             Option("Eyes", "Old Person Wrinkles", "Avatar/Layers/Face/OldPersonWrinkles"),
             Option("Eyes", "Tired Eyes", "Avatar/Layers/Face/TiredEyes"),
             Option("Facial Hair", "Goatee", "Avatar/Layers/Face/FacialHair_Goatee"),
             Option("Facial Hair", "Stubble", "Avatar/Layers/Face/FacialHair_Stubble"),
-            Option("Facial Hair", "Swirl", "Avatar/Layers/Face/FacialHair_Swirl")
+            Option("Facial Hair", "Swirl", "Avatar/Layers/Face/FacialHair_Swirl"),
+            Option("Face Tattoos", "Forehead Cross", "Avatar/Layers/Tattoos/face/Face_ForeheadCross"),
+            Option("Face Tattoos", "Sword", "Avatar/Layers/Tattoos/face/Face_Sword"),
+            Option("Face Tattoos", "Teardrop", "Avatar/Layers/Tattoos/face/Face_Teardrop"),
+            Option("Face Tattoos", "Tribal", "Avatar/Layers/Tattoos/face/Face_Tribal")
         );
 
         public static IReadOnlyList<AppearancePresetOption> BodyLayers { get; } = Create(
@@ -80,7 +87,24 @@ namespace Schedule1ModdingTool.Data
             Option("Bottom", "Female Underwear", "Avatar/Layers/Bottom/FemaleUnderwear"),
             Option("Bottom", "Jeans", "Avatar/Layers/Bottom/Jeans"),
             Option("Bottom", "Jorts", "Avatar/Layers/Bottom/Jorts"),
-            Option("Bottom", "Male Underwear", "Avatar/Layers/Bottom/MaleUnderwear")
+            Option("Bottom", "Male Underwear", "Avatar/Layers/Bottom/MaleUnderwear"),
+            Option("Accessories", "Fingerless Gloves", "Avatar/Layers/Accessories/FingerlessGloves"),
+            Option("Accessories", "Gloves", "Avatar/Layers/Accessories/Gloves"),
+            Option("Chest Tattoos", "Bird", "Avatar/Layers/Tattoos/chest/Chest_Bird"),
+            Option("Chest Tattoos", "Dead Face", "Avatar/Layers/Tattoos/chest/Chest_DeadFace"),
+            Option("Chest Tattoos", "Egg", "Avatar/Layers/Tattoos/chest/Chest_Egg"),
+            Option("Chest Tattoos", "LBC", "Avatar/Layers/Tattoos/chest/Chest_LBC"),
+            Option("Chest Tattoos", "Sword", "Avatar/Layers/Tattoos/chest/Chest_Sword"),
+            Option("Left Arm Tattoos", "Alien", "Avatar/Layers/Tattoos/leftarm/LeftArm_Alien"),
+            Option("Left Arm Tattoos", "Heart", "Avatar/Layers/Tattoos/leftarm/LeftArm_Heart"),
+            Option("Left Arm Tattoos", "Peace", "Avatar/Layers/Tattoos/leftarm/LeftArm_Peace"),
+            Option("Left Arm Tattoos", "Web", "Avatar/Layers/Tattoos/leftarm/LeftArm_Web"),
+            Option("Left Arm Tattoos", "Weed", "Avatar/Layers/Tattoos/leftarm/LeftArm_Weed"),
+            Option("Right Arm Tattoos", "Alien", "Avatar/Layers/Tattoos/rightarm/RightArm_Alien"),
+            Option("Right Arm Tattoos", "Heart", "Avatar/Layers/Tattoos/rightarm/RightArm_Heart"),
+            Option("Right Arm Tattoos", "Peace", "Avatar/Layers/Tattoos/rightarm/RightArm_Peace"),
+            Option("Right Arm Tattoos", "Web", "Avatar/Layers/Tattoos/rightarm/RightArm_Web"),
+            Option("Right Arm Tattoos", "Weed", "Avatar/Layers/Tattoos/rightarm/RightArm_Weed")
         );
 
         public static IReadOnlyList<AppearancePresetOption> AccessoryLayers { get; } = Create(
@@ -98,6 +122,8 @@ namespace Schedule1ModdingTool.Data
             Option("Head", "Respirator", "Avatar/Accessories/Head/Respirator/Respirator"),
             Option("Head", "Sauce Pan", "Avatar/Accessories/Head/SaucePan/SaucePan"),
             Option("Head", "Small Round Glasses", "Avatar/Accessories/Head/SmallRoundGlasses/SmallRoundGlasses"),
+            Option("Head", "Beanie", "Avatar/Accessories/Head/Beanie/Beanie"),
+            Option("Head", "Trash Crown", "Avatar/Accessories/Head/TrashCrown/TrashCrown"),
             Option("Chest", "Blazer", "Avatar/Accessories/Chest/Blazer/Blazer"),
             Option("Chest", "Bullet Proof Vest", "Avatar/Accessories/Chest/BulletProofVest/BulletProofVest"),
             Option("Chest", "Bullet Proof Vest (Police)", "Avatar/Accessories/Chest/BulletProofVest/BulletProofVest_Police"),
@@ -116,7 +142,8 @@ namespace Schedule1ModdingTool.Data
             Option("Waist", "Belt", "Avatar/Accessories/Waist/Belt/Belt"),
             Option("Waist", "Hazmat Suit", "Avatar/Accessories/Waist/HazmatSuit/HazmatSuit"),
             Option("Waist", "Police Belt", "Avatar/Accessories/Waist/PoliceBelt/PoliceBelt"),
-            Option("Waist", "Priest Gown", "Avatar/Accessories/Neck/PriestGown/PriestGown")
+            Option("Waist", "Priest Gown", "Avatar/Accessories/Waist/PriestGown/PriestGown"),
+            Option("Facial Hair", "Chevron", "Avatar/Accessories/FacialHair/Chevron/Chevron")
         );
 
         private static IReadOnlyList<AppearancePresetOption> Create(params AppearancePresetOption[] options) =>
