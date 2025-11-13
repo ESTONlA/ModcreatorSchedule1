@@ -7,9 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag (e.g., 1.0.0-beta.1)'
+        description: 'Version (e.g., 1.0.0-beta.1). Leave empty to auto-increment from project file.'
         required: false
         type: string
+
+permissions:
+  contents: write
+  pull-requests: read
 
 jobs:
   build-and-release:
@@ -72,13 +76,39 @@ jobs:
       working-directory: ModCreatorConnector
       run: dotnet build ModCreatorConnector.csproj -c CI
 
-    - name: Extract version from project
+    - name: Extract and determine version
       id: get_version
       run: |
-        $version = Select-String -Path "Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
+        # Get version from manual input, project file, or default
+        if ("${{ github.event.inputs.version }}" -ne "") {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          $version = Select-String -Path "Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
+        }
+        
+        # If version doesn't have beta suffix, add it
         if ([string]::IsNullOrWhiteSpace($version)) {
           $version = "1.0.0-beta.1"
+        } elseif ($version -notmatch '-beta\.\d+$') {
+          # Extract base version (e.g., "1.0.0" from "1.0.0" or "1.0.0-beta.1")
+          $baseVersion = $version -replace '-.*$', ''
+          
+          # Get existing beta tags for this base version
+          git fetch --tags --force
+          $existingBetas = git tag -l "v${baseVersion}-beta.*" | ForEach-Object { 
+            if ($_ -match '-beta\.(\d+)$') { [int]$matches[1] }
+          } | Sort-Object -Descending
+          
+          if ($existingBetas.Count -gt 0) {
+            $nextBeta = $existingBetas[0] + 1
+          } else {
+            $nextBeta = 1
+          }
+          
+          $version = "${baseVersion}-beta.${nextBeta}"
         }
+        
+        Write-Host "Determined version: $version"
         echo "VERSION=$version" >> $env:GITHUB_ENV
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
@@ -90,7 +120,7 @@ jobs:
 
     - name: Create release archive
       run: |
-        $archiveName = "Schedule1ModdingTool-$env:VERSION-beta.zip"
+        $archiveName = "Schedule1ModdingTool-$env:VERSION.zip"
         Compress-Archive -Path "publish\*" -DestinationPath $archiveName -Force
         echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
 
