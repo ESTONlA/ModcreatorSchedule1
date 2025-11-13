@@ -8,7 +8,7 @@ namespace Schedule1ModdingTool.Services
     /// </summary>
     public class ProjectService
     {
-        private const string FileFilter = "Quest Project files (*.qproj)|*.qproj|All files (*.*)|*.*";
+        private const string FileFilter = "Quest Project files (*.s1proj)|*.s1proj|All files (*.*)|*.*";
 
         public QuestProject? OpenProject()
         {
@@ -44,7 +44,7 @@ namespace Schedule1ModdingTool.Services
             {
                 Filter = FileFilter,
                 Title = "Save Quest Project As",
-                DefaultExt = "qproj",
+                DefaultExt = "s1proj",
                 FileName = string.IsNullOrEmpty(project.ProjectName) ? "Untitled" : project.ProjectName
             };
 

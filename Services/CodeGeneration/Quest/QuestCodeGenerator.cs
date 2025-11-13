@@ -106,6 +106,12 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Quest
             // OnLoaded method
             _methodGenerator.GenerateOnLoadedMethod(builder, quest);
 
+            // WaitForNPCs coroutine if NPCs are required (for OnLoaded)
+            if (quest.Objectives?.Any(obj => obj.HasLocation && obj.UseNpcLocation && !string.IsNullOrWhiteSpace(obj.NpcId)) == true)
+            {
+                _methodGenerator.GenerateWaitForNPCsCoroutine(builder, quest);
+            }
+
             // Reward method if needed
             if (quest.QuestRewards && quest.QuestRewardsList != null && quest.QuestRewardsList.Count > 0)
             {

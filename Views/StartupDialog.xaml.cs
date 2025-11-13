@@ -66,7 +66,7 @@ namespace Schedule1ModdingTool.Views
                     settings.Save();
 
                     // Set project file path
-                    var projectFilePath = Path.Combine(fullPath, $"{AppUtils.MakeSafeFilename(vm.ModName)}.qproj");
+                    var projectFilePath = Path.Combine(fullPath, $"{AppUtils.MakeSafeFilename(vm.ModName)}.s1proj");
                     newProject.FilePath = projectFilePath;
 
                     // Save the project file
@@ -104,7 +104,7 @@ namespace Schedule1ModdingTool.Views
             {
                 var dialog = new Microsoft.Win32.OpenFileDialog
                 {
-                    Filter = "Quest Project files (*.qproj)|*.qproj|All files (*.*)|*.*",
+                    Filter = "Quest Project files (*.s1proj)|*.s1proj|All files (*.*)|*.*",
                     Title = "Open Quest Project",
                     CheckFileExists = true
                 };

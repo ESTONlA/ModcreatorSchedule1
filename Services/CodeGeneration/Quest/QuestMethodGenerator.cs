@@ -163,15 +163,161 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Quest
             }
             else
             {
-                builder.AppendComment("Create quest entries if they don't exist yet");
-                builder.AppendComment("This ensures loaded quests have their entries created before OnCreated() runs");
-                builder.OpenBlock("if (QuestEntries.Count == 0)");
-                GenerateObjectiveCreationWithoutState(builder, quest);
-                builder.CloseBlock();
+                // Check if any objectives require NPCs
+                bool requiresNPCs = quest.Objectives.Any(obj => obj.HasLocation && obj.UseNpcLocation && !string.IsNullOrWhiteSpace(obj.NpcId));
+                
+                if (requiresNPCs)
+                {
+                    builder.AppendComment("Create quest entries if they don't exist yet");
+                    builder.AppendComment("This ensures loaded quests have their entries created before OnCreated() runs");
+                    builder.AppendComment("Wait for NPCs to spawn before creating entries (NPCs may not be available immediately on load)");
+                    builder.OpenBlock("if (QuestEntries.Count == 0)");
+                    builder.AppendLine("MelonCoroutines.Start(WaitForNPCsAndCreateEntries());");
+                    builder.CloseBlock();
+                }
+                else
+                {
+                    builder.AppendComment("Create quest entries if they don't exist yet");
+                    builder.AppendComment("This ensures loaded quests have their entries created before OnCreated() runs");
+                    builder.OpenBlock("if (QuestEntries.Count == 0)");
+                    GenerateObjectiveCreationWithoutState(builder, quest);
+                    builder.CloseBlock();
+                }
             }
 
             builder.CloseBlock();
             builder.AppendLine();
+        }
+
+        /// <summary>
+        /// Generates a coroutine that waits for NPCs to spawn before creating quest entries.
+        /// This is needed because NPCs may not be available immediately when a quest is loaded from save.
+        /// </summary>
+        public void GenerateWaitForNPCsCoroutine(ICodeBuilder builder, QuestBlueprint quest)
+        {
+            if (builder == null)
+                throw new ArgumentNullException(nameof(builder));
+            if (quest == null)
+                throw new ArgumentNullException(nameof(quest));
+
+            if (quest.Objectives?.Any() != true)
+                return;
+
+            // Collect all unique NPC IDs that are required
+            var requiredNpcIds = quest.Objectives
+                .Where(obj => obj.HasLocation && obj.UseNpcLocation && !string.IsNullOrWhiteSpace(obj.NpcId))
+                .Select(obj => obj.NpcId)
+                .Distinct()
+                .ToList();
+
+            if (requiredNpcIds.Count == 0)
+                return;
+
+            builder.AppendComment("🔧 Generated from: Quest.Objectives[] (wait for NPCs on load)");
+            builder.AppendBlockComment(
+                "Coroutine that waits for required NPCs to spawn before creating quest entries.",
+                "This prevents NPC lookup failures when quests are loaded before NPCs are initialized."
+            );
+            builder.OpenBlock("private System.Collections.IEnumerator WaitForNPCsAndCreateEntries()");
+            
+            builder.AppendLine("float timeout = 10f;");
+            builder.AppendLine("float waited = 0f;");
+            builder.AppendLine();
+            builder.AppendComment("Wait for all required NPCs to be available");
+            builder.AppendLine("var requiredNPCs = new Dictionary<string, NPC>();");
+            builder.OpenBlock("while (waited < timeout)");
+            
+            // Check each required NPC
+            foreach (var npcId in requiredNpcIds)
+            {
+                builder.AppendLine($"if (!requiredNPCs.ContainsKey(\"{CodeFormatter.EscapeString(npcId)}\"))");
+                builder.OpenBlock();
+                builder.AppendLine($"var npc = NPC.All.FirstOrDefault(n => n.ID == \"{CodeFormatter.EscapeString(npcId)}\");");
+                builder.OpenBlock("if (npc != null)");
+                builder.AppendLine($"requiredNPCs[\"{CodeFormatter.EscapeString(npcId)}\"] = npc;");
+                builder.CloseBlock();
+                builder.CloseBlock();
+            }
+            
+            builder.AppendLine();
+            builder.AppendLine($"if (requiredNPCs.Count >= {requiredNpcIds.Count})");
+            builder.OpenBlock();
+            builder.AppendLine("break; // All NPCs found");
+            builder.CloseBlock();
+            
+            builder.AppendLine();
+            builder.AppendLine("waited += Time.deltaTime;");
+            builder.AppendLine("yield return null; // wait 1 frame");
+            builder.CloseBlock();
+            
+            builder.AppendLine();
+            builder.AppendComment("Log warning if timeout reached and not all NPCs were found");
+            builder.AppendLine($"if (requiredNPCs.Count < {requiredNpcIds.Count})");
+            builder.OpenBlock();
+            builder.AppendLine($"MelonLogger.Warning($\"[Quest] Timeout reached waiting for NPCs. Found {{requiredNPCs.Count}}/{requiredNpcIds.Count} required NPCs. Creating entries anyway.\");");
+            builder.CloseBlock();
+            builder.AppendLine();
+            builder.AppendComment("Create quest entries now that NPCs are available (or timeout reached)");
+            builder.AppendLine();
+            
+            // Generate the actual entry creation code using cached NPCs
+            GenerateObjectiveCreationWithoutStateWithCachedNPCs(builder, quest, requiredNpcIds);
+            
+            builder.CloseBlock();
+            builder.AppendLine();
+        }
+
+        /// <summary>
+        /// Generates objective creation code for OnLoaded WITHOUT setting states, using cached NPCs from dictionary.
+        /// Used when NPCs have been waited for and cached in a dictionary.
+        /// </summary>
+        private void GenerateObjectiveCreationWithoutStateWithCachedNPCs(ICodeBuilder builder, QuestBlueprint quest, List<string> cachedNpcIds)
+        {
+            var objectiveNames = _entryFieldGenerator.GetAllObjectiveVariableNames(quest);
+
+            for (int i = 0; i < quest.Objectives.Count; i++)
+            {
+                var objective = quest.Objectives[i];
+                var objectiveVar = objectiveNames[i];
+
+                builder.AppendComment($"🔧 Generated from: Quest.Objectives[{i}]");
+                builder.AppendComment($"Objective \"{CodeFormatter.EscapeString(objective.Title)}\" ({objective.Name})");
+
+                // Create entry
+                // HasLocation automatically implies POI creation
+                if (objective.HasLocation)
+                {
+                    if (objective.UseNpcLocation && !string.IsNullOrWhiteSpace(objective.NpcId))
+                    {
+                        builder.AppendComment($"🔧 From: Objectives[{i}].Title, HasLocation, UseNpcLocation, NpcId");
+                        builder.AppendComment($"🔧 From: Objectives[{i}].NpcId = \"{CodeFormatter.EscapeString(objective.NpcId)}\"");
+                        builder.AppendLine($"requiredNPCs.TryGetValue(\"{CodeFormatter.EscapeString(objective.NpcId)}\", out var npc_{i});");
+                        builder.OpenBlock($"if (npc_{i} != null)");
+                        builder.AppendLine($"{objectiveVar} = AddEntry(\"{CodeFormatter.EscapeString(objective.Title)}\", npc_{i});");
+                        builder.AppendComment("Ensure POI is created and follows NPC location (handles cases where NPC transform wasn't ready during AddEntry)");
+                        builder.AppendLine($"{objectiveVar}.SetPOIToNPC(npc_{i});");
+                        builder.CloseBlock();
+                        builder.OpenBlock("else");
+                        builder.AppendLine($"MelonLogger.Warning($\"[Quest] NPC '{CodeFormatter.EscapeString(objective.NpcId)}' not found for quest entry '{CodeFormatter.EscapeString(objective.Title)}' (timeout reached)\");");
+                        builder.AppendLine($"{objectiveVar} = AddEntry(\"{CodeFormatter.EscapeString(objective.Title)}\");");
+                        builder.CloseBlock();
+                    }
+                    else
+                    {
+                        builder.AppendComment($"🔧 From: Objectives[{i}].Title, HasLocation, LocationX/Y/Z");
+                        builder.AppendLine($"{objectiveVar} = AddEntry(\"{CodeFormatter.EscapeString(objective.Title)}\", {CodeFormatter.FormatVector3(objective)});");
+                    }
+                }
+                else
+                {
+                    builder.AppendComment($"🔧 From: Objectives[{i}].Title");
+                    builder.AppendLine($"{objectiveVar} = AddEntry(\"{CodeFormatter.EscapeString(objective.Title)}\");");
+                }
+
+                // DO NOT set state here - let the save system restore it
+                builder.AppendComment("State will be restored from save data by S1API");
+                builder.AppendLine();
+            }
         }
 
         /// <summary>

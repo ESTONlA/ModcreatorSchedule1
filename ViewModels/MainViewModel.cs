@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -585,7 +586,7 @@ namespace Schedule1ModdingTool.ViewModels
                     settings.DefaultModVersion = vm.ModVersion;
                     settings.Save();
 
-                    var projectFilePath = Path.Combine(fullPath, $"{AppUtils.MakeSafeFilename(vm.ModName)}.qproj");
+                    var projectFilePath = Path.Combine(fullPath, $"{AppUtils.MakeSafeFilename(vm.ModName)}.s1proj");
                     newProject.FilePath = projectFilePath;
 
                     ProcessState = "Saving project...";
@@ -937,54 +938,63 @@ namespace Schedule1ModdingTool.ViewModels
 
         private void BuildAndPlay()
         {
+            _ = BuildAndPlayAsync();
+        }
+
+        private async Task BuildAndPlayAsync()
+        {
             try
             {
                 if (string.IsNullOrWhiteSpace(_modSettings.GameInstallPath))
                 {
-                    AppUtils.ShowError("Game install path is not configured. Please set it in Settings.");
+                    Application.Current.Dispatcher.Invoke(() =>
+                        AppUtils.ShowError("Game install path is not configured. Please set it in Settings."));
                     return;
                 }
 
                 // Export mod project if needed
-                ProcessState = "Checking if export is needed...";
-                if (!TryExportModProject(showSuccessDialog: false, out var exportPath))
+                UpdateProcessStateAsync("Checking if export is needed...");
+                string? exportPath = null;
+                if (!await TryExportModProjectAsync(showSuccessDialog: false, path => exportPath = path))
                 {
-                    ProcessState = "Export failed";
+                    UpdateProcessStateAsync("Export failed");
                     return;
                 }
 
                 // Build user mod if needed
                 if (!string.IsNullOrWhiteSpace(exportPath) && Directory.Exists(exportPath))
                 {
-                    ProcessState = "Checking if build is needed...";
-                    var modDllPath = GetModDllPath(exportPath);
+                    UpdateProcessStateAsync("Checking if build is needed...");
+                    var modDllPath = await Task.Run(() => GetModDllPath(exportPath));
                     var needsBuild = modDllPath == null || !File.Exists(modDllPath) || 
-                                     IsProjectNewerThanDll(exportPath, modDllPath);
+                                     await Task.Run(() => IsProjectNewerThanDll(exportPath, modDllPath));
 
                     if (needsBuild)
                     {
-                        ProcessState = "Building mod...";
-                        var buildResult = _modBuildService.BuildModProject(exportPath, _modSettings);
+                        UpdateProcessStateAsync("Building mod...");
+                        var buildResult = await Task.Run(() => 
+                            _modBuildService.BuildModProject(exportPath, _modSettings));
                         if (!buildResult.Success)
                         {
-                            ProcessState = "Build failed";
-                            ShowBuildResult(buildResult);
+                            UpdateProcessStateAsync("Build failed");
+                            Application.Current.Dispatcher.Invoke(() => ShowBuildResult(buildResult));
                             return;
                         }
-                        ProcessState = "Mod built successfully";
+                        UpdateProcessStateAsync("Mod built successfully");
                     }
                     else
                     {
-                        ProcessState = "Mod build is up to date";
+                        UpdateProcessStateAsync("Mod build is up to date");
                     }
                 }
 
                 // Launch game
-                ProcessState = "Building connector mod and launching game...";
+                UpdateProcessStateAsync("Building connector mod and launching game...");
                 var useLocalDll = true;
-                var launchResult = _gameLaunchService.LaunchGame(_modSettings, useLocalDll, previewEnabled: false);
+                var launchResult = await Task.Run(() => 
+                    _gameLaunchService.LaunchGame(_modSettings, useLocalDll, previewEnabled: false));
 
-                UpdateProcessState();
+                Application.Current.Dispatcher.Invoke(UpdateProcessState);
 
                 if (launchResult.Success)
                 {
@@ -997,23 +1007,24 @@ namespace Schedule1ModdingTool.ViewModels
                     {
                         message += $"\n\nWarnings:\n{string.Join("\n", launchResult.Warnings)}";
                     }
-                    AppUtils.ShowInfo(message);
+                    Application.Current.Dispatcher.Invoke(() => AppUtils.ShowInfo(message));
                 }
                 else
                 {
-                    ProcessState = "Launch failed";
+                    UpdateProcessStateAsync("Launch failed");
                     var errorMessage = $"Failed to launch game: {launchResult.ErrorMessage}";
                     if (!string.IsNullOrEmpty(launchResult.BuildOutput))
                     {
                         errorMessage += $"\n\nBuild Output:\n{launchResult.BuildOutput}";
                     }
-                    AppUtils.ShowError(errorMessage);
+                    Application.Current.Dispatcher.Invoke(() => AppUtils.ShowError(errorMessage));
                 }
             }
             catch (Exception ex)
             {
-                ProcessState = "Launch failed";
-                AppUtils.ShowError($"Failed to launch game: {ex.Message}");
+                UpdateProcessStateAsync("Launch failed");
+                Application.Current.Dispatcher.Invoke(() =>
+                    AppUtils.ShowError($"Failed to launch game: {ex.Message}"));
             }
         }
 
@@ -1237,22 +1248,38 @@ namespace Schedule1ModdingTool.ViewModels
 
         private void ExportModProject()
         {
-            TryExportModProject(showSuccessDialog: true, out _);
+            _ = ExportModProjectAsync(showSuccessDialog: true);
+        }
+
+        private async Task ExportModProjectAsync(bool showSuccessDialog)
+        {
+            await TryExportModProjectAsync(showSuccessDialog);
         }
 
         private bool TryExportModProject(bool showSuccessDialog, out string? generatedProjectPath)
         {
-            generatedProjectPath = null;
+            // Synchronous wrapper - use async version but wait synchronously (for compatibility)
+            // This should only be called from async contexts now
+            string? resultPath = null;
+            var task = TryExportModProjectAsync(showSuccessDialog, path => resultPath = path);
+            var result = task.GetAwaiter().GetResult();
+            generatedProjectPath = resultPath;
+            return result;
+        }
 
+        private async Task<bool> TryExportModProjectAsync(bool showSuccessDialog, Action<string?>? setPath = null)
+        {
             if (!HasAnyElements())
             {
-                AppUtils.ShowWarning("No mod elements in project. Add at least one quest or NPC before exporting.");
+                Application.Current.Dispatcher.Invoke(() =>
+                    AppUtils.ShowWarning("No mod elements in project. Add at least one quest or NPC before exporting."));
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(CurrentProject.FilePath) || !File.Exists(CurrentProject.FilePath))
             {
-                AppUtils.ShowWarning("Project must be saved before exporting. Please save the project first.");
+                Application.Current.Dispatcher.Invoke(() =>
+                    AppUtils.ShowWarning("Project must be saved before exporting. Please save the project first."));
                 return false;
             }
 
@@ -1263,7 +1290,8 @@ namespace Schedule1ModdingTool.ViewModels
                                      string.Join("\n\n", missingResources) +
                                      "\n\nThese resources will be excluded from the exported mod. Do you want to continue?";
 
-                var confirmation = MessageBox.Show(missingMessage, "Missing Resources", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                var confirmation = Application.Current.Dispatcher.Invoke(() =>
+                    MessageBox.Show(missingMessage, "Missing Resources", MessageBoxButton.YesNo, MessageBoxImage.Warning));
                 if (confirmation != MessageBoxResult.Yes)
                 {
                     return false;
@@ -1272,28 +1300,38 @@ namespace Schedule1ModdingTool.ViewModels
 
             try
             {
-                if (SelectedQuest != null || SelectedNpc != null)
+                // Regenerate code on UI thread before starting background work
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    RegenerateCode();
-                }
+                    if (SelectedQuest != null || SelectedNpc != null)
+                    {
+                        RegenerateCode();
+                    }
+                });
 
-                ProcessState = "Exporting mod project...";
+                UpdateProcessStateAsync("Exporting mod project...");
+                
                 var projectDir = Path.GetDirectoryName(CurrentProject.FilePath);
                 if (string.IsNullOrWhiteSpace(projectDir) || !Directory.Exists(projectDir))
                 {
-                    AppUtils.ShowError("Project directory not found. Please save the project first.");
-                    UpdateProcessState();
+                    Application.Current.Dispatcher.Invoke(() =>
+                        AppUtils.ShowError("Project directory not found. Please save the project first."));
+                    Application.Current.Dispatcher.Invoke(UpdateProcessState);
                     return false;
                 }
 
                 _modSettings = ModSettings.Load();
-                ProcessState = "Generating mod files...";
-                var result = _modProjectGenerator.GenerateModProject(CurrentProject, projectDir, _modSettings);
+                UpdateProcessStateAsync("Generating mod files...");
+                
+                // Run file generation on background thread
+                var result = await Task.Run(() => 
+                    _modProjectGenerator.GenerateModProject(CurrentProject, projectDir, _modSettings));
 
-                UpdateProcessState();
+                Application.Current.Dispatcher.Invoke(UpdateProcessState);
+                
                 if (result.Success)
                 {
-                    generatedProjectPath = result.OutputPath;
+                    setPath?.Invoke(result.OutputPath);
                     var message = $"Mod project exported successfully to:\n{result.OutputPath}\n\nGenerated {result.GeneratedFiles.Count} files.";
 
                     var hasIssues = result.Errors.Count > 0 || result.Warnings.Count > 0;
@@ -1307,11 +1345,11 @@ namespace Schedule1ModdingTool.ViewModels
                         {
                             message += $"\n\nWarnings ({result.Warnings.Count}):\n{string.Join("\n", result.Warnings)}";
                         }
-                        AppUtils.ShowWarning(message);
+                        Application.Current.Dispatcher.Invoke(() => AppUtils.ShowWarning(message));
                     }
                     else if (showSuccessDialog)
                     {
-                        AppUtils.ShowInfo(message);
+                        Application.Current.Dispatcher.Invoke(() => AppUtils.ShowInfo(message));
                     }
 
                     return true;
@@ -1327,62 +1365,85 @@ namespace Schedule1ModdingTool.ViewModels
                     {
                         errorMessage += $"\n\nWarnings:\n{string.Join("\n", result.Warnings)}";
                     }
-                    AppUtils.ShowError($"Failed to export mod project:\n{errorMessage}");
+                    Application.Current.Dispatcher.Invoke(() =>
+                        AppUtils.ShowError($"Failed to export mod project:\n{errorMessage}"));
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                ProcessState = "Export failed";
-                AppUtils.ShowError($"Export failed: {ex.Message}");
+                UpdateProcessStateAsync("Export failed");
+                Application.Current.Dispatcher.Invoke(() =>
+                    AppUtils.ShowError($"Export failed: {ex.Message}"));
                 return false;
             }
         }
 
         private void BuildMod()
         {
+            _ = BuildModAsync();
+        }
+
+        private async Task BuildModAsync()
+        {
             try
             {
-                if (!TryExportModProject(showSuccessDialog: false, out var exportPath))
+                string? exportPath = null;
+                if (!await TryExportModProjectAsync(showSuccessDialog: false, path => exportPath = path))
                 {
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(exportPath) || !Directory.Exists(exportPath))
                 {
-                    AppUtils.ShowError("Generated project path is empty or missing. Please export the project again.");
+                    Application.Current.Dispatcher.Invoke(() =>
+                        AppUtils.ShowError("Generated project path is empty or missing. Please export the project again."));
                     return;
                 }
 
-                ProcessState = "Building mod...";
-                var buildResult = _modBuildService.BuildModProject(exportPath, _modSettings);
-                UpdateProcessState();
+                UpdateProcessStateAsync("Building mod...");
+                
+                // Run build on background thread
+                var buildResult = await Task.Run(() => 
+                    _modBuildService.BuildModProject(exportPath, _modSettings));
+                
+                Application.Current.Dispatcher.Invoke(UpdateProcessState);
+                
                 if (!buildResult.Success)
                 {
-                    ProcessState = "Build failed";
+                    UpdateProcessStateAsync("Build failed");
                 }
-                ShowBuildResult(buildResult);
+                
+                Application.Current.Dispatcher.Invoke(() => ShowBuildResult(buildResult));
             }
             catch (Exception ex)
             {
-                ProcessState = "Build failed";
-                AppUtils.ShowError($"Build failed: {ex.Message}");
+                UpdateProcessStateAsync("Build failed");
+                Application.Current.Dispatcher.Invoke(() =>
+                    AppUtils.ShowError($"Build failed: {ex.Message}"));
             }
         }
 
         private void PreviewNpc()
         {
+            _ = PreviewNpcAsync();
+        }
+
+        private async Task PreviewNpcAsync()
+        {
             try
             {
                 if (SelectedNpc == null)
                 {
-                    AppUtils.ShowError("No NPC selected for preview.");
+                    Application.Current.Dispatcher.Invoke(() =>
+                        AppUtils.ShowError("No NPC selected for preview."));
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(_modSettings.GameInstallPath))
                 {
-                    AppUtils.ShowError("Game install path is not configured. Please set it in Settings.");
+                    Application.Current.Dispatcher.Invoke(() =>
+                        AppUtils.ShowError("Game install path is not configured. Please set it in Settings."));
                     return;
                 }
 
@@ -1405,12 +1466,13 @@ namespace Schedule1ModdingTool.ViewModels
                     System.Diagnostics.Debug.WriteLine("[DEBUG] PreviewNpc: WARNING - SelectedNpc or Appearance is null!");
                 }
 
-                ProcessState = "Building connector mod and launching game with preview enabled...";
+                UpdateProcessStateAsync("Building connector mod and launching game with preview enabled...");
 
                 var useLocalDll = true;
-                var launchResult = _gameLaunchService.LaunchGame(_modSettings, useLocalDll, previewEnabled: true);
+                var launchResult = await Task.Run(() => 
+                    _gameLaunchService.LaunchGame(_modSettings, useLocalDll, previewEnabled: true));
 
-                UpdateProcessState();
+                Application.Current.Dispatcher.Invoke(UpdateProcessState);
 
                 if (launchResult.Success)
                 {
@@ -1424,76 +1486,86 @@ namespace Schedule1ModdingTool.ViewModels
                     {
                         message += $"\n\nWarnings:\n{string.Join("\n", launchResult.Warnings)}";
                     }
-                    AppUtils.ShowInfo(message);
+                    Application.Current.Dispatcher.Invoke(() => AppUtils.ShowInfo(message));
                 }
                 else
                 {
-                    ProcessState = "Launch failed";
+                    UpdateProcessStateAsync("Launch failed");
                     var errorMessage = $"Failed to launch game: {launchResult.ErrorMessage}";
                     if (!string.IsNullOrEmpty(launchResult.BuildOutput))
                     {
                         errorMessage += $"\n\nBuild Output:\n{launchResult.BuildOutput}";
                     }
-                    AppUtils.ShowError(errorMessage);
+                    Application.Current.Dispatcher.Invoke(() => AppUtils.ShowError(errorMessage));
                 }
             }
             catch (Exception ex)
             {
-                ProcessState = "Launch failed";
-                AppUtils.ShowError($"Failed to launch game: {ex.Message}");
+                UpdateProcessStateAsync("Launch failed");
+                Application.Current.Dispatcher.Invoke(() =>
+                    AppUtils.ShowError($"Failed to launch game: {ex.Message}"));
             }
         }
 
         private void PlayGame()
         {
+            _ = PlayGameAsync();
+        }
+
+        private async Task PlayGameAsync()
+        {
             try
             {
                 if (string.IsNullOrWhiteSpace(_modSettings.GameInstallPath))
                 {
-                    AppUtils.ShowError("Game install path is not configured. Please set it in Settings.");
+                    Application.Current.Dispatcher.Invoke(() =>
+                        AppUtils.ShowError("Game install path is not configured. Please set it in Settings."));
                     return;
                 }
 
                 // Export mod project if needed
-                ProcessState = "Checking if export is needed...";
-                if (!TryExportModProject(showSuccessDialog: false, out var exportPath))
+                UpdateProcessStateAsync("Checking if export is needed...");
+                string? exportPath = null;
+                if (!await TryExportModProjectAsync(showSuccessDialog: false, path => exportPath = path))
                 {
-                    ProcessState = "Export failed";
+                    UpdateProcessStateAsync("Export failed");
                     return;
                 }
 
                 // Build user mod if needed
                 if (!string.IsNullOrWhiteSpace(exportPath) && Directory.Exists(exportPath))
                 {
-                    ProcessState = "Checking if build is needed...";
-                    var modDllPath = GetModDllPath(exportPath);
+                    UpdateProcessStateAsync("Checking if build is needed...");
+                    var modDllPath = await Task.Run(() => GetModDllPath(exportPath));
                     var needsBuild = modDllPath == null || !File.Exists(modDllPath) || 
-                                     IsProjectNewerThanDll(exportPath, modDllPath);
+                                     await Task.Run(() => IsProjectNewerThanDll(exportPath, modDllPath));
 
                     if (needsBuild)
                     {
-                        ProcessState = "Building mod...";
-                        var buildResult = _modBuildService.BuildModProject(exportPath, _modSettings);
+                        UpdateProcessStateAsync("Building mod...");
+                        var buildResult = await Task.Run(() => 
+                            _modBuildService.BuildModProject(exportPath, _modSettings));
                         if (!buildResult.Success)
                         {
-                            ProcessState = "Build failed";
-                            ShowBuildResult(buildResult);
+                            UpdateProcessStateAsync("Build failed");
+                            Application.Current.Dispatcher.Invoke(() => ShowBuildResult(buildResult));
                             return;
                         }
-                        ProcessState = "Mod built successfully";
+                        UpdateProcessStateAsync("Mod built successfully");
                     }
                     else
                     {
-                        ProcessState = "Mod build is up to date";
+                        UpdateProcessStateAsync("Mod build is up to date");
                     }
                 }
 
-                ProcessState = "Building connector mod and launching game...";
+                UpdateProcessStateAsync("Building connector mod and launching game...");
 
                 var useLocalDll = true;
-                var launchResult = _gameLaunchService.LaunchGame(_modSettings, useLocalDll, previewEnabled: false);
+                var launchResult = await Task.Run(() => 
+                    _gameLaunchService.LaunchGame(_modSettings, useLocalDll, previewEnabled: false));
 
-                UpdateProcessState();
+                Application.Current.Dispatcher.Invoke(UpdateProcessState);
 
                 if (launchResult.Success)
                 {
@@ -1506,23 +1578,24 @@ namespace Schedule1ModdingTool.ViewModels
                     {
                         message += $"\n\nWarnings:\n{string.Join("\n", launchResult.Warnings)}";
                     }
-                    AppUtils.ShowInfo(message);
+                    Application.Current.Dispatcher.Invoke(() => AppUtils.ShowInfo(message));
                 }
                 else
                 {
-                    ProcessState = "Launch failed";
+                    UpdateProcessStateAsync("Launch failed");
                     var errorMessage = $"Failed to launch game: {launchResult.ErrorMessage}";
                     if (!string.IsNullOrEmpty(launchResult.BuildOutput))
                     {
                         errorMessage += $"\n\nBuild Output:\n{launchResult.BuildOutput}";
                     }
-                    AppUtils.ShowError(errorMessage);
+                    Application.Current.Dispatcher.Invoke(() => AppUtils.ShowError(errorMessage));
                 }
             }
             catch (Exception ex)
             {
-                ProcessState = "Launch failed";
-                AppUtils.ShowError($"Failed to launch game: {ex.Message}");
+                UpdateProcessStateAsync("Launch failed");
+                Application.Current.Dispatcher.Invoke(() =>
+                    AppUtils.ShowError($"Failed to launch game: {ex.Message}"));
             }
         }
 
@@ -1745,6 +1818,14 @@ namespace Schedule1ModdingTool.ViewModels
             {
                 ProcessState = "Ready";
             }
+        }
+
+        /// <summary>
+        /// Updates ProcessState from a background thread by marshaling to the UI thread
+        /// </summary>
+        private void UpdateProcessStateAsync(string state)
+        {
+            Application.Current.Dispatcher.Invoke(() => ProcessState = state);
         }
 
         #endregion
