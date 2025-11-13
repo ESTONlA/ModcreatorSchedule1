@@ -34,7 +34,7 @@ jobs:
         } elseif (${{ github.event.inputs.version }}) {
           $version = "${{ github.event.inputs.version }}"
         } else {
-          $version = Select-String -Path "ModcreatorSchedule1\Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
+          $version = Select-String -Path "Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
           # Remove beta suffix if present
           $version = $version -replace '-beta.*', ''
         }
@@ -45,17 +45,15 @@ jobs:
         echo "version=$version" >> $env:GITHUB_OUTPUT
 
     - name: Build Release
-      working-directory: ModcreatorSchedule1
       run: dotnet build Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION
 
     - name: Publish Release
-      working-directory: ModcreatorSchedule1
       run: dotnet publish Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION -o ./publish --self-contained false
 
     - name: Create release archive
       run: |
         $archiveName = "Schedule1ModdingTool-$env:VERSION-stable.zip"
-        Compress-Archive -Path "ModcreatorSchedule1\publish\*" -DestinationPath $archiveName -Force
+        Compress-Archive -Path "publish\*" -DestinationPath $archiveName -Force
         echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
 
     - name: Generate release notes
