@@ -137,6 +137,38 @@ jobs:
         Compress-Archive -Path "publish\*" -DestinationPath $archiveName -Force
         echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
 
+    - name: Update version files
+      run: |
+        # Update Schedule1ModdingTool.csproj with the determined version
+        $csprojPath = "Schedule1ModdingTool.csproj"
+        $csprojContent = Get-Content $csprojPath -Raw
+        $csprojContent = $csprojContent -replace '<Version>.*?</Version>', "<Version>$env:VERSION</Version>"
+        $csprojContent | Set-Content $csprojPath -NoNewline
+        Write-Host "✓ Updated Schedule1ModdingTool.csproj with version $env:VERSION"
+        
+        # Update AutoUpdater.xml with the determined version
+        $xmlLines = @(
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<item>',
+            "    <version>$env:VERSION</version>",
+            "    <url>https://github.com/ESTONlA/ModcreatorSchedule1/releases/download/v$env:VERSION/Schedule1ModdingTool-$env:VERSION.zip</url>",
+            '    <changelog>https://github.com/ESTONlA/ModcreatorSchedule1/releases</changelog>',
+            '    <mandatory>false</mandatory>',
+            '</item>'
+        )
+        $xmlContent = $xmlLines -join "`n"
+        $xmlContent | Out-File -FilePath "AutoUpdater.xml" -Encoding UTF8 -NoNewline
+        Write-Host "✓ Updated AutoUpdater.xml with version $env:VERSION"
+
+    - name: Commit and push version updates
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add Schedule1ModdingTool.csproj AutoUpdater.xml
+        git commit -m "chore: update version to $env:VERSION" || exit 0
+        git push origin beta || exit 0
+        Write-Host "✓ Committed and pushed version updates"
+
     - name: Generate release notes
       id: release_notes
       run: |

@@ -61,9 +61,10 @@ namespace Schedule1ModdingTool.Services
                 if (latestRelease == null)
                     return;
 
-                // For GitHub Releases, AutoUpdater.NET supports direct GitHub releases URL
-                // AutoUpdater.NET 2.0+ supports: https://github.com/{owner}/{repo}/releases/latest
-                var githubReleasesUrl = $"https://github.com/{GitHubOwner}/{GitHubRepo}/releases/latest";
+                // AutoUpdater.NET requires an XML file URL, not a GitHub releases page
+                // The XML file is hosted in the repository and updated by the release workflow
+                // Use raw.githubusercontent.com to access the XML file directly
+                var xmlFileUrl = $"https://raw.githubusercontent.com/{GitHubOwner}/{GitHubRepo}/beta/AutoUpdater.xml";
 
                 // Set up event handler for update check results
                 AutoUpdater.CheckForUpdateEvent += (args) =>
@@ -82,8 +83,8 @@ namespace Schedule1ModdingTool.Services
                     }
                 };
 
-                // Start update check
-                AutoUpdater.Start(githubReleasesUrl);
+                // Start update check - AutoUpdater.NET will download and parse the XML file
+                AutoUpdater.Start(xmlFileUrl);
             }
             catch (Exception ex)
             {
