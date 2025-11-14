@@ -164,6 +164,13 @@
 						                         Width="16" Height="16" />
 					</MenuItem.Icon>
 				</MenuItem>
+				<MenuItem Header="Test _Update System (Debug)" x:Name="UpdateTestMenuItem" Style="{StaticResource DarkMenuItemStyle}">
+					<MenuItem.Icon>
+						<materialDesign:PackIcon Kind="BugCheck"
+						                         Foreground="{StaticResource LightTextBrush}"
+						                         Width="16" Height="16" />
+					</MenuItem.Icon>
+				</MenuItem>
 			</MenuItem>
 		</Menu>
 

@@ -1,0 +1,132 @@
+<Window x:Class="Schedule1ModdingTool.Views.UpdateTestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Update Test Tool"
+        Height="500"
+        Width="700"
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0"
+                   Text="Auto-Update Testing Tool"
+                   Style="{StaticResource MaterialDesignHeadline5TextBlock}"
+                   Margin="0,0,0,20"/>
+
+        <!-- Current Version Info -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource MaterialDesignDivider}"
+                Padding="12"
+                Margin="0,0,0,12"
+                CornerRadius="4">
+            <StackPanel>
+                <TextBlock Text="Current Application Version"
+                           FontWeight="Bold"
+                           Margin="0,0,0,4"/>
+                <TextBlock x:Name="CurrentVersionText"
+                           Text="Loading..."
+                           FontSize="14"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Debug Mode Toggle -->
+        <CheckBox Grid.Row="2"
+                  x:Name="DebugModeCheckBox"
+                  Content="Enable Debug Mode (shows detailed logs)"
+                  IsChecked="True"
+                  Margin="0,0,0,12"/>
+
+        <!-- Test XML URL -->
+        <GroupBox Grid.Row="3"
+                  Header="Test XML Configuration"
+                  Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="Leave empty to use production XML from GitHub beta branch"
+                           TextWrapping="Wrap"
+                           Opacity="0.7"
+                           FontSize="11"
+                           Margin="0,0,0,8"/>
+                <TextBox x:Name="TestXmlUrlTextBox"
+                         materialDesign:HintAssist.Hint="Custom XML URL (optional)"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Margin="0,0,0,8"/>
+                <TextBlock TextWrapping="Wrap"
+                           Opacity="0.7"
+                           FontSize="11">
+                    <Run Text="Examples:"/>
+                    <LineBreak/>
+                    <Run Text="• file:///C:/path/to/test-AutoUpdater.xml"/>
+                    <LineBreak/>
+                    <Run Text="• https://raw.githubusercontent.com/ESTONlA/ModcreatorSchedule1/test-branch/AutoUpdater.xml"/>
+                </TextBlock>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Quick Test Buttons -->
+        <GroupBox Grid.Row="4"
+                  Header="Quick Tests"
+                  Margin="0,0,0,12">
+            <StackPanel>
+                <Button x:Name="TestNormalButton"
+                        Content="Test Normal Update Check"
+                        Click="TestNormalButton_Click"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="0,0,0,8"/>
+                <Button x:Name="CreateTestXmlButton"
+                        Content="Create Test XML File (Simulate Update Available)"
+                        Click="CreateTestXmlButton_Click"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="0,0,0,8"/>
+                <TextBlock x:Name="TestXmlPathText"
+                           TextWrapping="Wrap"
+                           Opacity="0.7"
+                           FontSize="11"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Info -->
+        <Border Grid.Row="5"
+                Background="{DynamicResource MaterialDesignToolBarBackground}"
+                Padding="12"
+                CornerRadius="4">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <TextBlock TextWrapping="Wrap" FontSize="11">
+                    <Run Text="How to Use:" FontWeight="Bold"/>
+                    <LineBreak/><LineBreak/>
+                    <Run Text="1. Enable Debug Mode to see detailed logging"/>
+                    <LineBreak/>
+                    <Run Text="2. Click 'Create Test XML File' to generate a test configuration simulating a newer version"/>
+                    <LineBreak/>
+                    <Run Text="3. The test XML path will be auto-filled in the field above"/>
+                    <LineBreak/>
+                    <Run Text="4. Click 'Test Normal Update Check' to trigger the update check"/>
+                    <LineBreak/>
+                    <Run Text="5. You should see debug logs and the update dialog if working correctly"/>
+                    <LineBreak/><LineBreak/>
+                    <Run Text="Note: The test XML simulates version 99.99.99-beta.99 to ensure it's always 'newer' than your current version."/>
+                </TextBlock>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Close Button -->
+        <Button Grid.Row="6"
+                Content="Close"
+                Click="CloseButton_Click"
+                Style="{StaticResource MaterialDesignFlatButton}"
+                HorizontalAlignment="Right"
+                Margin="0,12,0,0"/>
+    </Grid>
+</Window>

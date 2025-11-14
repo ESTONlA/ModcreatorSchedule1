@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -21,6 +22,12 @@ namespace Schedule1ModdingTool.Services
         private const string GitHubApiBase = "https://api.github.com";
         private static readonly HttpClient HttpClient = new HttpClient();
 
+        // Enable debug mode to see detailed logs and use test XML
+        public static bool DebugMode { get; set; } = false;
+
+        // Test XML URL - can point to a local file or test branch
+        public static string? TestXmlUrl { get; set; }
+
         static UpdateService()
         {
             HttpClient.DefaultRequestHeaders.Add("User-Agent", "Schedule1ModdingTool-Updater");
@@ -31,10 +38,16 @@ namespace Schedule1ModdingTool.Services
         /// </summary>
         public static async Task CheckForUpdatesAsync(bool silent = false)
         {
+            var debugLog = new StringBuilder();
+
             try
             {
+                var currentVersion = VersionInfo.Version;
+                debugLog.AppendLine($"[UpdateService] Current version: {currentVersion}");
+
                 var settings = ModSettings.Load();
                 var isBetaChannel = settings.UpdateChannel == UpdateChannel.Beta;
+                debugLog.AppendLine($"[UpdateService] Update channel: {(isBetaChannel ? "Beta" : "Stable")}");
 
                 // Configure AutoUpdater.NET
                 AutoUpdater.LetUserSelectRemindLater = true;
@@ -44,54 +57,119 @@ namespace Schedule1ModdingTool.Services
                 AutoUpdater.ShowRemindLaterButton = true;
                 AutoUpdater.Mandatory = false;
 
+                // CRITICAL: Set the installed version explicitly
+                // AutoUpdater.NET defaults to Assembly.Version (1.0.0) if not set
+                // Strip build metadata (everything after '+') since System.Version can't parse it
+                var cleanVersion = VersionInfo.BaseVersion.Split('+')[0];
+                AutoUpdater.InstalledVersion = new Version(cleanVersion);
+                debugLog.AppendLine($"[UpdateService] Set InstalledVersion to: {AutoUpdater.InstalledVersion} (from {VersionInfo.Version})");
+
                 // Check GitHub API first to filter by channel if needed
                 GitHubReleaseInfo? latestRelease = null;
                 if (!isBetaChannel)
                 {
                     // Stable channel: get latest non-beta release
                     latestRelease = await GetLatestReleaseAsync(includeBeta: false);
+                    debugLog.AppendLine($"[UpdateService] Latest stable release: {latestRelease?.Version ?? "none"}");
                 }
                 else
                 {
                     // Beta channel: get latest release (beta or stable)
                     latestRelease = await GetLatestReleaseAsync(includeBeta: true);
+                    debugLog.AppendLine($"[UpdateService] Latest beta release: {latestRelease?.Version ?? "none"}");
                 }
 
                 // If no suitable release found, skip update check
                 if (latestRelease == null)
+                {
+                    debugLog.AppendLine("[UpdateService] No suitable release found, skipping update check");
+                    if (DebugMode)
+                    {
+                        MessageBox.Show(debugLog.ToString(), "Update Check Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                     return;
+                }
 
                 // AutoUpdater.NET requires an XML file URL, not a GitHub releases page
                 // The XML file is hosted in the repository and updated by the release workflow
                 // Use raw.githubusercontent.com to access the XML file directly
-                var xmlFileUrl = $"https://raw.githubusercontent.com/{GitHubOwner}/{GitHubRepo}/beta/AutoUpdater.xml";
+                var xmlFileUrl = TestXmlUrl ?? $"https://raw.githubusercontent.com/{GitHubOwner}/{GitHubRepo}/beta/AutoUpdater.xml";
+                debugLog.AppendLine($"[UpdateService] XML URL: {xmlFileUrl}");
 
                 // Set up event handler for update check results
                 AutoUpdater.CheckForUpdateEvent += (args) =>
                 {
-                    if (args != null && args.IsUpdateAvailable)
+                    debugLog.AppendLine($"[UpdateService] CheckForUpdateEvent fired");
+
+                    if (args == null)
                     {
+                        debugLog.AppendLine("[UpdateService] args is null");
+                        if (DebugMode || !silent)
+                        {
+                            MessageBox.Show(debugLog.ToString() + "\n\nUpdate check returned null args.",
+                                "Update Check Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        return;
+                    }
+
+                    if (args.Error != null)
+                    {
+                        debugLog.AppendLine($"[UpdateService] Error: {args.Error.Message}");
+                        if (DebugMode || !silent)
+                        {
+                            MessageBox.Show(debugLog.ToString() + $"\n\nError: {args.Error.Message}",
+                                "Update Check Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                        return;
+                    }
+
+                    debugLog.AppendLine($"[UpdateService] IsUpdateAvailable: {args.IsUpdateAvailable}");
+                    debugLog.AppendLine($"[UpdateService] CurrentVersion (from XML): {args.CurrentVersion}");
+                    debugLog.AppendLine($"[UpdateService] InstalledVersion: {args.InstalledVersion}");
+
+                    if (args.IsUpdateAvailable)
+                    {
+                        debugLog.AppendLine($"[UpdateService] Update available: {args.CurrentVersion}");
+
                         // Additional channel filtering if AutoUpdater returns a beta release for stable users
                         if (!isBetaChannel && IsBetaRelease(args.CurrentVersion))
                         {
-                            // Skip beta releases for stable channel users
+                            debugLog.AppendLine("[UpdateService] Skipping beta release for stable channel user");
+                            if (DebugMode)
+                            {
+                                MessageBox.Show(debugLog.ToString(), "Update Check Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
                             return;
                         }
 
                         // Show update dialog (always show if update is available, silent only affects error messages)
+                        debugLog.AppendLine("[UpdateService] Showing update dialog");
                         AutoUpdater.ShowUpdateForm(args);
                     }
+                    else
+                    {
+                        debugLog.AppendLine("[UpdateService] No update available");
+                        if (DebugMode || !silent)
+                        {
+                            MessageBox.Show(debugLog.ToString(), "Update Check Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
                 };
+
+                debugLog.AppendLine("[UpdateService] Starting AutoUpdater.Start()");
 
                 // Start update check - AutoUpdater.NET will download and parse the XML file
                 AutoUpdater.Start(xmlFileUrl);
             }
             catch (Exception ex)
             {
-                if (!silent)
+                debugLog.AppendLine($"[UpdateService] Exception: {ex.Message}");
+                debugLog.AppendLine($"[UpdateService] Stack trace: {ex.StackTrace}");
+
+                if (!silent || DebugMode)
                 {
                     MessageBox.Show(
-                        $"Failed to check for updates: {ex.Message}",
+                        debugLog.ToString() + $"\n\nFailed to check for updates: {ex.Message}",
                         "Update Check Failed",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);

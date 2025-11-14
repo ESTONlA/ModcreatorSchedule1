@@ -79,44 +79,39 @@ jobs:
     - name: Extract and determine version
       id: get_version
       run: |
-        # Get version from manual input, project file, or default
+        # Get version from manual input or project file
         if ("${{ github.event.inputs.version }}" -ne "") {
-          $version = "${{ github.event.inputs.version }}"
+          $baseVersion = "${{ github.event.inputs.version }}"
         } else {
-          $version = Select-String -Path "Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
+          $baseVersion = Select-String -Path "Schedule1ModdingTool.csproj" -Pattern '<Version>(.*)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
         }
-        
-        # If version doesn't have beta suffix, add it
-        if ([string]::IsNullOrWhiteSpace($version)) {
-          $version = "1.0.0-beta.1"
-        } elseif ($version -notmatch '-beta\.\d+$') {
-          # Extract base version (e.g., "1.0.0" from "1.0.0" or "1.0.0-beta.1")
-          $baseVersion = $version -replace '-.*$', ''
-          
-          # Get existing beta tags for this base version
-          git fetch --tags --force
-          $existingBetas = git tag -l "v${baseVersion}-beta.*" | ForEach-Object { 
-            if ($_ -match '-beta\.(\d+)$') { [int]$matches[1] }
-          } | Sort-Object -Descending
-          
-          if ($existingBetas.Count -gt 0) {
-            $nextBeta = $existingBetas[0] + 1
-          } else {
-            $nextBeta = 1
-          }
-          
-          $version = "${baseVersion}-beta.${nextBeta}"
+
+        # Default if empty
+        if ([string]::IsNullOrWhiteSpace($baseVersion)) {
+          $baseVersion = "1.0.1"
         }
-        
-        Write-Host "Determined version: $version"
-        echo "VERSION=$version" >> $env:GITHUB_ENV
-        echo "version=$version" >> $env:GITHUB_OUTPUT
+
+        # Strip any existing -beta suffix from .csproj (shouldn't be there, but just in case)
+        $baseVersion = $baseVersion -replace '-beta.*$', ''
+
+        # Create the beta release tag by appending -beta
+        $betaTag = "${baseVersion}-beta"
+
+        Write-Host "Base version: $baseVersion"
+        Write-Host "Beta release tag: $betaTag"
+
+        # BASE_VERSION = clean version (e.g., "1.0.1") - used for .csproj, AutoUpdater.xml, assembly version
+        # BETA_TAG = version with -beta suffix (e.g., "1.0.1-beta") - used for GitHub release tag and filename
+        echo "BASE_VERSION=$baseVersion" >> $env:GITHUB_ENV
+        echo "BETA_TAG=$betaTag" >> $env:GITHUB_ENV
+        echo "base_version=$baseVersion" >> $env:GITHUB_OUTPUT
+        echo "beta_tag=$betaTag" >> $env:GITHUB_OUTPUT
 
     - name: Build Release
-      run: dotnet build Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION -p:CI=true
+      run: dotnet build Schedule1ModdingTool.csproj -c Release -p:Version=$env:BASE_VERSION -p:CI=true
 
     - name: Publish Release
-      run: dotnet publish Schedule1ModdingTool.csproj -c Release -p:Version=$env:VERSION -p:CI=true -o ./publish --self-contained false
+      run: dotnet publish Schedule1ModdingTool.csproj -c Release -p:Version=$env:BASE_VERSION -p:CI=true -o ./publish --self-contained false
 
     - name: Copy ModCreatorConnector DLL to publish directory
       run: |
@@ -133,47 +128,53 @@ jobs:
 
     - name: Create release archive
       run: |
-        $archiveName = "Schedule1ModdingTool-$env:VERSION.zip"
+        # Use BETA_TAG for filename (e.g., "Schedule1ModdingTool-1.0.1-beta.zip")
+        $archiveName = "Schedule1ModdingTool-$env:BETA_TAG.zip"
         Compress-Archive -Path "publish\*" -DestinationPath $archiveName -Force
         echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
 
     - name: Update version files
       run: |
-        # Update Schedule1ModdingTool.csproj with the determined version
+        # Update Schedule1ModdingTool.csproj with the BASE version (no -beta suffix)
         $csprojPath = "Schedule1ModdingTool.csproj"
         $csprojContent = Get-Content $csprojPath -Raw
-        $csprojContent = $csprojContent -replace '<Version>.*?</Version>', "<Version>$env:VERSION</Version>"
+        $csprojContent = $csprojContent -replace '<Version>.*?</Version>', "<Version>$env:BASE_VERSION</Version>"
         $csprojContent | Set-Content $csprojPath -NoNewline
-        Write-Host "✓ Updated Schedule1ModdingTool.csproj with version $env:VERSION"
-        
-        # Update AutoUpdater.xml with the determined version
+        Write-Host "✓ Updated Schedule1ModdingTool.csproj with version $env:BASE_VERSION"
+
+        # Update AutoUpdater.xml with BASE_VERSION (clean version for AutoUpdater.NET)
+        # URL uses BETA_TAG for the GitHub release tag and filename
         $xmlLines = @(
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<item>',
-            "    <version>$env:VERSION</version>",
-            "    <url>https://github.com/ESTONlA/ModcreatorSchedule1/releases/download/v$env:VERSION/Schedule1ModdingTool-$env:VERSION.zip</url>",
-            '    <changelog>https://github.com/ESTONlA/ModcreatorSchedule1/releases</changelog>',
+            "    <version>$env:BASE_VERSION</version>",
+            "    <url>https://github.com/S1M0D/ModcreatorSchedule1/releases/download/v$env:BETA_TAG/Schedule1ModdingTool-$env:BETA_TAG.zip</url>",
+            '    <changelog>https://github.com/S1M0D/ModcreatorSchedule1/releases/latest</changelog>',
             '    <mandatory>false</mandatory>',
             '</item>'
         )
         $xmlContent = $xmlLines -join "`n"
         $xmlContent | Out-File -FilePath "AutoUpdater.xml" -Encoding UTF8 -NoNewline
-        Write-Host "✓ Updated AutoUpdater.xml with version $env:VERSION"
+        Write-Host "✓ Updated AutoUpdater.xml:"
+        Write-Host "   - Version: $env:BASE_VERSION (for comparison)"
+        Write-Host "   - Download URL: v$env:BETA_TAG/Schedule1ModdingTool-$env:BETA_TAG.zip"
 
     - name: Commit and push version updates
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add Schedule1ModdingTool.csproj AutoUpdater.xml
-        git commit -m "chore: update version to $env:VERSION" || exit 0
+        git commit -m "chore: update version to $env:BASE_VERSION (beta release $env:BETA_TAG)" || exit 0
         git push origin beta || exit 0
         Write-Host "✓ Committed and pushed version updates"
 
     - name: Generate release notes
       id: release_notes
       run: |
-        $notes = "## Beta Release $env:VERSION`n`n"
+        $notes = "## Beta Release $env:BETA_TAG`n`n"
         $notes += "Automated beta release from beta branch.`n`n"
+        $notes += "**Version:** ``$env:BASE_VERSION```n"
+        $notes += "**Release Tag:** ``$env:BETA_TAG```n`n"
         $notes += "### Changes`n"
         $notes += "See commit history for details."
         echo "notes<<EOF" >> $env:GITHUB_OUTPUT
@@ -183,8 +184,8 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ env.VERSION }}
-        name: Beta Release ${{ env.VERSION }}
+        tag_name: v${{ env.BETA_TAG }}
+        name: Beta Release ${{ env.BETA_TAG }}
         body: ${{ steps.release_notes.outputs.notes }}
         prerelease: true
         files: ${{ env.ARCHIVE_NAME }}

@@ -37,6 +37,21 @@ namespace Schedule1ModdingTool.Views
 
                 ConfigureCodeEditorTheme();
 
+#if DEBUG
+                // Show update test menu item only in Debug builds
+                if (UpdateTestMenuItem != null)
+                {
+                    UpdateTestMenuItem.Visibility = Visibility.Visible;
+                    UpdateTestMenuItem.Click += UpdateTestMenuItem_Click;
+                }
+#else
+                // Hide update test menu item in Release builds
+                if (UpdateTestMenuItem != null)
+                {
+                    UpdateTestMenuItem.Visibility = Visibility.Collapsed;
+                }
+#endif
+
                 // Subscribe to IsCodeVisible changes to fix grid divider issue
                 if (DataContext is MainViewModel viewModel)
                 {
@@ -445,5 +460,14 @@ namespace Schedule1ModdingTool.Views
                 vm.CloseTab(tab);
             }
         }
+
+#if DEBUG
+        private void UpdateTestMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var testWindow = new UpdateTestWindow();
+            testWindow.Owner = this;
+            testWindow.ShowDialog();
+        }
+#endif
     }
 }
