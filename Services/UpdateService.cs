@@ -220,7 +220,7 @@ namespace Schedule1ModdingTool.Services
                         else
                         {
                             // Dispatch to UI thread
-                            app.Dispatcher.BeginInvoke(() =>
+                            _ = app.Dispatcher.BeginInvoke(() =>
                             {
                                 MessageBox.Show(
                                     debugLog.ToString() + $"\n\nFailed to check for updates: {ex.Message}",

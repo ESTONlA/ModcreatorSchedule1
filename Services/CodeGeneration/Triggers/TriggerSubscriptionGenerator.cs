@@ -395,7 +395,6 @@ namespace Schedule1ModdingTool.Services.CodeGeneration.Triggers
             var questTitle = CodeFormatter.EscapeString(trigger.TargetQuestId);
             var actionParts = trigger.TargetAction.Split('.');
             string eventPath;
-            string questLookupCode;
 
             if (actionParts.Length >= 2)
             {
